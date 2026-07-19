@@ -376,7 +376,7 @@ function openCompanionsModule() {
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
     frame.style.cssText = 'flex:1;border:0;width:100%';
-    frame.src = 'src/companions/companions.html?v=19'; // bump OBLIGATOIRE dès que companions.html change (onglets/panels/shell), sinon le navigateur sert l'ancien shell en cache (cache-busting, voir companions.html)
+    frame.src = 'src/companions/companions.html?v=20'; // bump OBLIGATOIRE dès que companions.html change (onglets/panels/shell), sinon le navigateur sert l'ancien shell en cache (cache-busting, voir companions.html)
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);

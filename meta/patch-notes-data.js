@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V487', d:'19/07/2026 13:00', name:{fr:'Modal de retour + langue Compagnon', en:'Welcome-back modal + Companion language'}, fr:[
+      {t:'change', sub:'ui', tx:'Le modal « Bon retour » (résumé d\'absence) se ferme désormais avec Échap ou en cliquant en dehors de la fenêtre, en plus de la croix.'},
+      {t:'new', sub:'compagnon', tx:'Un sélecteur de langue FR / EN est ajouté dans l\'en-tête du menu Compagnon.'},
+    ], en:[
+      {t:'change', sub:'ui', tx:'The "Welcome back" modal (offline summary) now closes with Escape or by clicking outside the window, in addition to the close button.'},
+      {t:'new', sub:'compagnon', tx:'An FR / EN language selector is added to the Companion menu header.'},
+    ] },
   { v:'V486', d:'19/07/2026 12:00', name:{fr:'Fiche familier : mention ramasseur', en:'Companion card: looter note'}, fr:[
       {t:'change', sub:'compagnon', tx:'La fiche d\'un familier de type Collecte affiche désormais une petite mention 🐾 « Ramasse le loot au sol en combat » au-dessus de ses stats, pour rappeler que ce sont bien ces familiers-là (et leurs stats) qui ramassent le butin pendant que tu combats.'},
     ], en:[
