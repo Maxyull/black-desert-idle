@@ -213,7 +213,6 @@ function applyI18n() {
     const key = el.getAttribute('data-i18n-title');
     if (I18N[key]) el.setAttribute('title', I18N[key][LANG]);
   });
-  $a('langThumb').classList.toggle('en', LANG === 'en');
   document.querySelectorAll('.langOpt').forEach(el => el.classList.toggle('active', el.dataset.lang === LANG));
   document.querySelectorAll('.authLangBtn').forEach(el => el.classList.toggle('active', el.dataset.lang === LANG));
   document.documentElement.lang = LANG;
@@ -238,9 +237,19 @@ function applyI18n() {
   if (companionsFrame) { try { companionsFrame.contentWindow.location.reload(); } catch (e) { companionsFrame.src = companionsFrame.src; } }
   hudFast();
 }
-$a('langToggle').onclick = () => {
-  LANG = LANG === 'fr' ? 'en' : 'fr';
+// Sélecteur de langue segmenté (2026-07-19) : chaque segment FR/EN sélectionne DIRECTEMENT sa
+// langue (look repris du switcher Compagnon, désormais retiré). Remplace l'ancien toggle unique
+// sur le conteneur. Toute la logique du header est conservée (LANG + i18next + velia-idle-lang +
+// applyI18n, qui recharge aussi l'iframe Compagnon pour la resynchroniser). No-op si déjà actif :
+// les boutons "langue préférée" de Mon compte (.langOpt[data-lang].click(), account-panel.js) et
+// tout autre déclencheur passent par ici.
+function setGameLang(lng) {
+  if ((lng !== 'fr' && lng !== 'en') || lng === LANG) return;
+  LANG = lng;
   if (typeof i18next !== 'undefined') i18next.changeLanguage(LANG); // garde i18next synchronise avec LANG, voir docs/I18N_PLAN.md §8
   try { localStorage.setItem('velia-idle-lang', LANG); } catch(e) {}
   applyI18n();
-};
+}
+document.querySelectorAll('#langToggle .langOpt').forEach(el => {
+  el.onclick = (e) => { e.stopPropagation(); setGameLang(el.dataset.lang); };
+});

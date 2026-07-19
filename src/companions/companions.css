@@ -37,11 +37,8 @@ body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;widt
 #hdrCloseBtn:hover{border-color:var(--red);color:var(--red2)}
 .hdr-pill{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;display:flex;align-items:center;gap:5px;color:var(--cream2)}
 .hdr-pill strong{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green2)}
-/* switcher de langue (2026-07-19) : deux boutons FR/EN, l'actif surligné en doré (voir applyCompanionsI18n) */
-.langSwitch{display:inline-flex;border:1px solid var(--border);border-radius:20px;overflow:hidden}
-.langBtn{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.04em;padding:3px 9px;border:none;background:transparent;color:var(--cream3);cursor:pointer;transition:all .12s}
-.langBtn:hover{color:var(--cream)}
-.langBtn.on{background:var(--gold);color:var(--bg);font-weight:600}
+/* switcher de langue propre au module retiré (2026-07-19) : la langue se change via le header du jeu
+   (sélecteur FR/EN unique) -- styles .langSwitch/.langBtn supprimés avec lui. */
 .tabs{display:flex;background:var(--s1);border-bottom:1px solid var(--border);flex-shrink:0}
 .tab{padding:9px 18px;font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--cream3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;gap:5px;white-space:nowrap}
 .tab:hover{color:var(--cream2)}.tab.active{color:var(--gold);border-bottom-color:var(--gold)}

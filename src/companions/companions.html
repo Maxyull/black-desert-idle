@@ -14,7 +14,7 @@
      chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
-<link rel="stylesheet" href="companions.css?v=20">
+<link rel="stylesheet" href="companions.css?v=21">
 <!-- three.js vendorisé en local, jamais de CDN (2026-07-10, viewer 3D compagnons GLB) --
      three.module.min.js/GLTFLoader.js/OrbitControls.js sont des modules ES (import/export imposé
      par la lib), l'importmap ci-dessous résout le spécificateur nu "three" ; vendor/three/three-
@@ -53,12 +53,9 @@
     <div class="hdr-pill">💰 <strong id="h-silver">55 000</strong></div>
     <div class="hdr-pill">🥚 <strong id="h-egg">05:42:18</strong></div>
     <div class="hdr-pill" title="Connexions consécutives" data-i18n-title="companions.header.streak_title">🔥 <strong id="h-streak">0/7</strong></div>
-    <!-- switcher de langue (2026-07-19, demande explicite : "ajoute un switcher langue dans compagnon") :
-         persiste la clé PARTAGÉE velia-idle-lang et recharge l'iframe (setCompanionLang, i18n.js). -->
-    <div class="langSwitch" title="Langue / Language">
-      <button class="langBtn" data-lng="fr" onclick="setCompanionLang('fr')">FR</button>
-      <button class="langBtn" data-lng="en" onclick="setCompanionLang('en')">EN</button>
-    </div>
+    <!-- switcher de langue retiré (2026-07-19) : la langue se change désormais uniquement via le
+         sélecteur FR/EN du header du jeu (un seul contrôle, plus cohérent) -- il persiste la clé
+         PARTAGÉE velia-idle-lang et recharge cette iframe (applyI18n, src/core/i18n-legacy.js). -->
     <button style="font-family:'Cinzel',serif;font-size:9px;padding:5px 10px;border-radius:5px;border:1px solid var(--red);background:transparent;color:var(--red2);cursor:pointer" onclick="resetSave()" title="Efface la sauvegarde et recharge le roster de départ" data-i18n-title="companions.header.reset_title">🗑️ Reset</button>
   </div>
 </div>
@@ -494,7 +491,7 @@
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
 <script src="i18n-resources.generated.js?v=5"></script>
-<script src="i18n.js?v=2"></script>
+<script src="i18n.js?v=3"></script>
 <script src="pixelart.js?v=7"></script>
 <script src="catalog.js?v=9"></script>
 <script src="economy.js?v=33"></script>
