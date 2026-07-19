@@ -7128,6 +7128,8 @@ function setFarmViewVisible(v) {
 }
 
 function showActivityPage(id) {
+  
+  if (id !== 'pet') { const ci = $a('companionsInline'); if (ci) ci.style.display = 'none'; }
   if (id === 'boss') {
     currentActivity = 'boss';
     setFarmViewVisible(false);
@@ -7138,7 +7140,11 @@ function showActivityPage(id) {
     setFarmViewVisible(false);
     if (!minibossState.active) openMiniBossLobby();
   } else if (id === 'pet') {
+    
     currentActivity = 'pet';
+    setFarmViewVisible(false);
+    if (!bossState.active) $('bossRoom').classList.remove('open');
+    if (!minibossState.active) { const mbr = $a('minibossRoom'); if (mbr) mbr.classList.remove('open'); }
     openCompanionsModule();
   } else { 
     currentActivity = 'zone';
@@ -7150,32 +7156,22 @@ function showActivityPage(id) {
 }
 
 function openCompanionsModule() {
-  let overlay = $a('companionsOverlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'companionsOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:950;background:#080810;display:flex;flex-direction:column';
-    const bar = document.createElement('div');
-    bar.style.cssText = 'flex-shrink:0;display:flex;justify-content:flex-end;padding:6px 10px;background:#10101e;border-bottom:1px solid #2a2a44';
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕ ' + i18next.t('combat:combat.boss.close_button');
-    closeBtn.style.cssText = 'font-family:Georgia,serif;font-size:12px;background:transparent;border:1px solid #3a3a58;color:#ddd0b8;border-radius:5px;padding:5px 12px;cursor:pointer';
-    closeBtn.onclick = closeCompanionsModule;
-    bar.appendChild(closeBtn);
+  let cont = $a('companionsInline');
+  if (!cont) {
+    cont = document.createElement('div');
+    cont.id = 'companionsInline'; 
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
-    frame.style.cssText = 'flex:1;border:0;width:100%';
     frame.src = 'src/companions/companions.html?v=20'; 
-    overlay.appendChild(bar);
-    overlay.appendChild(frame);
-    document.body.appendChild(overlay);
+    cont.appendChild(frame);
+    ($a('wrap') || document.body).appendChild(cont);
   }
-  overlay.style.display = 'flex';
+  cont.style.display = 'flex';
 }
 
 function closeCompanionsModule() {
-  const overlay = $a('companionsOverlay');
-  if (overlay) overlay.style.display = 'none';
+  const cont = $a('companionsInline');
+  if (cont) cont.style.display = 'none';
   currentActivity = 'zone';
   showActivityPage('zone');
 }

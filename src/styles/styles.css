@@ -2504,6 +2504,13 @@
     flex-direction:column; height:calc(100vh - 62px); min-height:440px;
   }
   #bossRoom.open { display:flex; }
+  /* Compagnon : vue inline dans #wrap, même calque que #bossRoom (dans le flux du jeu, sous le
+     header qui reste visible) — plus d'overlay plein écran. display togglé en JS (boss.js). */
+  #companionsInline {
+    display:none; width:100%; background:#080810; border:1px solid #2c2a31;
+    flex-direction:column; height:calc(100vh - 145px); min-height:440px;
+  }
+  #companionsInline > iframe { flex:1; border:0; width:100%; min-height:0; }
   #bossLobby { display:none; flex-direction:column; height:100%; overflow-y:auto; }
   #bossRoom.lobby #bossLobby { display:flex; }
   #bossRoom.lobby #bossArena { display:none; }

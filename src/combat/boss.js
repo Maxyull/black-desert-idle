@@ -329,6 +329,9 @@ function setFarmViewVisible(v) {
 }
 /** @param {string} id - id d'ACTIVITY_TABS. Bascule la vue du jeu vers cette activité (zone/boss/compagnon). */
 function showActivityPage(id) {
+  // le module Compagnon est une vue inline dans #wrap (comme #bossRoom) : on la masque par
+  // défaut, seule la branche 'pet' la ré-affiche via openCompanionsModule()
+  if (id !== 'pet') { const ci = $a('companionsInline'); if (ci) ci.style.display = 'none'; }
   if (id === 'boss') {
     currentActivity = 'boss';
     setFarmViewVisible(false);
@@ -340,7 +343,12 @@ function showActivityPage(id) {
     setFarmViewVisible(false);
     if (!minibossState.active) openMiniBossLobby();
   } else if (id === 'pet') {
+    // Compagnon : même convention que boss/miniboss ci-dessus — on masque la vue farm et les
+    // salles boss, puis on affiche le module inline dans #wrap (plus d'overlay plein écran).
     currentActivity = 'pet';
+    setFarmViewVisible(false);
+    if (!bossState.active) $('bossRoom').classList.remove('open');
+    if (!minibossState.active) { const mbr = $a('minibossRoom'); if (mbr) mbr.classList.remove('open'); }
     openCompanionsModule();
   } else { // zone = retour au farm
     currentActivity = 'zone';
@@ -359,34 +367,25 @@ function showActivityPage(id) {
 // le module réutilise des noms globaux génériques (SILVER, PETS, toast, ST, son propre :root
 // de couleurs...) qui entreraient en collision avec le scope global partagé du jeu -- voir
 // src/companions/README.md.
-/** Ouvre le module Compagnon dans une iframe isolée (créée au tout premier clic, jamais bundlée avec le jeu — voir src/companions/README.md). */
+/** Ouvre le module Compagnon en vue inline dans #wrap (comme #bossRoom) : iframe isolée créée au
+ *  tout premier clic, jamais bundlée avec le jeu — voir src/companions/README.md. */
 function openCompanionsModule() {
-  let overlay = $a('companionsOverlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'companionsOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:950;background:#080810;display:flex;flex-direction:column';
-    const bar = document.createElement('div');
-    bar.style.cssText = 'flex-shrink:0;display:flex;justify-content:flex-end;padding:6px 10px;background:#10101e;border-bottom:1px solid #2a2a44';
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕ ' + i18next.t('combat:combat.boss.close_button');
-    closeBtn.style.cssText = 'font-family:Georgia,serif;font-size:12px;background:transparent;border:1px solid #3a3a58;color:#ddd0b8;border-radius:5px;padding:5px 12px;cursor:pointer';
-    closeBtn.onclick = closeCompanionsModule;
-    bar.appendChild(closeBtn);
+  let cont = $a('companionsInline');
+  if (!cont) {
+    cont = document.createElement('div');
+    cont.id = 'companionsInline'; // styles dans styles.css (calque de #bossRoom) — pas de fixed/overlay
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
-    frame.style.cssText = 'flex:1;border:0;width:100%';
     frame.src = 'src/companions/companions.html?v=20'; // bump OBLIGATOIRE dès que companions.html change (onglets/panels/shell), sinon le navigateur sert l'ancien shell en cache (cache-busting, voir companions.html)
-    overlay.appendChild(bar);
-    overlay.appendChild(frame);
-    document.body.appendChild(overlay);
+    cont.appendChild(frame);
+    ($a('wrap') || document.body).appendChild(cont);
   }
-  overlay.style.display = 'flex';
+  cont.style.display = 'flex';
 }
-/** Ferme l'iframe du module Compagnon et revient à la vue Zone. */
+/** Masque la vue inline Compagnon et revient à la vue Zone. */
 function closeCompanionsModule() {
-  const overlay = $a('companionsOverlay');
-  if (overlay) overlay.style.display = 'none';
+  const cont = $a('companionsInline');
+  if (cont) cont.style.display = 'none';
   currentActivity = 'zone';
   showActivityPage('zone');
 }
