@@ -18204,35 +18204,35 @@ function setAdminTheme(id) {
 
 const ADMIN_SECTIONS = [
   { cat:'overview', label:{fr:'Vue d\'ensemble',en:'Overview'}, items:[
-    { id:'dashboard', icon:'🏠', label:{fr:'Dashboard',en:'Dashboard'}, render:renderAdminDashboard },
+    { id:'dashboard', icon:'🏠', label:{fr:'Dashboard',en:'Dashboard'}, render:(el)=>renderAdminDashboard(el) },
   ]},
   { cat:'players', label:{fr:'Joueurs',en:'Players'}, items:[
-    { id:'list', icon:'👥', label:{fr:'Liste des joueurs',en:'Player list'}, render:renderAdminPlayerList },
-    { id:'target', icon:'🎯', label:{fr:'Joueur précis',en:'Specific player'}, render:renderAdminTargetPlayer },
-    { id:'sanctions', icon:'🚫', label:{fr:'Sanctions',en:'Sanctions'}, render:renderAdminSanctions },
-    { id:'roles', icon:'🧑‍🤝‍🧑', label:{fr:'Rôles',en:'Roles'}, render:renderAdminRoles },
-    { id:'reconnect', icon:'🔄', label:{fr:'Reconnexion',en:'Reconnect'}, render:renderAdminReconnect },
+    { id:'list', icon:'👥', label:{fr:'Liste des joueurs',en:'Player list'}, render:(el)=>renderAdminPlayerList(el) },
+    { id:'target', icon:'🎯', label:{fr:'Joueur précis',en:'Specific player'}, render:(el)=>renderAdminTargetPlayer(el) },
+    { id:'sanctions', icon:'🚫', label:{fr:'Sanctions',en:'Sanctions'}, render:(el)=>renderAdminSanctions(el) },
+    { id:'roles', icon:'🧑‍🤝‍🧑', label:{fr:'Rôles',en:'Roles'}, render:(el)=>renderAdminRoles(el) },
+    { id:'reconnect', icon:'🔄', label:{fr:'Reconnexion',en:'Reconnect'}, render:(el)=>renderAdminReconnect(el) },
     { id:'guilds', icon:'👑', label:{fr:'Guildes',en:'Guilds'}, planned:true },
     { id:'pvp', icon:'⚔️', label:{fr:'PvP',en:'PvP'}, planned:true },
   ]},
   { cat:'content', label:{fr:'Contenu',en:'Content'}, items:[
-    { id:'boss', icon:'🌍', label:{fr:'Boss mondiaux',en:'World bosses'}, render:renderAdminBoss },
-    { id:'zones', icon:'🗾', label:{fr:'Progression par zone',en:'Zone progression'}, render:renderAdminZoneProgression },
-    { id:'compendium', icon:'📖', label:{fr:'Compendium',en:'Compendium'}, render:renderAdminCompendium },
-    { id:'items', icon:'📦', label:{fr:'Ressources farmées',en:'Farmed resources'}, render:renderAdminItems },
-    { id:'cron', icon:'⏳', label:{fr:'Pierres de Cron',en:'Cron Stones'}, render:renderAdminCron },
-    { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'}, render:renderAdminTreasure },
-    { id:'loot', icon:'🎲', label:{fr:'Table de loot',en:'Loot table'}, render:renderAdminLoot },
-    { id:'tutorials', icon:'🎓', label:{fr:'Tutoriels d\'objets',en:'Item tutorials'}, render:renderAdminItemTutorials },
-    { id:'onboarding', icon:'🧭', label:{fr:'Onboarding',en:'Onboarding'}, render:renderAdminOnboarding },
-    { id:'companions', icon:'🐾', label:{fr:'Compagnons',en:'Companions'}, render:renderAdminCompanions },
-    { id:'patchnotesmod', icon:'🚩', label:{fr:'Notes de version : modération',en:'Patch notes: moderation'}, render:renderAdminPatchNotesModeration },
+    { id:'boss', icon:'🌍', label:{fr:'Boss mondiaux',en:'World bosses'}, render:(el)=>renderAdminBoss(el) },
+    { id:'zones', icon:'🗾', label:{fr:'Progression par zone',en:'Zone progression'}, render:(el)=>renderAdminZoneProgression(el) },
+    { id:'compendium', icon:'📖', label:{fr:'Compendium',en:'Compendium'}, render:(el)=>renderAdminCompendium(el) },
+    { id:'items', icon:'📦', label:{fr:'Ressources farmées',en:'Farmed resources'}, render:(el)=>renderAdminItems(el) },
+    { id:'cron', icon:'⏳', label:{fr:'Pierres de Cron',en:'Cron Stones'}, render:(el)=>renderAdminCron(el) },
+    { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'}, render:(el)=>renderAdminTreasure(el) },
+    { id:'loot', icon:'🎲', label:{fr:'Table de loot',en:'Loot table'}, render:(el)=>renderAdminLoot(el) },
+    { id:'tutorials', icon:'🎓', label:{fr:'Tutoriels d\'objets',en:'Item tutorials'}, render:(el)=>renderAdminItemTutorials(el) },
+    { id:'onboarding', icon:'🧭', label:{fr:'Onboarding',en:'Onboarding'}, render:(el)=>renderAdminOnboarding(el) },
+    { id:'companions', icon:'🐾', label:{fr:'Compagnons',en:'Companions'}, render:(el)=>renderAdminCompanions(el) },
+    { id:'patchnotesmod', icon:'🚩', label:{fr:'Notes de version : modération',en:'Patch notes: moderation'}, render:(el)=>renderAdminPatchNotesModeration(el) },
   ]},
   { cat:'me', label:{fr:'Compte (Moi)',en:'Account (Me)'}, items:[
-    { id:'tests', icon:'🧪', label:{fr:'Tests perso',en:'Personal tests'}, render:renderAdminMyTests },
+    { id:'tests', icon:'🧪', label:{fr:'Tests perso',en:'Personal tests'}, render:(el)=>renderAdminMyTests(el) },
   ]},
   { cat:'system', label:{fr:'Système',en:'System'}, items:[
-    { id:'danger', icon:'⚙️', label:{fr:'Zone danger',en:'Danger zone'}, render:renderAdminServerDanger },
+    { id:'danger', icon:'⚙️', label:{fr:'Zone danger',en:'Danger zone'}, render:(el)=>renderAdminServerDanger(el) },
   ]},
 ];
 
@@ -18300,6 +18300,495 @@ async function resetAllAccounts() {
   showResetNotice('🔄', title_fr, body_fr);
 }
 
+function dashboardLight(healthy) {
+  return healthy
+    ? { dot:'🟢', label: i18next.t('admin:admin.dashboard.light_ok') }
+    : { dot:'🔴', label: i18next.t('admin:admin.dashboard.light_needs_attention') };
+}
+
+const DASHBOARD_WIDGETS = [
+  { id:'dw-econ', cat:'economy', sec:'health', icon:'💹', title:{fr:'Santé économique',en:'Economic health'},
+    fetch: () => sb.from('admin_silver_ledger_by_category').select('category, total_gained, total_spent'),
+    build: ({ data }) => {
+      const rows = (data||[]).map(r => ({ category:r.category, gained:Number(r.total_gained||0), spent:Number(r.total_spent||0) }));
+      const alerts = computeEconAlerts(rows);
+      const label = c => CATEGORY_LABEL[c] ? CATEGORY_LABEL[c][LANG] : c;
+      const sources = rows.filter(r=>r.gained>0).map(r=>({label:label(r.category), value:r.gained}));
+      return {
+        light: dashboardLight(alerts.length===0),
+        chart: buildPieWithLegendHtml(sources, { thresholdPct:6 }),
+        note: alerts.length ? alerts[0].text : i18next.t('admin:admin.dashboard.econ_healthy_note'),
+      };
+    } },
+  { id:'dw-silver', cat:'economy', sec:'silver', icon:'🏦', title:{fr:'Flux de silver (48h)',en:'Silver flow (48h)'},
+    fetch: () => sb.from('admin_silver_ledger_by_hour').select('hour, net_delta'),
+    build: ({ data }) => {
+      const rows = data || [];
+      const netTotal = rows.reduce((a,r) => a + Number(r.net_delta||0), 0);
+      const { accent, danger } = currentAdminAccentColors();
+      return {
+        light: dashboardLight(netTotal >= 0),
+        chart: buildSilverChartSvg(rows, accent, danger),
+        note: i18next.t('admin:admin.dashboard.silver_net_48h_prefix') + (netTotal>=0?'+':'') + fmt(Math.round(netTotal)),
+      };
+    } },
+  { id:'dw-wealth', cat:'economy', sec:'wealth', icon:'📈', title:{fr:'Richesse des joueurs',en:'Player wealth'},
+    fetch: () => sb.from('admin_wealth').select('silver'),
+    build: ({ data }) => {
+      const silvers = (data||[]).map(r => Number(r.silver||0)).sort((a,b)=>a-b);
+      const total = silvers.reduce((a,b)=>a+b,0);
+      const avg = silvers.length ? total/silvers.length : 0;
+      const med = silvers.length ? silvers[Math.floor(silvers.length/2)] : 0;
+      const brackets = [
+        { max:10000, label:'< 10k' }, { max:100000, label:'10k-100k' }, { max:1000000, label:'100k-1M' },
+        { max:10000000, label:'1M-10M' }, { max:Infinity, label:'10M+' },
+      ];
+      const counts = brackets.map(() => 0);
+      silvers.forEach(v => { const idx = brackets.findIndex(b=>v<b.max); counts[idx>=0?idx:brackets.length-1]++; });
+      
+      const skewed = med > 0 && avg > med * 4;
+      return {
+        light: dashboardLight(!skewed),
+        chart: buildPieWithLegendHtml(brackets.map((b,i)=>({label:b.label, value:counts[i]})), { thresholdPct:0, formatValue:v=>String(Math.round(v)) }),
+        note: skewed ? i18next.t('admin:admin.dashboard.wealth_skewed_note') : i18next.t('admin:admin.dashboard.wealth_reasonable_note'),
+      };
+    } },
+  { id:'dw-market', cat:'economy', sec:'market', icon:'🏛️', title:{fr:'Marché',en:'Market'},
+    fetch: () => Promise.all([sb.rpc('get_market_open'), sb.rpc('admin_market_top_items', { p_days:30 })]),
+    build: ([{ data: openData }, { data: topItems }]) => {
+      const open = openData !== false;
+      const rows = topItems || [];
+      return {
+        light: dashboardLight(open && rows.length > 0),
+        chart: buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name)||r.item_name, value: Number(r.total_silver_value||0) }))),
+        note: !open ? i18next.t('admin:admin.dashboard.market_closed_note') : (rows.length ? i18next.t('admin:admin.dashboard.market_active_note') : i18next.t('admin:admin.dashboard.market_no_trades_note')),
+      };
+    } },
+  { id:'dw-signups', cat:'overview', sec:'signups', icon:'📈', title:{fr:'Inscriptions (30j)',en:'Signups (30d)'},
+    fetch: () => Promise.all([sb.rpc('admin_signups_by_day', { p_days:30 }), sb.rpc('admin_signups_by_provider')]),
+    build: ([{ data: byDay }, { data: byProvider }]) => {
+      const rows = byDay || [];
+      const { accent } = currentAdminAccentColors();
+      const last7 = rows.slice(-7).reduce((a,r) => a + Number(r.signups||0), 0);
+      const chart = rows.length
+        ? buildBarSeriesSvg(rows.map(r => ({ label:r.day, value:Number(r.signups||0) })), accent)
+        : buildPieWithLegendHtml((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon+' '+providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), { thresholdPct:0 });
+      return {
+        light: dashboardLight(last7 > 0),
+        chart,
+        note: i18next.t('admin:admin.dashboard.signups_note', { count: last7 }),
+      };
+    } },
+  { id:'dw-bans', cat:'players', sec:'sanctions', icon:'🚫', title:{fr:'Sanctions actives',en:'Active sanctions'},
+    fetch: () => sb.rpc('admin_list_bans'),
+    build: ({ data }) => {
+      const count = (data||[]).length;
+      return {
+        light: dashboardLight(count === 0),
+        chart: `<div style="text-align:center"><div style="font-size:34px;font-weight:bold;color:${count===0?'var(--gold)':'var(--danger)'}">${count}</div><div class="admHint">${i18next.t('admin:admin.dashboard.active_bans_label')}</div></div>`,
+        note: count === 0 ? i18next.t('admin:admin.dashboard.no_active_sanction_note') : i18next.t('admin:admin.dashboard.players_banned_note', { count }),
+      };
+    } },
+  { id:'dw-onboarding', cat:'content', sec:'onboarding', icon:'🧭', title:{fr:'Onboarding',en:'Onboarding'},
+    fetch: () => sb.rpc('admin_onboarding_stats'),
+    build: ({ data }) => {
+      const s = (data && data[0]) || { started:0, completed:0, skipped:0, in_progress:0 };
+      const started = Number(s.started||0), completed = Number(s.completed||0), skipped = Number(s.skipped||0), inProgress = Number(s.in_progress||0);
+      const pct = started ? Math.round(completed/started*100) : 0;
+      return {
+        light: dashboardLight(!started || pct >= 40),
+        chart: started ? buildPieWithLegendHtml([
+          { label: i18next.t('admin:admin.dashboard.onboarding_completed_label'), value: completed },
+          { label: i18next.t('admin:admin.dashboard.onboarding_skipped_label'), value: skipped },
+          { label: i18next.t('admin:admin.dashboard.onboarding_in_progress_label'), value: inProgress },
+        ], { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.onboarding_none_started')}</div>`,
+        note: started ? i18next.t('admin:admin.dashboard.completion_pct_note', { pct }) : '',
+      };
+    } },
+  { id:'dw-tutorials', cat:'content', sec:'tutorials', icon:'🎓', title:{fr:'Tutoriels d\'objets',en:'Item tutorials'},
+    fetch: () => sb.rpc('admin_item_tutorial_stats'),
+    build: ({ data }) => {
+      const rows = data || [];
+      const completed = rows.reduce((a,r)=>a+Number(r.completed_count||0),0);
+      const skipped = rows.reduce((a,r)=>a+Number(r.skipped_count||0),0);
+      const total = completed + skipped;
+      const skipRate = total ? skipped/total : 0;
+      return {
+        light: dashboardLight(!total || skipRate < 0.5),
+        chart: total ? buildPieWithLegendHtml([
+          { label: i18next.t('admin:admin.content.completed_label'), value: completed },
+          { label: i18next.t('admin:admin.content.skipped_label'), value: skipped },
+        ], { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.tutorials_none_seen')}</div>`,
+        note: total ? i18next.t('admin:admin.dashboard.skipped_pct_note', { pct: Math.round(skipRate*100) }) : '',
+      };
+    } },
+  { id:'dw-companions', cat:'content', sec:'companions', icon:'🐾', title:{fr:'Compagnons',en:'Companions'},
+    fetch: () => Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown')]),
+    build: ([{ data: statsData }, { data: breakdownData }]) => {
+      const s = (statsData && statsData[0]) || {};
+      const playersSynced = Number(s.players_synced||0);
+      const rows = breakdownData || [];
+      const rarityTotals = sumCompanionBreakdown(rows, 'rarity_breakdown');
+      const rarityItems = COMPANION_RARITY_LABELS.filter(r => rarityTotals[r.id]).map(r => ({ label:r.name, value:rarityTotals[r.id] }));
+      return {
+        light: dashboardLight(playersSynced > 0),
+        chart: playersSynced ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.companions_none_synced')}</div>`,
+        note: i18next.t('admin:admin.dashboard.companions_synced_note', { count: playersSynced }),
+      };
+    } },
+  { id:'dw-zones', cat:'content', sec:'zones', icon:'🗾', title:{fr:'Progression par zone',en:'Zone progression'},
+    fetch: () => sb.from('player_stats').select('best_zone_index'),
+    build: ({ data }) => {
+      const zoneCounts = new Map();
+      (data||[]).forEach(r => { const zi = Number(r.best_zone_index||0); zoneCounts.set(zi, (zoneCounts.get(zi)||0)+1); });
+      const items = [...zoneCounts.entries()].sort((a,b)=>a[0]-b[0]).map(([zi,cnt]) => ({ label: ZONES[zi] ? tr(ZONES[zi].name) : `#${zi}`, value: cnt }));
+      return {
+        light: dashboardLight(items.length > 0),
+        chart: buildPieWithLegendHtml(items),
+        note: i18next.t('admin:admin.dashboard.players_count_note', { count: (data||[]).length }),
+      };
+    } },
+  { id:'dw-cron', cat:'content', sec:'cron', icon:'⏳', title:{fr:'Pierres de Cron',en:'Cron Stones'},
+    fetch: () => sb.from('admin_farm_by_item').select('item_name, item_kind, total_qty'),
+    build: ({ data }) => {
+      const farmedRow = (data||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'material');
+      const usedRow = (data||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'cron_used');
+      const farmed = farmedRow ? Number(farmedRow.total_qty||0) : 0;
+      const used = usedRow ? Number(usedRow.total_qty||0) : 0;
+      return {
+        light: dashboardLight(farmed >= used),
+        chart: buildPieWithLegendHtml([
+          { label: i18next.t('admin:admin.dashboard.cron_in_stock_label'), value: Math.max(0, farmed-used) },
+          { label: i18next.t('admin:admin.dashboard.cron_used_label'), value: used },
+        ], { thresholdPct:0 }),
+        note: i18next.t('admin:admin.dashboard.cron_farmed_used_note', { farmed: fmt(farmed), used: fmt(used) }),
+      };
+    } },
+];
+
+function buildDashboardCard(widget, result) {
+  return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
+      <div class="admDashCardHead">
+        <span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span>
+        <span class="admDashLight" title="${result.light.label}">${result.light.dot}</span>
+      </div>
+      <div class="admDashCardBody">${result.chart}</div>
+      <div class="admDashCardNote">${escapeHtml(result.note||'')}</div>
+    </div>`;
+}
+
+function buildDashboardCardError(widget) {
+  return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
+      <div class="admDashCardHead"><span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span><span class="admDashLight" title="${i18next.t('admin:admin.dashboard.unavailable')}">⚪</span></div>
+      <div class="admDashCardBody"><div class="admEmpty">${i18next.t('admin:admin.dashboard.unavailable')}</div></div>
+    </div>`;
+}
+
+function renderAdminDashboard(el) {
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
+  const topPromise = Promise.all([
+    sb.rpc('admin_list_players'),
+    sb.from('admin_wealth').select('silver'),
+    sb.rpc('admin_list_bans'),
+    sb.rpc('get_market_open'),
+    sb.from('admin_silver_ledger_by_category').select('total_gained, total_spent'),
+  ]).then(([{data: players}, {data: wealth}, {data: bans}, {data: marketOpen}, {data: ledgerByCat}]) => {
+    const online = (players||[]).filter(p => p.online).length;
+    const totalSilver = (wealth||[]).reduce((a,r) => a + Number(r.silver||0), 0);
+    const activeBans = (bans||[]).length;
+    const open = marketOpen !== false;
+    const alerts = typeof computeEconAlerts === 'function' ? computeEconAlerts(ledgerByCat) : [];
+    const alertsHtml = typeof buildEconAlertsHtml === 'function' ? buildEconAlertsHtml(alerts) : '';
+    return `${alertsHtml}<div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">🟢 ${i18next.t('admin:admin.dashboard.players_online')}</div><div class="astVal">${online}</div></div>
+        <div class="admStatTile"><div class="astLbl">🏦 ${i18next.t('admin:admin.dashboard.total_silver_in_game')}</div><div class="astVal">${fmt(totalSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🚫 ${i18next.t('admin:admin.dashboard.active_bans_stat')}</div><div class="astVal">${activeBans}</div></div>
+        <div class="admStatTile"><div class="astLbl">🏛️ ${i18next.t('admin:admin.dashboard.market_label')}</div><div class="astVal" style="${open?'':'color:var(--danger)'}">${open?i18next.t('admin:admin.dashboard.market_state_open'):i18next.t('admin:admin.dashboard.market_state_closed')}</div></div>
+      </div>`;
+  });
+  
+  const widgetPromises = DASHBOARD_WIDGETS.map(w =>
+    Promise.resolve(w.fetch()).then(res => buildDashboardCard(w, w.build(res))).catch(() => buildDashboardCardError(w))
+  );
+  Promise.all([topPromise, Promise.allSettled(widgetPromises)]).then(([topHtml, settled]) => {
+    const cards = settled.map(s => s.status === 'fulfilled' ? s.value : '').join('');
+    el.innerHTML = `${topHtml}
+      <div class="admHint" style="margin:10px 0 12px">${i18next.t('admin:admin.dashboard.overview_hint')}</div>
+      <div class="admDashGrid">${cards}</div>`;
+    el.querySelectorAll('.admDashCard').forEach(card => {
+      card.onclick = () => openAdminSection(card.dataset.cat, card.dataset.id);
+    });
+  });
+}
+
+const PROVIDER_INFO = {
+  email: { icon:'📧', label:{fr:'Email',en:'Email'} },
+  discord: { icon:'🎮', label:{fr:'Discord',en:'Discord'} },
+  google: { icon:'🔵', label:{fr:'Google',en:'Google'} },
+  github: { icon:'🐙', label:{fr:'GitHub',en:'GitHub'} },
+  twitter: { icon:'🐦', label:{fr:'Twitter/X',en:'Twitter/X'} },
+  anonymous: { icon:'🎭', label:{fr:'Invité',en:'Guest'} },
+};
+
+async function adminSpawnSharedBoss(id, targetMin) {
+  if (!sb) return false;
+  let onlineTotal = 1;
+  try {
+    const { data } = await sb.rpc('get_online_counts', { p_window_seconds: 90 });
+    if (data && data[0]) onlineTotal = Math.max(1, data[0].total || 1);
+  } catch (e) {}
+  const expectedFighters = Math.max(1, Math.round(onlineTotal * 0.4));
+  const sharedHp = Math.round(BOSS_REF_DPS * expectedFighters * targetMin * 60);
+  const { error } = await sb.rpc('admin_spawn_boss', { p_boss_id: id, p_minutes: 9, p_hp: sharedHp });
+  if (!error) await refreshLiveBoss();
+  return !error;
+}
+
+function renderAdminBoss(el) {
+  const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
+  el.innerHTML = `
+    <div class="admSection riskGlobal">
+      <div class="admSectionTitle">🌍 ${i18next.t('admin:admin.content.boss_launch_title')}</div>
+      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.content.boss_danger_sub')}</div>
+      <div class="admBossSpawn">
+        <span>${i18next.t('admin:admin.content.boss_label')}</span>
+        <select id="admGlobalBossSelect">${bossOptions}</select>
+        <select id="admBossDurationSelect">
+          ${[2,3,4,5,6,7].map(m => `<option value="${m}"${m===4?' selected':''}>${i18next.t('admin:admin.content.boss_duration_option', { m })}</option>`).join('')}
+        </select>
+        <button id="btnAdmSpawnGlobal">${i18next.t('admin:admin.content.boss_launch_btn')}</button>
+        <button id="btnAdmDespawnBoss">🛑 ${i18next.t('admin:admin.content.boss_despawn_btn')}</button>
+      </div>
+      <div class="admHint">${i18next.t('admin:admin.content.boss_hint')}</div>
+    </div>`;
+  $a('btnAdmSpawnGlobal').onclick = async () => {
+    if (!isAdmin() || !sb) return;
+    const id = $a('admGlobalBossSelect').value;
+    const targetMin = Number($a('admBossDurationSelect').value) || 4;
+    const ok = await adminSpawnSharedBoss(id, targetMin);
+    if (ok) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a lancé ${BOSS_ROSTER[id].name.fr} pour tous (~${targetMin} min)`, 0x9cc9e8);
+    floatTxt(P.x, P.y, 100, ok ? i18next.t('admin:admin.content.boss_launched_toast') : i18next.t('admin:admin.content.boss_launch_failed_toast'), { gold:ok, hurt:!ok });
+  };
+  $a('btnAdmDespawnBoss').onclick = async () => {
+    if (!isAdmin() || !sb) return;
+    if (!confirm(i18next.t('admin:admin.content.boss_despawn_confirm'))) return;
+    const { error } = await sb.rpc('admin_despawn_boss');
+    if (!error) { await refreshLiveBoss(); logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a fait disparaître le boss mondial`, 0x9cc9e8); }
+    floatTxt(P.x, P.y, 100, !error ? i18next.t('admin:admin.content.boss_despawned_toast') : i18next.t('admin:admin.common.failed'), { gold:!error, hurt:!!error });
+  };
+}
+
+function renderAdminPatchNotesModeration(el) {
+  el.innerHTML = `
+    <div class="admSection">
+      <div class="admSectionTitle">🚩 ${i18next.t('admin:admin.patchnotes.pending_reports_title')}</div>
+      <div id="admPatchReports"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
+    </div>
+    <div class="admSection">
+      <div class="admSectionTitle">🗑️ ${i18next.t('admin:admin.patchnotes.removed_comments_title')}</div>
+      <div id="admPatchRemoved"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
+    </div>`;
+  refreshAdminPatchNotesModeration();
+}
+
+async function refreshAdminPatchNotesModeration() {
+  if (!sb) return;
+  const reportsEl = $a('admPatchReports'), removedEl = $a('admPatchRemoved');
+  if (!reportsEl || !removedEl) return;
+
+  const { data: reports, error: reportsErr } = await sb.rpc('admin_patch_note_pending_reports');
+  reportsEl.innerHTML = reportsErr ? `<div class="admHint">${escapeHtml(reportsErr.message)}</div>`
+    : (!reports || reports.length === 0) ? `<div class="admEmpty">${i18next.t('admin:admin.patchnotes.no_pending_reports')}</div>`
+    : reports.map(r => `<div class="achRow">
+        <div class="achInfo"><div class="achName">${escapeHtml(r.author)} — ${escapeHtml(r.entry_id)}</div>
+        <div class="achDesc">${escapeHtml(r.text)}</div></div>
+        <div class="achReward">🚩 ${r.report_count}</div>
+      </div>`).join('');
+
+  const { data: removed, error: removedErr } = await sb.rpc('admin_list_removed_patch_note_comments');
+  removedEl.innerHTML = removedErr ? `<div class="admHint">${escapeHtml(removedErr.message)}</div>`
+    : (!removed || removed.length === 0) ? `<div class="admEmpty">${i18next.t('admin:admin.patchnotes.no_removed_comments')}</div>`
+    : removed.map(c => `<div class="achRow" data-cid="${c.id}">
+        <div class="achInfo"><div class="achName">${escapeHtml(c.author)} — ${escapeHtml(c.entry_id)} ${c.status==='pending_review'?`<span style="color:var(--red2,#e08070)">🚩 ${i18next.t('admin:admin.patchnotes.auto_hidden_label')}</span>`:''}</div>
+        <div class="achDesc">${escapeHtml(c.text)}</div></div>
+        <div class="achReward"><button class="admPatchRestoreBtn" data-cid="${c.id}">↩️ ${i18next.t('admin:admin.patchnotes.restore_btn')}</button></div>
+      </div>`).join('');
+  removedEl.querySelectorAll('.admPatchRestoreBtn').forEach(btn => {
+    btn.onclick = async () => {
+      await sb.rpc('restore_patch_note_comment', { p_comment_id: parseInt(btn.dataset.cid, 10) });
+      refreshAdminPatchNotesModeration();
+    };
+  });
+}
+
+function renderAdminMyTests(el) {
+  const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
+  el.innerHTML = `
+    <div class="admSection riskSafe">
+      <div class="admSectionTitle">👤 ${i18next.t('admin:admin.tests.title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.tests.sub')}</div>
+      <div class="admActions">
+        <button id="btnTestSilver">💰 +1M silver</button>
+        <button id="btnTestLoyalty">📬 +200 Loyalties</button>
+        <button id="btnTestAch">🏅 ${i18next.t('admin:admin.tests.unlock_achievements_btn')}</button>
+        <button id="btnResetMyQuests">🔄 ${i18next.t('admin:admin.tests.reset_my_quests_btn')}</button>
+        <button id="btnResetDemo">🔄 ${i18next.t('admin:admin.tests.reset_demo_btn')}</button>
+      </div>
+      <div class="admBossSpawn">
+        <span>${i18next.t('admin:admin.tests.fight_boss_label')}</span>
+        <select id="admBossSelect">${bossOptions}</select>
+        <button id="btnAdmSpawnBoss">${i18next.t('admin:admin.tests.fight_now_btn')}</button>
+      </div>
+      <div class="admHint">${i18next.t('admin:admin.tests.hint')}</div>
+    </div>`;
+  $a('btnTestSilver').onclick = () => { if(!isAdmin())return; addSilver(1000000, 'admin_test'); refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
+  $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; mailboxAdd('loyalty', 'Loyalties', '🏅', 200); updateMailBadge(); floatTxt(P.x,P.y,100,'+200 🏅 (courrier)',{gold:true}); };
+  $a('btnTestAch').onclick = () => { if(!isAdmin())return; ACHIEVEMENTS.forEach(a => { if(!S.achUnlocked[a.id]){ S.achUnlocked[a.id]=Date.now(); addSilver(a.reward, 'admin_test', a.name.fr); } }); refreshStatsOnly(); renderAdminMyTests(el); };
+  $a('btnResetMyQuests').onclick = resetMyQuests;
+  $a('btnResetDemo').onclick = resetDemo;
+  $a('btnAdmSpawnBoss').onclick = async () => {
+    if (!isAdmin() || !sb) return;
+    const id = $a('admBossSelect').value;
+    const ok = await adminSpawnSharedBoss(id, 4);
+    if (!ok) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.content.boss_launch_failed_toast'), { hurt:true }); return; }
+    closeAdminPanel();
+    startBossFight(id, true); 
+  };
+}
+
+function renderAdminThemeSwatchesHtml(currentTheme) {
+  return `<div class="admThemeSwatches" title="🎨 ${i18next.t('admin:admin.system.palette_label')}">${ADMIN_THEMES.map(t =>
+    `<button class="admSwatchBtn${t.id===currentTheme?' active':''}" data-theme="${t.id}" style="background:${t.color}" title="${escapeHtml(t.label[LANG])}"></button>`
+  ).join('')}</div>`;
+}
+
+function wireAdminThemeSwatches() {
+  $a('adminSidebar').querySelectorAll('.admSwatchBtn').forEach(btn => {
+    btn.onclick = () => {
+      const t = ADMIN_THEMES.find(x => x.id === btn.dataset.theme) || ADMIN_THEMES[0];
+      const root = $a('adminOverlay');
+      if (root) root.dataset.admTheme = t.id;
+      $a('adminSidebar').querySelectorAll('.admSwatchBtn').forEach(b => b.classList.toggle('active', b === btn));
+      setAdminTheme(t.id);
+    };
+  });
+}
+
+function renderAdminServerDanger(el) {
+  el.innerHTML = `
+    <div class="admSection riskGlobal">
+      <div class="admSectionTitle">🌍 ${i18next.t('admin:admin.system.danger_title')}</div>
+      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.content.boss_danger_sub')}</div>
+      <div class="admActions">
+        <button id="btnResetAllQuests">⚠️ ${i18next.t('admin:admin.system.reset_all_quests_btn')}</button>
+        <button id="btnResetAllAccounts" style="border-color:var(--danger);color:#e8a89f">💥 ${i18next.t('admin:admin.system.reset_all_accounts_btn')}</button>
+      </div>
+      <div class="admHint warn">${i18next.t('admin:admin.system.reset_all_accounts_hint')}</div>
+    </div>`;
+  $a('btnResetAllQuests').onclick = resetAllQuests;
+  $a('btnResetAllAccounts').onclick = resetAllAccounts;
+}
+
+function closeAdminPanel() {
+  const overlay = $a('adminOverlay'); if (overlay) overlay.classList.remove('open');
+}
+
+function renderAdminSidebar(activeCat, activeId) {
+  return ADMIN_SECTIONS.map(group => `
+    <div class="admNavCatLabel">${group.label[LANG]}</div>
+    ${group.items.map(item => `
+      <div class="admNavItem${activeCat===group.cat&&activeId===item.id?' active':''}${item.planned?' planned':''}" data-cat="${group.cat}" data-id="${item.id}">
+        <span class="admNavIcon">${item.icon}</span><span>${item.label[LANG]}</span>
+        ${item.planned?`<span class="admNavBadge">${i18next.t('admin:admin.system.planned_badge')}</span>`:''}
+      </div>`).join('')}
+  `).join('');
+}
+
+function findAdminSection(cat, id) {
+  const group = ADMIN_SECTIONS.find(g => g.cat === cat);
+  return group ? group.items.find(i => i.id === id) : null;
+}
+
+function openAdminSection(cat, id) {
+  const item = findAdminSection(cat, id);
+  if (!item) return;
+  $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
+    el.classList.toggle('active', el.dataset.cat === cat && el.dataset.id === id);
+  });
+  
+  $a('adminMainTitle').textContent = item.icon + ' ' + item.label[LANG];
+  const body = $a('adminMainBody');
+  if (item.planned) {
+    body.innerHTML = `<div class="admPlannedPane"><div class="admPlannedIcon">🔜</div>
+      ${i18next.t('admin:admin.system.planned_pane_text')}</div>`;
+    return;
+  }
+  item.render(body);
+}
+
+function wireAdminSidebarSearch() {
+  const input = $a('admNavSearch'); if (!input) return;
+  input.oninput = () => {
+    const q = input.value.trim().toLowerCase();
+    const rows = [...$a('adminSidebar').children].filter(c => c.classList.contains('admNavCatLabel') || c.classList.contains('admNavItem'));
+    let lastCatLabel = null, catHasVisible = false;
+    rows.forEach(el => {
+      if (el.classList.contains('admNavCatLabel')) {
+        if (lastCatLabel) lastCatLabel.style.display = catHasVisible ? '' : 'none';
+        lastCatLabel = el; catHasVisible = false;
+        return;
+      }
+      const match = !q || el.textContent.toLowerCase().includes(q);
+      el.style.display = match ? '' : 'none';
+      if (match) catHasVisible = true;
+    });
+    if (lastCatLabel) lastCatLabel.style.display = catHasVisible ? '' : 'none';
+  };
+}
+
+async function openAdminPanel() {
+  if (!isAdmin() || !sb) return;
+  const currentTheme = getAdminTheme();
+  const overlay = $a('adminOverlay');
+  overlay.classList.add('admThemeRoot');
+  overlay.dataset.admTheme = currentTheme;
+  $a('adminMainHead').innerHTML = `<span id="adminMainTitle" style="flex:1"></span>`;
+  $a('adminSidebar').innerHTML = `<div class="admNavHead">` +
+      `<span class="admNavTitle">🛠️ Admin</span>` +
+      renderAdminThemeSwatchesHtml(currentTheme) +
+      `<button id="closeAdmin" title="${i18next.t('admin:admin.system.close_btn_title')}">✕</button></div>` +
+    `<input type="text" id="admNavSearch" class="admNavSearch" placeholder="🔍 ${i18next.t('admin:admin.system.search_placeholder')}">` +
+    renderAdminSidebar('overview', 'dashboard');
+  $a('closeAdmin').onclick = closeAdminPanel;
+  $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
+    el.onclick = () => openAdminSection(el.dataset.cat, el.dataset.id);
+  });
+  wireAdminThemeSwatches();
+  wireAdminSidebarSearch();
+  overlay.classList.add('open');
+  openAdminSection('overview', 'dashboard');
+}
+
+$a('btnAdminTopbar').onclick = openAdminPanel;
+
+function openTesterPanel() {
+  if (!myIsTester) return;
+  const upcoming = [
+    { icon:'🎣', name:{fr:'Pêche',en:'Fishing'} },
+    { icon:'⛏️', name:{fr:'Mine',en:'Mining'} },
+    { icon:'🌲', name:{fr:'Forêt',en:'Forest'} },
+    { icon:'🌾', name:{fr:'Champs',en:'Fields'} },
+    { icon:'🐑', name:{fr:'Bergerie',en:'Ranch'} },
+  ];
+  const list = upcoming.map(a => `<div class="achRow inactive"><div class="achIcon">${a.icon}</div>` +
+    `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${i18next.t('admin:admin.tests.upcoming_in_dev')}</div></div></div>`).join('');
+  openInfo(i18next.t('admin:admin.tests.tester_panel_title'),
+    `<div class="admSummary">${i18next.t('admin:admin.tests.tester_panel_intro')}</div>` +
+    list);
+}
+$a('btnTester').onclick = openTesterPanel;
+
+// ==== src/admin/admin-players.js ====
 async function adminScreenshotPlayer() {
   if (!isAdmin() || !sb) return;
   const uuid = ($a('admResetUuidInput').value || '').trim();
@@ -18475,6 +18964,157 @@ async function refreshRoleList() {
   });
 }
 
+function providerInfo(provider) {
+  return PROVIDER_INFO[provider] || { icon:'❔', label:{fr:provider||'?',en:provider||'?'} };
+}
+
+function renderAdminPlayerList(el) {
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
+  sb.rpc('admin_list_players').then(({data: playersList}) => {
+    const playersHtml = (playersList||[]).map(p => {
+      const prov = providerInfo(p.provider);
+      return `
+      <tr>
+        <td>${p.online ? '🟢' : '⚪'}</td><td>${escapeHtml(p.display_name||'?')}</td>
+        <td title="${escapeHtml(prov.label[LANG])}">${prov.icon}</td>
+        <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td>
+        <td title="${i18next.t('admin:admin.players.ap_title')}">${(p.ap||0).toFixed(1)}</td>
+        <td title="${i18next.t('admin:admin.players.dp_title')}">${(p.dp||0).toFixed(1)}</td>
+        <td>${p.lvl||1}</td>
+        <td title="${i18next.t('admin:admin.players.best_kpm_title')}">🏹 ${(p.best_kpm||0).toFixed(1)}</td>
+        <td><button class="admUuidBtn" data-uuid="${p.user_id}">📋 UUID</button></td>
+        <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${i18next.t('admin:admin.players.inventory_btn_title')}">🎒 ${i18next.t('admin:admin.players.inventory_btn')}</button></td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="11" class="admEmpty">${i18next.t('admin:admin.common.no_data')}</td></tr>`;
+    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.players.summary_online_registered', { online: (playersList||[]).filter(p=>p.online).length, total: (playersList||[]).length })}</div>
+      <table class="admTable">
+        <thead><tr><th></th><th>${i18next.t('admin:admin.players.table_player')}</th><th title="${i18next.t('admin:admin.players.signup_platform_title')}">${i18next.t('admin:admin.players.table_platform')}</th><th>Silver</th><th>GS</th><th title="${i18next.t('admin:admin.players.ap_title')}">PA</th><th title="${i18next.t('admin:admin.players.dp_title')}">PD</th><th>Niv.</th><th title="${i18next.t('admin:admin.players.kpm_record_title')}">🏹</th><th></th><th></th></tr></thead>
+        <tbody>${playersHtml}</tbody>
+      </table>`;
+    el.querySelectorAll('.admUuidBtn').forEach(btn => {
+      btn.onclick = async e => {
+        e.stopPropagation();
+        try { await navigator.clipboard.writeText(btn.dataset.uuid); } catch(e) {}
+        floatTxt(P.x, P.y, 100, i18next.t('admin:admin.players.uuid_copied'), { gold:true });
+      };
+    });
+    el.querySelectorAll('.admInvBtn').forEach(btn => {
+      btn.onclick = e => { e.stopPropagation(); showPlayerInventoryWindow(btn.dataset.uuid, btn.dataset.name); };
+    });
+  });
+}
+
+function renderAdminTargetPlayer(el) {
+  el.innerHTML = `
+    <div class="admSection riskSingle">
+      <div class="admSectionTitle">🎯 ${i18next.t('admin:admin.players.target_title')}</div>
+      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.players.target_sub')}</div>
+      <div class="admActions">
+        <input type="text" id="admResetUuidInput" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="width:230px">
+        <button id="btnScreenshotPlayer">📸 ${i18next.t('admin:admin.players.screenshot_btn')}</button>
+        <button id="btnResetAccountByUuid" style="border-color:var(--danger);color:#e8a89f">🔄 ${i18next.t('admin:admin.players.reset_this_player_btn')}</button>
+      </div>
+      <div class="admHint">${i18next.t('admin:admin.players.target_hint')}</div>
+    </div>`;
+  $a('btnScreenshotPlayer').onclick = adminScreenshotPlayer;
+  $a('btnResetAccountByUuid').onclick = resetAccountByUuid;
+}
+
+function renderAdminSanctions(el) {
+  el.innerHTML = `
+    <div class="admSection">
+      <div class="admSectionTitle">🚫 ${i18next.t('admin:admin.sanctions.ban_a_player_title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.sanctions.ban_a_player_sub')}</div>
+      <div class="admActions">
+        <input type="text" id="admBanUuidInput" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="width:230px">
+        <select id="admBanReasonSelect">${BAN_REASONS.map(r => `<option value="${r.id}">${r.label[LANG]}</option>`).join('')}</select>
+        <select id="admBanDurationSelect">${BAN_DURATIONS.map(d => `<option value="${d.hours}"${d.hours===24?' selected':''}>${d.label[LANG]}</option>`).join('')}</select>
+        <button id="btnBanPlayer" style="border-color:var(--danger);color:#e8a89f">🚫 ${i18next.t('admin:admin.sanctions.ban_btn')}</button>
+      </div>
+      <div class="admHint warn">${i18next.t('admin:admin.sanctions.ban_hint')}</div>
+    </div>
+    <div class="admSection">
+      <div class="admSectionTitle">📋 ${i18next.t('admin:admin.sanctions.active_bans_title')}</div>
+      <div id="admBanList"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
+    </div>`;
+  $a('btnBanPlayer').onclick = banPlayerByUuid;
+  refreshBanList();
+}
+
+function renderAdminRoles(el) {
+  el.innerHTML = `
+    <div class="admSection riskMgmt">
+      <div class="admSectionTitle">🎭 ${i18next.t('admin:admin.roles.title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.roles.sub')}</div>
+      <div class="admBossSpawn">
+        <input type="text" id="admRoleUuid" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
+        <select id="admRoleSelect" style="flex:0 0 auto;width:auto;">
+          <option value="mod">🛡️ ${i18next.t('admin:admin.roles.moderator_label')}</option>
+          <option value="tester">🧪 ${i18next.t('admin:admin.roles.tester_label')}</option>
+        </select>
+        <button id="btnAddRole" style="flex:0 0 auto;width:auto;">${i18next.t('admin:admin.roles.add_btn')}</button>
+      </div>
+      <div id="admRoleList"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
+    </div>`;
+  $a('btnAddRole').onclick = async () => {
+    if (!isAdmin() || !sb) return;
+    const uuid = $a('admRoleUuid').value.trim(); if (!uuid) return;
+    const role = $a('admRoleSelect').value;
+    const rpc = role === 'mod' ? 'admin_add_mod' : 'admin_add_tester';
+    const { error } = await sb.rpc(rpc, { p_user_id: uuid });
+    if (error) { $a('admRoleList').insertAdjacentHTML('afterbegin', `<div class="admHint">${escapeHtml(error.message)}</div>`); return; }
+    logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ajouté le rôle ${role==='mod'?'Modérateur':'Testeur'} à \`${uuid}\``, 0x9cc9e8);
+    $a('admRoleUuid').value = ''; refreshRoleList();
+  };
+  refreshRoleList();
+}
+
+function renderAdminReconnect(el) {
+  el.innerHTML = `
+    <div class="admSection">
+      <div class="admSectionTitle">🔄 ${i18next.t('admin:admin.reconnect.title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.reconnect.sub')}</div>
+      <div id="admReconnectStats"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
+    </div>
+    <div class="admSection">
+      <div class="admSectionTitle">🏆 ${i18next.t('admin:admin.reconnect.top10_title')}</div>
+      <div id="admReconnectTop"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
+    </div>`;
+  refreshAdminReconnect();
+}
+
+async function refreshAdminReconnect() {
+  if (!isAdmin() || !sb) return;
+  const statsEl = $a('admReconnectStats'), topEl = $a('admReconnectTop');
+  if (!statsEl || !topEl) return;
+  const { data, error } = await sb.rpc('admin_afk_sessions_summary');
+  if (error || !data || !data[0]) {
+    statsEl.innerHTML = `<div class="admHint">${escapeHtml(error ? error.message : 'no data')}</div>`;
+    topEl.innerHTML = '';
+    return;
+  }
+  const s = data[0];
+  statsEl.innerHTML = `
+    <div class="admStatsGrid">
+      <div class="admStatCard"><b>${(s.total_sessions||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.logged_sessions')}</span></div>
+      <div class="admStatCard"><b>${(s.total_players||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.players_involved')}</span></div>
+      <div class="admStatCard"><b>${Math.round(s.total_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.total_silver_recovered')}</span></div>
+      <div class="admStatCard"><b>${Math.round(s.avg_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.avg_per_session')}</span></div>
+    </div>`;
+  const top = Array.isArray(s.top_sessions) ? s.top_sessions : [];
+  topEl.innerHTML = top.length === 0
+    ? `<div class="admEmpty">${i18next.t('admin:admin.reconnect.no_session_yet')}</div>`
+    : `<table class="admTable"><thead><tr>
+        <th>Silver</th><th>${i18next.t('admin:admin.reconnect.table_zone')}</th><th>${i18next.t('admin:admin.reconnect.table_date')}</th><th>${i18next.t('admin:admin.reconnect.table_player_uuid')}</th>
+      </tr></thead><tbody>${top.map(t => `<tr>
+        <td>${Math.round(t.silver_gained||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</td>
+        <td>${escapeHtml(t.zone_name||'—')}</td>
+        <td>${new Date(t.ended_at).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</td>
+        <td style="font-family:monospace;font-size:10px">${escapeHtml((t.user_id||'').slice(0,8))}…</td>
+      </tr>`).join('')}</tbody></table>`;
+}
+
+// ==== src/admin/admin-content.js ====
 function buildLootVersionTabHtml() {
   const v = S.lootTableVersion || 'v2';
   const rows = [
@@ -18818,644 +19458,6 @@ function renderAdminCompanions(el) {
       ${fusionListHtml}`;
   });
 }
-
-function dashboardLight(healthy) {
-  return healthy
-    ? { dot:'🟢', label: i18next.t('admin:admin.dashboard.light_ok') }
-    : { dot:'🔴', label: i18next.t('admin:admin.dashboard.light_needs_attention') };
-}
-
-const DASHBOARD_WIDGETS = [
-  { id:'dw-econ', cat:'economy', sec:'health', icon:'💹', title:{fr:'Santé économique',en:'Economic health'},
-    fetch: () => sb.from('admin_silver_ledger_by_category').select('category, total_gained, total_spent'),
-    build: ({ data }) => {
-      const rows = (data||[]).map(r => ({ category:r.category, gained:Number(r.total_gained||0), spent:Number(r.total_spent||0) }));
-      const alerts = computeEconAlerts(rows);
-      const label = c => CATEGORY_LABEL[c] ? CATEGORY_LABEL[c][LANG] : c;
-      const sources = rows.filter(r=>r.gained>0).map(r=>({label:label(r.category), value:r.gained}));
-      return {
-        light: dashboardLight(alerts.length===0),
-        chart: buildPieWithLegendHtml(sources, { thresholdPct:6 }),
-        note: alerts.length ? alerts[0].text : i18next.t('admin:admin.dashboard.econ_healthy_note'),
-      };
-    } },
-  { id:'dw-silver', cat:'economy', sec:'silver', icon:'🏦', title:{fr:'Flux de silver (48h)',en:'Silver flow (48h)'},
-    fetch: () => sb.from('admin_silver_ledger_by_hour').select('hour, net_delta'),
-    build: ({ data }) => {
-      const rows = data || [];
-      const netTotal = rows.reduce((a,r) => a + Number(r.net_delta||0), 0);
-      const { accent, danger } = currentAdminAccentColors();
-      return {
-        light: dashboardLight(netTotal >= 0),
-        chart: buildSilverChartSvg(rows, accent, danger),
-        note: i18next.t('admin:admin.dashboard.silver_net_48h_prefix') + (netTotal>=0?'+':'') + fmt(Math.round(netTotal)),
-      };
-    } },
-  { id:'dw-wealth', cat:'economy', sec:'wealth', icon:'📈', title:{fr:'Richesse des joueurs',en:'Player wealth'},
-    fetch: () => sb.from('admin_wealth').select('silver'),
-    build: ({ data }) => {
-      const silvers = (data||[]).map(r => Number(r.silver||0)).sort((a,b)=>a-b);
-      const total = silvers.reduce((a,b)=>a+b,0);
-      const avg = silvers.length ? total/silvers.length : 0;
-      const med = silvers.length ? silvers[Math.floor(silvers.length/2)] : 0;
-      const brackets = [
-        { max:10000, label:'< 10k' }, { max:100000, label:'10k-100k' }, { max:1000000, label:'100k-1M' },
-        { max:10000000, label:'1M-10M' }, { max:Infinity, label:'10M+' },
-      ];
-      const counts = brackets.map(() => 0);
-      silvers.forEach(v => { const idx = brackets.findIndex(b=>v<b.max); counts[idx>=0?idx:brackets.length-1]++; });
-      
-      const skewed = med > 0 && avg > med * 4;
-      return {
-        light: dashboardLight(!skewed),
-        chart: buildPieWithLegendHtml(brackets.map((b,i)=>({label:b.label, value:counts[i]})), { thresholdPct:0, formatValue:v=>String(Math.round(v)) }),
-        note: skewed ? i18next.t('admin:admin.dashboard.wealth_skewed_note') : i18next.t('admin:admin.dashboard.wealth_reasonable_note'),
-      };
-    } },
-  { id:'dw-market', cat:'economy', sec:'market', icon:'🏛️', title:{fr:'Marché',en:'Market'},
-    fetch: () => Promise.all([sb.rpc('get_market_open'), sb.rpc('admin_market_top_items', { p_days:30 })]),
-    build: ([{ data: openData }, { data: topItems }]) => {
-      const open = openData !== false;
-      const rows = topItems || [];
-      return {
-        light: dashboardLight(open && rows.length > 0),
-        chart: buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name)||r.item_name, value: Number(r.total_silver_value||0) }))),
-        note: !open ? i18next.t('admin:admin.dashboard.market_closed_note') : (rows.length ? i18next.t('admin:admin.dashboard.market_active_note') : i18next.t('admin:admin.dashboard.market_no_trades_note')),
-      };
-    } },
-  { id:'dw-signups', cat:'overview', sec:'signups', icon:'📈', title:{fr:'Inscriptions (30j)',en:'Signups (30d)'},
-    fetch: () => Promise.all([sb.rpc('admin_signups_by_day', { p_days:30 }), sb.rpc('admin_signups_by_provider')]),
-    build: ([{ data: byDay }, { data: byProvider }]) => {
-      const rows = byDay || [];
-      const { accent } = currentAdminAccentColors();
-      const last7 = rows.slice(-7).reduce((a,r) => a + Number(r.signups||0), 0);
-      const chart = rows.length
-        ? buildBarSeriesSvg(rows.map(r => ({ label:r.day, value:Number(r.signups||0) })), accent)
-        : buildPieWithLegendHtml((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon+' '+providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), { thresholdPct:0 });
-      return {
-        light: dashboardLight(last7 > 0),
-        chart,
-        note: i18next.t('admin:admin.dashboard.signups_note', { count: last7 }),
-      };
-    } },
-  { id:'dw-bans', cat:'players', sec:'sanctions', icon:'🚫', title:{fr:'Sanctions actives',en:'Active sanctions'},
-    fetch: () => sb.rpc('admin_list_bans'),
-    build: ({ data }) => {
-      const count = (data||[]).length;
-      return {
-        light: dashboardLight(count === 0),
-        chart: `<div style="text-align:center"><div style="font-size:34px;font-weight:bold;color:${count===0?'var(--gold)':'var(--danger)'}">${count}</div><div class="admHint">${i18next.t('admin:admin.dashboard.active_bans_label')}</div></div>`,
-        note: count === 0 ? i18next.t('admin:admin.dashboard.no_active_sanction_note') : i18next.t('admin:admin.dashboard.players_banned_note', { count }),
-      };
-    } },
-  { id:'dw-onboarding', cat:'content', sec:'onboarding', icon:'🧭', title:{fr:'Onboarding',en:'Onboarding'},
-    fetch: () => sb.rpc('admin_onboarding_stats'),
-    build: ({ data }) => {
-      const s = (data && data[0]) || { started:0, completed:0, skipped:0, in_progress:0 };
-      const started = Number(s.started||0), completed = Number(s.completed||0), skipped = Number(s.skipped||0), inProgress = Number(s.in_progress||0);
-      const pct = started ? Math.round(completed/started*100) : 0;
-      return {
-        light: dashboardLight(!started || pct >= 40),
-        chart: started ? buildPieWithLegendHtml([
-          { label: i18next.t('admin:admin.dashboard.onboarding_completed_label'), value: completed },
-          { label: i18next.t('admin:admin.dashboard.onboarding_skipped_label'), value: skipped },
-          { label: i18next.t('admin:admin.dashboard.onboarding_in_progress_label'), value: inProgress },
-        ], { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.onboarding_none_started')}</div>`,
-        note: started ? i18next.t('admin:admin.dashboard.completion_pct_note', { pct }) : '',
-      };
-    } },
-  { id:'dw-tutorials', cat:'content', sec:'tutorials', icon:'🎓', title:{fr:'Tutoriels d\'objets',en:'Item tutorials'},
-    fetch: () => sb.rpc('admin_item_tutorial_stats'),
-    build: ({ data }) => {
-      const rows = data || [];
-      const completed = rows.reduce((a,r)=>a+Number(r.completed_count||0),0);
-      const skipped = rows.reduce((a,r)=>a+Number(r.skipped_count||0),0);
-      const total = completed + skipped;
-      const skipRate = total ? skipped/total : 0;
-      return {
-        light: dashboardLight(!total || skipRate < 0.5),
-        chart: total ? buildPieWithLegendHtml([
-          { label: i18next.t('admin:admin.content.completed_label'), value: completed },
-          { label: i18next.t('admin:admin.content.skipped_label'), value: skipped },
-        ], { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.tutorials_none_seen')}</div>`,
-        note: total ? i18next.t('admin:admin.dashboard.skipped_pct_note', { pct: Math.round(skipRate*100) }) : '',
-      };
-    } },
-  { id:'dw-companions', cat:'content', sec:'companions', icon:'🐾', title:{fr:'Compagnons',en:'Companions'},
-    fetch: () => Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown')]),
-    build: ([{ data: statsData }, { data: breakdownData }]) => {
-      const s = (statsData && statsData[0]) || {};
-      const playersSynced = Number(s.players_synced||0);
-      const rows = breakdownData || [];
-      const rarityTotals = sumCompanionBreakdown(rows, 'rarity_breakdown');
-      const rarityItems = COMPANION_RARITY_LABELS.filter(r => rarityTotals[r.id]).map(r => ({ label:r.name, value:rarityTotals[r.id] }));
-      return {
-        light: dashboardLight(playersSynced > 0),
-        chart: playersSynced ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.companions_none_synced')}</div>`,
-        note: i18next.t('admin:admin.dashboard.companions_synced_note', { count: playersSynced }),
-      };
-    } },
-  { id:'dw-zones', cat:'content', sec:'zones', icon:'🗾', title:{fr:'Progression par zone',en:'Zone progression'},
-    fetch: () => sb.from('player_stats').select('best_zone_index'),
-    build: ({ data }) => {
-      const zoneCounts = new Map();
-      (data||[]).forEach(r => { const zi = Number(r.best_zone_index||0); zoneCounts.set(zi, (zoneCounts.get(zi)||0)+1); });
-      const items = [...zoneCounts.entries()].sort((a,b)=>a[0]-b[0]).map(([zi,cnt]) => ({ label: ZONES[zi] ? tr(ZONES[zi].name) : `#${zi}`, value: cnt }));
-      return {
-        light: dashboardLight(items.length > 0),
-        chart: buildPieWithLegendHtml(items),
-        note: i18next.t('admin:admin.dashboard.players_count_note', { count: (data||[]).length }),
-      };
-    } },
-  { id:'dw-cron', cat:'content', sec:'cron', icon:'⏳', title:{fr:'Pierres de Cron',en:'Cron Stones'},
-    fetch: () => sb.from('admin_farm_by_item').select('item_name, item_kind, total_qty'),
-    build: ({ data }) => {
-      const farmedRow = (data||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'material');
-      const usedRow = (data||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'cron_used');
-      const farmed = farmedRow ? Number(farmedRow.total_qty||0) : 0;
-      const used = usedRow ? Number(usedRow.total_qty||0) : 0;
-      return {
-        light: dashboardLight(farmed >= used),
-        chart: buildPieWithLegendHtml([
-          { label: i18next.t('admin:admin.dashboard.cron_in_stock_label'), value: Math.max(0, farmed-used) },
-          { label: i18next.t('admin:admin.dashboard.cron_used_label'), value: used },
-        ], { thresholdPct:0 }),
-        note: i18next.t('admin:admin.dashboard.cron_farmed_used_note', { farmed: fmt(farmed), used: fmt(used) }),
-      };
-    } },
-];
-
-function buildDashboardCard(widget, result) {
-  return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
-      <div class="admDashCardHead">
-        <span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span>
-        <span class="admDashLight" title="${result.light.label}">${result.light.dot}</span>
-      </div>
-      <div class="admDashCardBody">${result.chart}</div>
-      <div class="admDashCardNote">${escapeHtml(result.note||'')}</div>
-    </div>`;
-}
-
-function buildDashboardCardError(widget) {
-  return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
-      <div class="admDashCardHead"><span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span><span class="admDashLight" title="${i18next.t('admin:admin.dashboard.unavailable')}">⚪</span></div>
-      <div class="admDashCardBody"><div class="admEmpty">${i18next.t('admin:admin.dashboard.unavailable')}</div></div>
-    </div>`;
-}
-
-function renderAdminDashboard(el) {
-  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
-  const topPromise = Promise.all([
-    sb.rpc('admin_list_players'),
-    sb.from('admin_wealth').select('silver'),
-    sb.rpc('admin_list_bans'),
-    sb.rpc('get_market_open'),
-    sb.from('admin_silver_ledger_by_category').select('total_gained, total_spent'),
-  ]).then(([{data: players}, {data: wealth}, {data: bans}, {data: marketOpen}, {data: ledgerByCat}]) => {
-    const online = (players||[]).filter(p => p.online).length;
-    const totalSilver = (wealth||[]).reduce((a,r) => a + Number(r.silver||0), 0);
-    const activeBans = (bans||[]).length;
-    const open = marketOpen !== false;
-    const alerts = typeof computeEconAlerts === 'function' ? computeEconAlerts(ledgerByCat) : [];
-    const alertsHtml = typeof buildEconAlertsHtml === 'function' ? buildEconAlertsHtml(alerts) : '';
-    return `${alertsHtml}<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🟢 ${i18next.t('admin:admin.dashboard.players_online')}</div><div class="astVal">${online}</div></div>
-        <div class="admStatTile"><div class="astLbl">🏦 ${i18next.t('admin:admin.dashboard.total_silver_in_game')}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🚫 ${i18next.t('admin:admin.dashboard.active_bans_stat')}</div><div class="astVal">${activeBans}</div></div>
-        <div class="admStatTile"><div class="astLbl">🏛️ ${i18next.t('admin:admin.dashboard.market_label')}</div><div class="astVal" style="${open?'':'color:var(--danger)'}">${open?i18next.t('admin:admin.dashboard.market_state_open'):i18next.t('admin:admin.dashboard.market_state_closed')}</div></div>
-      </div>`;
-  });
-  
-  const widgetPromises = DASHBOARD_WIDGETS.map(w =>
-    Promise.resolve(w.fetch()).then(res => buildDashboardCard(w, w.build(res))).catch(() => buildDashboardCardError(w))
-  );
-  Promise.all([topPromise, Promise.allSettled(widgetPromises)]).then(([topHtml, settled]) => {
-    const cards = settled.map(s => s.status === 'fulfilled' ? s.value : '').join('');
-    el.innerHTML = `${topHtml}
-      <div class="admHint" style="margin:10px 0 12px">${i18next.t('admin:admin.dashboard.overview_hint')}</div>
-      <div class="admDashGrid">${cards}</div>`;
-    el.querySelectorAll('.admDashCard').forEach(card => {
-      card.onclick = () => openAdminSection(card.dataset.cat, card.dataset.id);
-    });
-  });
-}
-
-const PROVIDER_INFO = {
-  email: { icon:'📧', label:{fr:'Email',en:'Email'} },
-  discord: { icon:'🎮', label:{fr:'Discord',en:'Discord'} },
-  google: { icon:'🔵', label:{fr:'Google',en:'Google'} },
-  github: { icon:'🐙', label:{fr:'GitHub',en:'GitHub'} },
-  twitter: { icon:'🐦', label:{fr:'Twitter/X',en:'Twitter/X'} },
-  anonymous: { icon:'🎭', label:{fr:'Invité',en:'Guest'} },
-};
-
-function providerInfo(provider) {
-  return PROVIDER_INFO[provider] || { icon:'❔', label:{fr:provider||'?',en:provider||'?'} };
-}
-
-function renderAdminPlayerList(el) {
-  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
-  sb.rpc('admin_list_players').then(({data: playersList}) => {
-    const playersHtml = (playersList||[]).map(p => {
-      const prov = providerInfo(p.provider);
-      return `
-      <tr>
-        <td>${p.online ? '🟢' : '⚪'}</td><td>${escapeHtml(p.display_name||'?')}</td>
-        <td title="${escapeHtml(prov.label[LANG])}">${prov.icon}</td>
-        <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td>
-        <td title="${i18next.t('admin:admin.players.ap_title')}">${(p.ap||0).toFixed(1)}</td>
-        <td title="${i18next.t('admin:admin.players.dp_title')}">${(p.dp||0).toFixed(1)}</td>
-        <td>${p.lvl||1}</td>
-        <td title="${i18next.t('admin:admin.players.best_kpm_title')}">🏹 ${(p.best_kpm||0).toFixed(1)}</td>
-        <td><button class="admUuidBtn" data-uuid="${p.user_id}">📋 UUID</button></td>
-        <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${i18next.t('admin:admin.players.inventory_btn_title')}">🎒 ${i18next.t('admin:admin.players.inventory_btn')}</button></td>
-      </tr>`;
-    }).join('') || `<tr><td colspan="11" class="admEmpty">${i18next.t('admin:admin.common.no_data')}</td></tr>`;
-    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.players.summary_online_registered', { online: (playersList||[]).filter(p=>p.online).length, total: (playersList||[]).length })}</div>
-      <table class="admTable">
-        <thead><tr><th></th><th>${i18next.t('admin:admin.players.table_player')}</th><th title="${i18next.t('admin:admin.players.signup_platform_title')}">${i18next.t('admin:admin.players.table_platform')}</th><th>Silver</th><th>GS</th><th title="${i18next.t('admin:admin.players.ap_title')}">PA</th><th title="${i18next.t('admin:admin.players.dp_title')}">PD</th><th>Niv.</th><th title="${i18next.t('admin:admin.players.kpm_record_title')}">🏹</th><th></th><th></th></tr></thead>
-        <tbody>${playersHtml}</tbody>
-      </table>`;
-    el.querySelectorAll('.admUuidBtn').forEach(btn => {
-      btn.onclick = async e => {
-        e.stopPropagation();
-        try { await navigator.clipboard.writeText(btn.dataset.uuid); } catch(e) {}
-        floatTxt(P.x, P.y, 100, i18next.t('admin:admin.players.uuid_copied'), { gold:true });
-      };
-    });
-    el.querySelectorAll('.admInvBtn').forEach(btn => {
-      btn.onclick = e => { e.stopPropagation(); showPlayerInventoryWindow(btn.dataset.uuid, btn.dataset.name); };
-    });
-  });
-}
-
-function renderAdminTargetPlayer(el) {
-  el.innerHTML = `
-    <div class="admSection riskSingle">
-      <div class="admSectionTitle">🎯 ${i18next.t('admin:admin.players.target_title')}</div>
-      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.players.target_sub')}</div>
-      <div class="admActions">
-        <input type="text" id="admResetUuidInput" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="width:230px">
-        <button id="btnScreenshotPlayer">📸 ${i18next.t('admin:admin.players.screenshot_btn')}</button>
-        <button id="btnResetAccountByUuid" style="border-color:var(--danger);color:#e8a89f">🔄 ${i18next.t('admin:admin.players.reset_this_player_btn')}</button>
-      </div>
-      <div class="admHint">${i18next.t('admin:admin.players.target_hint')}</div>
-    </div>`;
-  $a('btnScreenshotPlayer').onclick = adminScreenshotPlayer;
-  $a('btnResetAccountByUuid').onclick = resetAccountByUuid;
-}
-
-function renderAdminSanctions(el) {
-  el.innerHTML = `
-    <div class="admSection">
-      <div class="admSectionTitle">🚫 ${i18next.t('admin:admin.sanctions.ban_a_player_title')}</div>
-      <div class="admSectionSub">${i18next.t('admin:admin.sanctions.ban_a_player_sub')}</div>
-      <div class="admActions">
-        <input type="text" id="admBanUuidInput" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="width:230px">
-        <select id="admBanReasonSelect">${BAN_REASONS.map(r => `<option value="${r.id}">${r.label[LANG]}</option>`).join('')}</select>
-        <select id="admBanDurationSelect">${BAN_DURATIONS.map(d => `<option value="${d.hours}"${d.hours===24?' selected':''}>${d.label[LANG]}</option>`).join('')}</select>
-        <button id="btnBanPlayer" style="border-color:var(--danger);color:#e8a89f">🚫 ${i18next.t('admin:admin.sanctions.ban_btn')}</button>
-      </div>
-      <div class="admHint warn">${i18next.t('admin:admin.sanctions.ban_hint')}</div>
-    </div>
-    <div class="admSection">
-      <div class="admSectionTitle">📋 ${i18next.t('admin:admin.sanctions.active_bans_title')}</div>
-      <div id="admBanList"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
-    </div>`;
-  $a('btnBanPlayer').onclick = banPlayerByUuid;
-  refreshBanList();
-}
-
-function renderAdminRoles(el) {
-  el.innerHTML = `
-    <div class="admSection riskMgmt">
-      <div class="admSectionTitle">🎭 ${i18next.t('admin:admin.roles.title')}</div>
-      <div class="admSectionSub">${i18next.t('admin:admin.roles.sub')}</div>
-      <div class="admBossSpawn">
-        <input type="text" id="admRoleUuid" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
-        <select id="admRoleSelect" style="flex:0 0 auto;width:auto;">
-          <option value="mod">🛡️ ${i18next.t('admin:admin.roles.moderator_label')}</option>
-          <option value="tester">🧪 ${i18next.t('admin:admin.roles.tester_label')}</option>
-        </select>
-        <button id="btnAddRole" style="flex:0 0 auto;width:auto;">${i18next.t('admin:admin.roles.add_btn')}</button>
-      </div>
-      <div id="admRoleList"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
-    </div>`;
-  $a('btnAddRole').onclick = async () => {
-    if (!isAdmin() || !sb) return;
-    const uuid = $a('admRoleUuid').value.trim(); if (!uuid) return;
-    const role = $a('admRoleSelect').value;
-    const rpc = role === 'mod' ? 'admin_add_mod' : 'admin_add_tester';
-    const { error } = await sb.rpc(rpc, { p_user_id: uuid });
-    if (error) { $a('admRoleList').insertAdjacentHTML('afterbegin', `<div class="admHint">${escapeHtml(error.message)}</div>`); return; }
-    logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ajouté le rôle ${role==='mod'?'Modérateur':'Testeur'} à \`${uuid}\``, 0x9cc9e8);
-    $a('admRoleUuid').value = ''; refreshRoleList();
-  };
-  refreshRoleList();
-}
-
-function renderAdminReconnect(el) {
-  el.innerHTML = `
-    <div class="admSection">
-      <div class="admSectionTitle">🔄 ${i18next.t('admin:admin.reconnect.title')}</div>
-      <div class="admSectionSub">${i18next.t('admin:admin.reconnect.sub')}</div>
-      <div id="admReconnectStats"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
-    </div>
-    <div class="admSection">
-      <div class="admSectionTitle">🏆 ${i18next.t('admin:admin.reconnect.top10_title')}</div>
-      <div id="admReconnectTop"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
-    </div>`;
-  refreshAdminReconnect();
-}
-
-async function refreshAdminReconnect() {
-  if (!isAdmin() || !sb) return;
-  const statsEl = $a('admReconnectStats'), topEl = $a('admReconnectTop');
-  if (!statsEl || !topEl) return;
-  const { data, error } = await sb.rpc('admin_afk_sessions_summary');
-  if (error || !data || !data[0]) {
-    statsEl.innerHTML = `<div class="admHint">${escapeHtml(error ? error.message : 'no data')}</div>`;
-    topEl.innerHTML = '';
-    return;
-  }
-  const s = data[0];
-  statsEl.innerHTML = `
-    <div class="admStatsGrid">
-      <div class="admStatCard"><b>${(s.total_sessions||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.logged_sessions')}</span></div>
-      <div class="admStatCard"><b>${(s.total_players||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.players_involved')}</span></div>
-      <div class="admStatCard"><b>${Math.round(s.total_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.total_silver_recovered')}</span></div>
-      <div class="admStatCard"><b>${Math.round(s.avg_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.avg_per_session')}</span></div>
-    </div>`;
-  const top = Array.isArray(s.top_sessions) ? s.top_sessions : [];
-  topEl.innerHTML = top.length === 0
-    ? `<div class="admEmpty">${i18next.t('admin:admin.reconnect.no_session_yet')}</div>`
-    : `<table class="admTable"><thead><tr>
-        <th>Silver</th><th>${i18next.t('admin:admin.reconnect.table_zone')}</th><th>${i18next.t('admin:admin.reconnect.table_date')}</th><th>${i18next.t('admin:admin.reconnect.table_player_uuid')}</th>
-      </tr></thead><tbody>${top.map(t => `<tr>
-        <td>${Math.round(t.silver_gained||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</td>
-        <td>${escapeHtml(t.zone_name||'—')}</td>
-        <td>${new Date(t.ended_at).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</td>
-        <td style="font-family:monospace;font-size:10px">${escapeHtml((t.user_id||'').slice(0,8))}…</td>
-      </tr>`).join('')}</tbody></table>`;
-}
-
-async function adminSpawnSharedBoss(id, targetMin) {
-  if (!sb) return false;
-  let onlineTotal = 1;
-  try {
-    const { data } = await sb.rpc('get_online_counts', { p_window_seconds: 90 });
-    if (data && data[0]) onlineTotal = Math.max(1, data[0].total || 1);
-  } catch (e) {}
-  const expectedFighters = Math.max(1, Math.round(onlineTotal * 0.4));
-  const sharedHp = Math.round(BOSS_REF_DPS * expectedFighters * targetMin * 60);
-  const { error } = await sb.rpc('admin_spawn_boss', { p_boss_id: id, p_minutes: 9, p_hp: sharedHp });
-  if (!error) await refreshLiveBoss();
-  return !error;
-}
-
-function renderAdminBoss(el) {
-  const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
-  el.innerHTML = `
-    <div class="admSection riskGlobal">
-      <div class="admSectionTitle">🌍 ${i18next.t('admin:admin.content.boss_launch_title')}</div>
-      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.content.boss_danger_sub')}</div>
-      <div class="admBossSpawn">
-        <span>${i18next.t('admin:admin.content.boss_label')}</span>
-        <select id="admGlobalBossSelect">${bossOptions}</select>
-        <select id="admBossDurationSelect">
-          ${[2,3,4,5,6,7].map(m => `<option value="${m}"${m===4?' selected':''}>${i18next.t('admin:admin.content.boss_duration_option', { m })}</option>`).join('')}
-        </select>
-        <button id="btnAdmSpawnGlobal">${i18next.t('admin:admin.content.boss_launch_btn')}</button>
-        <button id="btnAdmDespawnBoss">🛑 ${i18next.t('admin:admin.content.boss_despawn_btn')}</button>
-      </div>
-      <div class="admHint">${i18next.t('admin:admin.content.boss_hint')}</div>
-    </div>`;
-  $a('btnAdmSpawnGlobal').onclick = async () => {
-    if (!isAdmin() || !sb) return;
-    const id = $a('admGlobalBossSelect').value;
-    const targetMin = Number($a('admBossDurationSelect').value) || 4;
-    const ok = await adminSpawnSharedBoss(id, targetMin);
-    if (ok) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a lancé ${BOSS_ROSTER[id].name.fr} pour tous (~${targetMin} min)`, 0x9cc9e8);
-    floatTxt(P.x, P.y, 100, ok ? i18next.t('admin:admin.content.boss_launched_toast') : i18next.t('admin:admin.content.boss_launch_failed_toast'), { gold:ok, hurt:!ok });
-  };
-  $a('btnAdmDespawnBoss').onclick = async () => {
-    if (!isAdmin() || !sb) return;
-    if (!confirm(i18next.t('admin:admin.content.boss_despawn_confirm'))) return;
-    const { error } = await sb.rpc('admin_despawn_boss');
-    if (!error) { await refreshLiveBoss(); logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a fait disparaître le boss mondial`, 0x9cc9e8); }
-    floatTxt(P.x, P.y, 100, !error ? i18next.t('admin:admin.content.boss_despawned_toast') : i18next.t('admin:admin.common.failed'), { gold:!error, hurt:!!error });
-  };
-}
-
-function renderAdminPatchNotesModeration(el) {
-  el.innerHTML = `
-    <div class="admSection">
-      <div class="admSectionTitle">🚩 ${i18next.t('admin:admin.patchnotes.pending_reports_title')}</div>
-      <div id="admPatchReports"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
-    </div>
-    <div class="admSection">
-      <div class="admSectionTitle">🗑️ ${i18next.t('admin:admin.patchnotes.removed_comments_title')}</div>
-      <div id="admPatchRemoved"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
-    </div>`;
-  refreshAdminPatchNotesModeration();
-}
-
-async function refreshAdminPatchNotesModeration() {
-  if (!sb) return;
-  const reportsEl = $a('admPatchReports'), removedEl = $a('admPatchRemoved');
-  if (!reportsEl || !removedEl) return;
-
-  const { data: reports, error: reportsErr } = await sb.rpc('admin_patch_note_pending_reports');
-  reportsEl.innerHTML = reportsErr ? `<div class="admHint">${escapeHtml(reportsErr.message)}</div>`
-    : (!reports || reports.length === 0) ? `<div class="admEmpty">${i18next.t('admin:admin.patchnotes.no_pending_reports')}</div>`
-    : reports.map(r => `<div class="achRow">
-        <div class="achInfo"><div class="achName">${escapeHtml(r.author)} — ${escapeHtml(r.entry_id)}</div>
-        <div class="achDesc">${escapeHtml(r.text)}</div></div>
-        <div class="achReward">🚩 ${r.report_count}</div>
-      </div>`).join('');
-
-  const { data: removed, error: removedErr } = await sb.rpc('admin_list_removed_patch_note_comments');
-  removedEl.innerHTML = removedErr ? `<div class="admHint">${escapeHtml(removedErr.message)}</div>`
-    : (!removed || removed.length === 0) ? `<div class="admEmpty">${i18next.t('admin:admin.patchnotes.no_removed_comments')}</div>`
-    : removed.map(c => `<div class="achRow" data-cid="${c.id}">
-        <div class="achInfo"><div class="achName">${escapeHtml(c.author)} — ${escapeHtml(c.entry_id)} ${c.status==='pending_review'?`<span style="color:var(--red2,#e08070)">🚩 ${i18next.t('admin:admin.patchnotes.auto_hidden_label')}</span>`:''}</div>
-        <div class="achDesc">${escapeHtml(c.text)}</div></div>
-        <div class="achReward"><button class="admPatchRestoreBtn" data-cid="${c.id}">↩️ ${i18next.t('admin:admin.patchnotes.restore_btn')}</button></div>
-      </div>`).join('');
-  removedEl.querySelectorAll('.admPatchRestoreBtn').forEach(btn => {
-    btn.onclick = async () => {
-      await sb.rpc('restore_patch_note_comment', { p_comment_id: parseInt(btn.dataset.cid, 10) });
-      refreshAdminPatchNotesModeration();
-    };
-  });
-}
-
-function renderAdminMyTests(el) {
-  const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
-  el.innerHTML = `
-    <div class="admSection riskSafe">
-      <div class="admSectionTitle">👤 ${i18next.t('admin:admin.tests.title')}</div>
-      <div class="admSectionSub">${i18next.t('admin:admin.tests.sub')}</div>
-      <div class="admActions">
-        <button id="btnTestSilver">💰 +1M silver</button>
-        <button id="btnTestLoyalty">📬 +200 Loyalties</button>
-        <button id="btnTestAch">🏅 ${i18next.t('admin:admin.tests.unlock_achievements_btn')}</button>
-        <button id="btnResetMyQuests">🔄 ${i18next.t('admin:admin.tests.reset_my_quests_btn')}</button>
-        <button id="btnResetDemo">🔄 ${i18next.t('admin:admin.tests.reset_demo_btn')}</button>
-      </div>
-      <div class="admBossSpawn">
-        <span>${i18next.t('admin:admin.tests.fight_boss_label')}</span>
-        <select id="admBossSelect">${bossOptions}</select>
-        <button id="btnAdmSpawnBoss">${i18next.t('admin:admin.tests.fight_now_btn')}</button>
-      </div>
-      <div class="admHint">${i18next.t('admin:admin.tests.hint')}</div>
-    </div>`;
-  $a('btnTestSilver').onclick = () => { if(!isAdmin())return; addSilver(1000000, 'admin_test'); refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
-  $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; mailboxAdd('loyalty', 'Loyalties', '🏅', 200); updateMailBadge(); floatTxt(P.x,P.y,100,'+200 🏅 (courrier)',{gold:true}); };
-  $a('btnTestAch').onclick = () => { if(!isAdmin())return; ACHIEVEMENTS.forEach(a => { if(!S.achUnlocked[a.id]){ S.achUnlocked[a.id]=Date.now(); addSilver(a.reward, 'admin_test', a.name.fr); } }); refreshStatsOnly(); renderAdminMyTests(el); };
-  $a('btnResetMyQuests').onclick = resetMyQuests;
-  $a('btnResetDemo').onclick = resetDemo;
-  $a('btnAdmSpawnBoss').onclick = async () => {
-    if (!isAdmin() || !sb) return;
-    const id = $a('admBossSelect').value;
-    const ok = await adminSpawnSharedBoss(id, 4);
-    if (!ok) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.content.boss_launch_failed_toast'), { hurt:true }); return; }
-    closeAdminPanel();
-    startBossFight(id, true); 
-  };
-}
-
-function renderAdminThemeSwatchesHtml(currentTheme) {
-  return `<div class="admThemeSwatches" title="🎨 ${i18next.t('admin:admin.system.palette_label')}">${ADMIN_THEMES.map(t =>
-    `<button class="admSwatchBtn${t.id===currentTheme?' active':''}" data-theme="${t.id}" style="background:${t.color}" title="${escapeHtml(t.label[LANG])}"></button>`
-  ).join('')}</div>`;
-}
-
-function wireAdminThemeSwatches() {
-  $a('adminSidebar').querySelectorAll('.admSwatchBtn').forEach(btn => {
-    btn.onclick = () => {
-      const t = ADMIN_THEMES.find(x => x.id === btn.dataset.theme) || ADMIN_THEMES[0];
-      const root = $a('adminOverlay');
-      if (root) root.dataset.admTheme = t.id;
-      $a('adminSidebar').querySelectorAll('.admSwatchBtn').forEach(b => b.classList.toggle('active', b === btn));
-      setAdminTheme(t.id);
-    };
-  });
-}
-
-function renderAdminServerDanger(el) {
-  el.innerHTML = `
-    <div class="admSection riskGlobal">
-      <div class="admSectionTitle">🌍 ${i18next.t('admin:admin.system.danger_title')}</div>
-      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.content.boss_danger_sub')}</div>
-      <div class="admActions">
-        <button id="btnResetAllQuests">⚠️ ${i18next.t('admin:admin.system.reset_all_quests_btn')}</button>
-        <button id="btnResetAllAccounts" style="border-color:var(--danger);color:#e8a89f">💥 ${i18next.t('admin:admin.system.reset_all_accounts_btn')}</button>
-      </div>
-      <div class="admHint warn">${i18next.t('admin:admin.system.reset_all_accounts_hint')}</div>
-    </div>`;
-  $a('btnResetAllQuests').onclick = resetAllQuests;
-  $a('btnResetAllAccounts').onclick = resetAllAccounts;
-}
-
-function closeAdminPanel() {
-  const overlay = $a('adminOverlay'); if (overlay) overlay.classList.remove('open');
-}
-
-function renderAdminSidebar(activeCat, activeId) {
-  return ADMIN_SECTIONS.map(group => `
-    <div class="admNavCatLabel">${group.label[LANG]}</div>
-    ${group.items.map(item => `
-      <div class="admNavItem${activeCat===group.cat&&activeId===item.id?' active':''}${item.planned?' planned':''}" data-cat="${group.cat}" data-id="${item.id}">
-        <span class="admNavIcon">${item.icon}</span><span>${item.label[LANG]}</span>
-        ${item.planned?`<span class="admNavBadge">${i18next.t('admin:admin.system.planned_badge')}</span>`:''}
-      </div>`).join('')}
-  `).join('');
-}
-
-function findAdminSection(cat, id) {
-  const group = ADMIN_SECTIONS.find(g => g.cat === cat);
-  return group ? group.items.find(i => i.id === id) : null;
-}
-
-function openAdminSection(cat, id) {
-  const item = findAdminSection(cat, id);
-  if (!item) return;
-  $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
-    el.classList.toggle('active', el.dataset.cat === cat && el.dataset.id === id);
-  });
-  
-  $a('adminMainTitle').textContent = item.icon + ' ' + item.label[LANG];
-  const body = $a('adminMainBody');
-  if (item.planned) {
-    body.innerHTML = `<div class="admPlannedPane"><div class="admPlannedIcon">🔜</div>
-      ${i18next.t('admin:admin.system.planned_pane_text')}</div>`;
-    return;
-  }
-  item.render(body);
-}
-
-function wireAdminSidebarSearch() {
-  const input = $a('admNavSearch'); if (!input) return;
-  input.oninput = () => {
-    const q = input.value.trim().toLowerCase();
-    const rows = [...$a('adminSidebar').children].filter(c => c.classList.contains('admNavCatLabel') || c.classList.contains('admNavItem'));
-    let lastCatLabel = null, catHasVisible = false;
-    rows.forEach(el => {
-      if (el.classList.contains('admNavCatLabel')) {
-        if (lastCatLabel) lastCatLabel.style.display = catHasVisible ? '' : 'none';
-        lastCatLabel = el; catHasVisible = false;
-        return;
-      }
-      const match = !q || el.textContent.toLowerCase().includes(q);
-      el.style.display = match ? '' : 'none';
-      if (match) catHasVisible = true;
-    });
-    if (lastCatLabel) lastCatLabel.style.display = catHasVisible ? '' : 'none';
-  };
-}
-
-async function openAdminPanel() {
-  if (!isAdmin() || !sb) return;
-  const currentTheme = getAdminTheme();
-  const overlay = $a('adminOverlay');
-  overlay.classList.add('admThemeRoot');
-  overlay.dataset.admTheme = currentTheme;
-  $a('adminMainHead').innerHTML = `<span id="adminMainTitle" style="flex:1"></span>`;
-  $a('adminSidebar').innerHTML = `<div class="admNavHead">` +
-      `<span class="admNavTitle">🛠️ Admin</span>` +
-      renderAdminThemeSwatchesHtml(currentTheme) +
-      `<button id="closeAdmin" title="${i18next.t('admin:admin.system.close_btn_title')}">✕</button></div>` +
-    `<input type="text" id="admNavSearch" class="admNavSearch" placeholder="🔍 ${i18next.t('admin:admin.system.search_placeholder')}">` +
-    renderAdminSidebar('overview', 'dashboard');
-  $a('closeAdmin').onclick = closeAdminPanel;
-  $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
-    el.onclick = () => openAdminSection(el.dataset.cat, el.dataset.id);
-  });
-  wireAdminThemeSwatches();
-  wireAdminSidebarSearch();
-  overlay.classList.add('open');
-  openAdminSection('overview', 'dashboard');
-}
-
-$a('btnAdminTopbar').onclick = openAdminPanel;
-
-function openTesterPanel() {
-  if (!myIsTester) return;
-  const upcoming = [
-    { icon:'🎣', name:{fr:'Pêche',en:'Fishing'} },
-    { icon:'⛏️', name:{fr:'Mine',en:'Mining'} },
-    { icon:'🌲', name:{fr:'Forêt',en:'Forest'} },
-    { icon:'🌾', name:{fr:'Champs',en:'Fields'} },
-    { icon:'🐑', name:{fr:'Bergerie',en:'Ranch'} },
-  ];
-  const list = upcoming.map(a => `<div class="achRow inactive"><div class="achIcon">${a.icon}</div>` +
-    `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${i18next.t('admin:admin.tests.upcoming_in_dev')}</div></div></div>`).join('');
-  openInfo(i18next.t('admin:admin.tests.tester_panel_title'),
-    `<div class="admSummary">${i18next.t('admin:admin.tests.tester_panel_intro')}</div>` +
-    list);
-}
-$a('btnTester').onclick = openTesterPanel;
 
 // ==== src/admin/admin-economy.js ====
 const CATEGORY_LABEL = {

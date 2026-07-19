@@ -665,6 +665,18 @@
         const hasRender = typeof item.render === 'function';
         const isPlanned = !!item.planned;
         assert(`"${group.cat}/${item.id}" a exactement un de render()/planned:true (jamais 0, jamais 2)`, hasRender !== isPlanned);
+        // référence PARESSEUSE (2026-07-19, découpe d'admin-panel.js) : les render vivent dans
+        // admin-players/content/economy/monitoring.js, qui chargent APRÈS le registre. La flèche
+        // `render:(el)=>renderX(el)` diffère la résolution à l'appel -- mais si renderX n'existe
+        // nulle part (faute de frappe, fonction supprimée/renommée), le clic échouerait seulement
+        // À L'EXÉCUTION, en silence. On résout donc ici le nom cible pour le détecter au test.
+        if (hasRender) {
+          const target = (item.render.toString().match(/=>\s*(\w+)\s*\(/) || [])[1];
+          if (target) {
+            assert(`"${group.cat}/${item.id}" : son render pointe vers une fonction définie (${target})`,
+              typeof window[target] === 'function');
+          }
+        }
       });
     });
   }
