@@ -110,6 +110,16 @@ const S = {
   // bonus "+50% première victoire de la semaine" ne compare qu'à CE boss, pas tous les boss confondus.
   bossPity: {}, bossLastKillWeek: {},
   penMastery: {}, // Compendium spécial "Maîtrise PEN" (2026-07-08) : { [itemName]: true } dès que cet objet a atteint PEN au moins une fois (voir markPenMastery)
+  // Sceau du Conclave des Marchands (2026-07-13, trésor multi-région, voir CONCLAVE_SEAL_FRAGMENTS
+  // world/region-tiers-data.js + progression/treasure-craft.js craftConclaveSeal) : flag permanent
+  // posé à l'assemblage (objet unique par compte, non ré-vendable -- pas un item INV classique une
+  // fois assemblé, même famille que S.penMastery/S.bossesKilled : un simple flag persisté).
+  hasConclaveMarchandsSeal: false,
+  // record PERMANENT des tierId (ZONE_TIERS) dont le fragment a contribué à l'assemblage -- lu
+  // APRÈS assemblage (les fragments eux-mêmes sont consommés) pour calculer le passif "Réseau
+  // Continental" (+2%/région, voir conclaveSealRegionalBonusPct, market.js). Pattern "record
+  // monotone" (CLAUDE.md §4/§13), jamais recalculé depuis l'inventaire une fois assemblé.
+  conclaveSealRegions: [],
   enhPeakByName: {}, // meilleur niveau d'optimisation JAMAIS atteint par nom d'objet (2026-07-15) : { [itemName]: enhLv }, voir trackEnhPeak -- survit à la vente de l'objet
   lootTableVersion: 'v2', // 'v1' (par zone, historique) ou 'v2' (taux fixe par palier, 2026-07-15) -- voir gearDropChance/jewelDropChance, réversible à tout moment via l'admin
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,

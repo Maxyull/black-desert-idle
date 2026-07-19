@@ -37,7 +37,7 @@ function referenceGearVal() {
 // plafond d'empilement en sac (2026-07-13, demande explicite) : au-delà, le surplus est vendu
 // automatiquement (voir enforceTreasureStackCap, appelé depuis invAdd) plutôt que de bloquer le
 // ramassage ou de remplir le sac indéfiniment.
-const TREASURE_STACK_CAP = { treasure_bout_velia:100, treasure_velia:1 };
+const TREASURE_STACK_CAP = { treasure_bout_velia:100, treasure_velia:1, conclave_seal_velia:1 };
 /** @param {object} slot - slot d'inventaire (kind:'treasure'). Vend automatiquement le surplus au-delà de TREASURE_STACK_CAP au lieu de bloquer le ramassage ou de remplir le sac. Appelé depuis invAdd. */
 function enforceTreasureStackCap(slot) {
   if (!slot || slot.kind !== 'treasure') return;
@@ -111,6 +111,33 @@ function craftSecretCombo() {
   renderInventory();
   return true;
 }
+// ---------- Sceau du Conclave des Marchands (assemblage) — 2026-07-13, port de mockup ----------
+// Voir CONCLAVE_SEAL_FRAGMENTS/CONCLAVE_SEAL_LORE (world/region-tiers-data.js) et les effets
+// Marché (market.js, conclaveSeal*). Même pattern que craftTreasurePiece ci-dessus : consomme des
+// ingrédients (ici 5 fragments DIFFÉRENTS, pas 100 du même) contre un résultat -- ici un flag
+// permanent (S.hasConclaveMarchandsSeal), pas un nouvel item INV (objet unique par compte, non
+// ré-vendable, voir S.penMastery pour le même genre de flag permanent).
+/** @returns {string[]} tierId (ZONE_TIERS) des fragments actuellement possédés en sac (pré-assemblage). */
+function conclaveSealFragmentsOwnedTierIds() {
+  return CONCLAVE_SEAL_FRAGMENTS.filter(f => invSlotByKey(f.key) !== -1).map(f => f.tierId);
+}
+/** @returns {boolean} vrai si les 5 fragments (toutes régions) sont en sac -- irréaliste tant que Heidel/Calpheon/Valencia/Edana restent verrouillés, voulu (pas un bug, voir commentaire CONCLAVE_SEAL_FRAGMENTS). */
+function conclaveSealAssembleReady() {
+  return CONCLAVE_SEAL_FRAGMENTS.every(f => invSlotByKey(f.key) !== -1);
+}
+/** @returns {boolean} vrai si assemblé (consomme les 5 fragments, pose S.hasConclaveMarchandsSeal + S.conclaveSealRegions), false si un fragment manque ou déjà assemblé. */
+function craftConclaveSeal() {
+  if (S.hasConclaveMarchandsSeal) return false; // unique par compte -- pas de double assemblage
+  if (!conclaveSealAssembleReady()) return false;
+  const regions = conclaveSealFragmentsOwnedTierIds();
+  CONCLAVE_SEAL_FRAGMENTS.forEach(f => { const i = invSlotByKey(f.key); if (i !== -1) invRemoveAt(i, 1); });
+  S.hasConclaveMarchandsSeal = true;
+  S.conclaveSealRegions = regions;
+  floatTxt(P.x,P.y,90,'📜 '+i18next.t('progression:progression.treasure_craft.conclave_seal_assembled'),{gold:true});
+  logToDiscord('📜 Sceau du Conclave', `**${myPseudo||'Joueur'}** assemble le Sceau du Conclave des Marchands (${regions.length}/5 régions)`, 0xc8a96e);
+  renderInventory();
+  return true;
+}
 // panneau de craft affiché SEULEMENT dans l'onglet "Trésors" de l'inventaire (voir renderInventory)
 /** Reconstruit le panneau de craft (onglet Trésors) : recettes disponibles, coffret secret, emplacements verrouillés Heidel/Calpheon — câble les clics. */
 function renderTreasureCraftPanel() {
@@ -138,11 +165,32 @@ function renderTreasureCraftPanel() {
     return `<button class="craftRecipeBtn" disabled title="${i18next.t('progression:progression.treasure_craft.upcoming_tier_hint', { tier: tierLabel })}">` +
       `🔒 🧩 0/100 → ${card.icon} ${escapeHtml(tr(card.name))}</button>`;
   }).join('');
+  // Sceau du Conclave des Marchands (2026-07-13) : 1 icône par fragment, 🔒 pour les régions
+  // verrouillées (jamais cliquable, même convention que le reste du contenu locked du jeu) --
+  // affiché même une fois assemblé (S.hasConclaveMarchandsSeal), avec un état "actif" distinct.
+  const sealRow = (() => {
+    if (S.hasConclaveMarchandsSeal) {
+      return `<button class="craftRecipeBtn ready" disabled title="${i18next.t('progression:progression.treasure_craft.conclave_seal_active_hint')}">` +
+        `📜 ${i18next.t('progression:progression.treasure_craft.conclave_seal_active_label')}</button>`;
+    }
+    const owned = conclaveSealFragmentsOwnedTierIds();
+    const icons = CONCLAVE_SEAL_FRAGMENTS.map(f => {
+      const locked = !conclaveSealFragmentUnlocked(f.tierId);
+      const have = owned.includes(f.tierId);
+      return locked ? '🔒' : (have ? '📜' : '▫️');
+    }).join('');
+    const ready = conclaveSealAssembleReady();
+    return `<button class="craftRecipeBtn${ready?' ready':''}" data-kind="conclaveSeal" ${ready?'':'disabled'} ` +
+      `title="${i18next.t('progression:progression.treasure_craft.conclave_seal_hint')}">` +
+      `${icons} ${owned.length}/5 → 📜 ${i18next.t('progression:progression.treasure_craft.conclave_seal_label')}</button>`;
+  })();
   el.innerHTML = `<div class="craftPanelTitle">${i18next.t('progression:progression.treasure_craft.panel_title')}</div>` +
-    `<div class="craftRecipes">${pieceRows}${secretRow}${upcomingRows}</div>`;
+    `<div class="craftRecipes">${pieceRows}${secretRow}${sealRow}${upcomingRows}</div>`;
   el.querySelectorAll('.craftRecipeBtn[data-kind="piece"]').forEach(btn => {
     btn.onclick = () => { const r = TREASURE_PIECE_RECIPES.find(x => x.needKey === btn.dataset.key); if (r) craftTreasurePiece(r); renderTreasureCraftPanel(); };
   });
   const secretBtn = el.querySelector('.craftRecipeBtn[data-kind="secret"]');
   if (secretBtn) secretBtn.onclick = () => { craftSecretCombo(); renderTreasureCraftPanel(); };
+  const sealBtn = el.querySelector('.craftRecipeBtn[data-kind="conclaveSeal"]');
+  if (sealBtn) sealBtn.onclick = () => { craftConclaveSeal(); renderTreasureCraftPanel(); };
 }

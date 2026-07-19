@@ -121,6 +121,71 @@ const MARKET_MATERIALS = [
 // Purement informatif ici (bandeau + aperçu net) -- le vrai calcul fait foi côté RPC.
 const MARKET_SELL_TAX_RATE = 0.35;
 
+// ==================== Sceau du Conclave des Marchands (2026-07-13) ====================
+// Trésor multi-région assemblé via progression/treasure-craft.js (craftConclaveSeal, CONCLAVE_SEAL_FRAGMENTS
+// dans world/region-tiers-data.js). Effets décrits ici sont CÔTÉ CLIENT (affichage/estimation) --
+// le calcul RÉEL du payout vendeur se fait 100% côté SQL (market_match_item, voir
+// supabase/migrations/20260718130000_market_sales_tax_35pct.sql, facteur 0.65 en dur). Une
+// migration correspondante (lit S.hasConclaveMarchandsSeal depuis game_saves.save_data pour ajuster
+// ce facteur par vendeur) doit être écrite/appliquée séparément (accès Supabase requis) pour que
+// ces bonus s'appliquent RÉELLEMENT au silver reçu -- tant que ce n'est pas fait, ce qui suit ne
+// sert qu'à afficher une ESTIMATION cohérente dans le panneau Marché, pas encore le comportement
+// réel du serveur. Voir supabase/migrations/20260721230000_conclave_seal_market_bonus.sql (écrite,
+// PAS appliquée cette session -- pas d'accès Supabase authentifié).
+const CONCLAVE_SEAL_TAX_REDUCTION = 0.05;     // -5% taxe de vente une fois assemblé
+const CONCLAVE_SEAL_LISTING_FEE_REDUCTION = 0.03; // -3% "frais de mise en vente" -- pas de flux de frais séparé de la taxe de vente dans ce jeu (vérifié : market_place_order ne prélève rien à la mise en vente), replié sur le MÊME facteur payout que la taxe (voir migration SQL)
+const CONCLAVE_SEAL_SELL_GAIN_BONUS = 0.08;   // +8% sur le montant net déjà taxé
+const CONCLAVE_SEAL_REGIONAL_BONUS_PCT = 0.02; // +2%/région dont le fragment a contribué à l'assemblage, cumulable (max 10% avec les 5)
+/** @returns {boolean} vrai si le joueur a assemblé le Sceau du Conclave des Marchands. */
+function conclaveSealActive() { return !!(typeof S !== 'undefined' && S.hasConclaveMarchandsSeal); }
+/** @returns {number} fraction du prix de vente conservée par le vendeur après taxe (avant assemblage : 1-MARKET_SELL_TAX_RATE ; après : taxe/frais réduits + bonus de gain). Purement une ESTIMATION client, voir commentaire ci-dessus. */
+function conclaveSealEffectiveSellKeepFraction() {
+  const base = 1 - MARKET_SELL_TAX_RATE;
+  if (!conclaveSealActive()) return base;
+  const reducedTax = base + CONCLAVE_SEAL_TAX_REDUCTION + CONCLAVE_SEAL_LISTING_FEE_REDUCTION;
+  return reducedTax * (1 + CONCLAVE_SEAL_SELL_GAIN_BONUS);
+}
+/**
+ * Passif "Réseau Continental" : +2% sur la vente d'un item ORIGINAIRE d'une région dont le
+ * fragment a contribué à l'assemblage (S.conclaveSealRegions, record permanent -- voir
+ * craftConclaveSeal). Mécanique générique par tierId, PAS câblée en dur sur Velia seul : elle
+ * s'étendra automatiquement le jour où Heidel/Calpheon/Valencia/Edana sortiront et qu'un futur
+ * ré-assemblage y ajoutera leur région. Aujourd'hui, seul 'early' (Velia) peut jamais être dans
+ * S.conclaveSealRegions (seules zones existantes), donc ce passif vaut 2% max en pratique.
+ * @param {string} itemOriginTierId - tierId ZONE_TIERS d'origine de l'item vendu (voir itemOriginRegionTierId).
+ * @returns {number} bonus en fraction (0.02 par région correspondante), 0 si le Sceau n'est pas assemblé ou l'item n'est d'aucune région couverte.
+ */
+function conclaveSealRegionalBonusPct(itemOriginTierId) {
+  if (!conclaveSealActive() || !S.conclaveSealRegions) return 0;
+  return S.conclaveSealRegions.includes(itemOriginTierId) ? CONCLAVE_SEAL_REGIONAL_BONUS_PCT : 0;
+}
+// toutes les zones du jeu existent aujourd'hui uniquement sous ZONE_TIERS 'early' (Velia) -- aucune
+// zone n'est encore tagée Heidel/Calpheon/Valencia/Edana (régions verrouillées, pas de zones
+// construites). Fonction générique prête à lire un futur tag par zone le jour où ces régions
+// sortiront, plutôt que de rester câblée en dur sur 'early'.
+/** @param {number} zi - index de zone. @returns {string} tierId ZONE_TIERS d'origine (aujourd'hui toujours 'early', voir commentaire ci-dessus). */
+function itemOriginRegionTierId(zi) { return (typeof ZONES !== 'undefined' && ZONES[zi] && ZONES[zi].originTierId) || 'early'; }
+/** @returns {number} nombre de fragments (0-5) actuellement contribuant à un bonus -- fragments encore en sac (pré-assemblage) OU régions déjà assemblées (S.conclaveSealRegions), jamais compté deux fois. */
+function conclaveSealSlotBonus() {
+  if (conclaveSealActive()) return (S.conclaveSealRegions || []).length;
+  return (typeof CONCLAVE_SEAL_FRAGMENTS !== 'undefined') ? CONCLAVE_SEAL_FRAGMENTS.filter(f => typeof invSlotByKey === 'function' && invSlotByKey(f.key) !== -1).length : 0;
+}
+/**
+ * "Aperçu du prix moyen" (remplace le "Marché Noir des Guildes" du mockup original, aucun système
+ * de guilde n'existe dans ce jeu) : moyenne des 10 dernières ventes RÉELLES de cet item, lue depuis
+ * market_trades (table déjà existante, déjà lue côté client par refreshBuyModalLadderAndStats --
+ * aucune nouvelle table/migration nécessaire pour CETTE partie de la feature). Réservé aux joueurs
+ * ayant assemblé le Sceau (conclaveSealActive()).
+ * @param {string} itemKey - clé d'objet (cmItemKey).
+ * @returns {Promise<?number>} prix moyen arrondi des 10 dernières ventes, null si aucune vente ou marché non assemblé.
+ */
+async function fetchConclaveSealAvgPrice(itemKey) {
+  if (!conclaveSealActive() || !sb) return null;
+  const { data, error } = await sb.from('market_trades').select('price').eq('item_key', itemKey).order('created_at', { ascending:false }).limit(10);
+  if (error || !data || !data.length) return null;
+  return Math.round(data.reduce((n,r) => n + Number(r.price), 0) / data.length);
+}
+
 /** Réouverture/rafraîchissement complet du panneau Marché : libellés i18next, portefeuille, onglets, parcours des offres, mes ordres. */
 async function refreshCommonMarket() {
   applyMarketStaticI18n();
@@ -451,10 +516,23 @@ function renderCmDetailPanel(g) {
       <input id="cmSellOfferPrice" type="number" placeholder="${l ? Math.round(l.price*1.05) : 550000}" ${owned>0?'':'disabled'}>
       <button id="cmSellOfferSubmitBtn" ${owned>0?'':'disabled'}>${i18next.t('market:market.offer_sell_submit_btn')}</button>
     </div>
+    ${conclaveSealActive() ? `<div class="cmDetailSub cmConclaveAvgPrice" id="cmConclaveAvgPrice">${i18next.t('market:market.conclave_seal.avg_price_loading')}</div>` : ''}
     <div id="cmBuyMsg"></div>`;
 
   if (l) panel.querySelector('.btnBuyListing').onclick = () => openBuyModal(g);
   wireCmOfferForms(panel, g, kind, enhLv, owned);
+  // "Aperçu du prix moyen" (2026-07-13, Sceau du Conclave des Marchands) : requête async séparée,
+  // ne bloque jamais le rendu synchrone du reste du panneau -- se remplit une fois la réponse
+  // arrivée, comme refreshBuyModalLadderAndStats pour le même genre de stat.
+  if (conclaveSealActive()) {
+    fetchConclaveSealAvgPrice(cmItemKey(kind, g.name, enhLv)).then(avg => {
+      const el2 = panel.querySelector('#cmConclaveAvgPrice');
+      if (!el2) return; // panneau déjà refermé/reconstruit entre-temps
+      el2.textContent = avg != null
+        ? i18next.t('market:market.conclave_seal.avg_price_label', { price: fmt(avg) })
+        : i18next.t('market:market.conclave_seal.avg_price_none');
+    });
+  }
 }
 /** @param {HTMLElement} panel - panneau de détail. @param {object} g - ligne sélectionnée. @param {string} kind @param {number} enhLv @param {number} owned - quantité possédée. Câble les formulaires d'offre d'achat/de vente (ouverture, +/-, soumission RPC market_place_order). */
 function wireCmOfferForms(panel, g, kind, enhLv, owned) {
