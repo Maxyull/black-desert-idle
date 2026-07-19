@@ -75,6 +75,15 @@ async function signInForTest(page) {
     .poll(() => page.evaluate(() => typeof onAuthed), { timeout: 10_000 })
     .toBe('function');
   await page.evaluate(async () => {
+    // supprime le tutoriel d'arrivée auto (22 étapes, startTutorial via onAuthed sur nouveau
+    // personnage, game-supabase.js) AVANT qu'il ne soit programmé : sa garde `if (!tutorialAutoShown)`
+    // devient fausse, donc aucun setTimeout(startTutorial) n'est planifié. Depuis 2026-07-19 le module
+    // Compagnon est une vue inline (#companionsInline dans #wrap, plus d'overlay plein écran à 950) :
+    // il ne recouvre donc plus #tutorialOverlay (900), et l'onboarding qui navigue vers la Zone
+    // masquerait la vue Compagnon en plein test. `tutorialAutoShown` est un `let` de portée globale
+    // lexicale (réassignation nue, comme le mock `sb`). Les tutoriels d'objet restent neutralisés via
+    // localStorage (beforeEach). N'affecte que le contexte de test, pas le jeu.
+    try { tutorialAutoShown = true; } catch (e) {}
     await onAuthed({ id:'00000000-0000-4000-8000-000000000001', email:'playwright-test@local.invalid', is_anonymous:false, identities:[] });
   });
   await expect(page.locator('#authOverlay')).toBeHidden({ timeout: 10_000 });
@@ -150,7 +159,7 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
 
   await dismissTutorialsAndClick(page, companionTab);
 
-  const overlay = page.locator('#companionsOverlay');
+  const overlay = page.locator('#companionsInline'); // vue inline dans #wrap (2026-07-19, plus d'overlay plein écran)
   await expect(overlay).toBeVisible();
 
   const frame = page.frameLocator('#companionsFrame');
@@ -194,8 +203,9 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   expect(syncState.hasSync).toBe(true);
   await frame.locator('body').evaluate(() => { syncCompanionStatsToServer(); });
 
-  // ferme le module : l'overlay disparaît et le jeu principal redevient visible
-  await page.locator('#companionsOverlay button', { hasText: 'Fermer' }).click();
+  // quitte le module en cliquant un autre onglet (Zone) : la vue inline disparaît et le jeu
+  // principal redevient visible -- plus de bouton "Fermer" dédié (nav par onglets, comme Boss)
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="zone"]'));
   await expect(overlay).toBeHidden();
   await expect(page.locator('#gameFrame')).toBeVisible();
 
@@ -1176,7 +1186,7 @@ test('header shows title, close button, and collection legend/sort/zoom controls
   // bouton de fermeture DANS le module, à côté de "FAMILIERS" -- appelle bien closeCompanionsModule
   // de la page hôte (vérifié via l'overlay principal qui se cache après le clic)
   await expect(frame.locator('#hdrCloseBtn')).toBeVisible();
-  const overlay = page.locator('#companionsOverlay');
+  const overlay = page.locator('#companionsInline'); // vue inline dans #wrap (2026-07-19, plus d'overlay plein écran)
   await expect(overlay).toBeVisible();
   await frame.locator('#hdrCloseBtn').click();
   await expect(overlay).toBeHidden();

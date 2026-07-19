@@ -494,9 +494,10 @@ rareté du pet (`--r0..--r5`, variable CSS `--pcard-color`) — jamais une coule
   de l'iframe (pas seulement le body pré-scale à 80%). Le plancher `minmax(90px,1fr)` de la
   Collection protège contre le même risque de carte trop étroite qui avait justifié le retrait du
   `zoom`. Test : `body is scaled 1.25x via transform (not CSS zoom)...` (`tests/companions.spec.js`).
-- `#updateToast` (jeu principal, `src/styles/styles.css`) : z-index relevé de 200 à 960, au-dessus
-  de `#companionsOverlay` (950) — la popup de mise à jour restait invisible derrière le module
-  Compagnon plein écran.
+- `#updateToast` (jeu principal, `src/styles/styles.css`) : z-index relevé de 200 à 960. À
+  l'origine (2026-07-20) pour passer au-dessus de l'ancien `#companionsOverlay` plein écran (950).
+  Depuis 2026-07-19 le module s'affiche en vue INLINE dans `#wrap` (`#companionsInline`, calqué sur
+  `#bossRoom`, plus d'overlay) — le 960 est conservé par sécurité, au-dessus de toute modale.
 
 **Marché d'échange réel entre joueurs (2026-07-10, demande explicite : "vrai backend d'échange...
 c'est fini la sauvegarde locale c'est sur supabase déjà")** : premier point de ce module qui fait
