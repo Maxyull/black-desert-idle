@@ -81,6 +81,20 @@ async function openAccountPanel() {
       <div class="acctRankRow" id="acctRankRow">🏆 ${i18next.t('backend:backend.account.rank_gs_label')} <span id="acctRankVal" class="acctRankVal">${i18next.t('backend:backend.account.rank_loading')}</span></div>
     </div>
 
+    <!-- Préférences (2026-07-19) : compteurs en ligne + langue préférée + Confiance & Sécurité,
+         rapatriés ici depuis l'ancienne sidebar gauche (menus déplacés dans le header). Libellés en
+         ligne (LANG) plutôt que nouvelles clés i18n, comme btnTrust (wiki-codex.js). -->
+    <div class="acctCard">
+      <h3>⚙️ ${LANG !== 'en' ? 'Préférences' : 'Preferences'}</h3>
+      <div class="acctGrid acctGrid3">
+        <div class="acctStat"><span class="acctStatLabel">${LANG !== 'en' ? 'Joueurs en ligne' : 'Players online'}</span><span class="acctStatVal">🟢 ${(document.getElementById('onlineTotal') || {}).textContent || '—'}</span></div>
+        <div class="acctStat"><span class="acctStatLabel">${LANG !== 'en' ? 'Inscrits' : 'Registered'}</span><span class="acctStatVal">👤 ${(document.getElementById('registeredTotal') || {}).textContent || '—'}</span></div>
+        <div class="acctStat"><span class="acctStatLabel">${LANG !== 'en' ? 'Langue préférée' : 'Preferred language'}</span><span class="acctStatVal" style="display:flex;gap:5px;justify-content:center"><button id="acctLangFr" class="acctLangBtn">🇫🇷 FR</button><button id="acctLangEn" class="acctLangBtn">🇬🇧 EN</button></span></div>
+      </div>
+      <div class="acctDivider"></div>
+      <button id="btnAcctTrust">🛡️ ${LANG !== 'en' ? 'Confiance & Sécurité' : 'Trust & Security'}</button>
+    </div>
+
     <div class="acctCard">
       <h3>🔌 ${i18next.t('backend:backend.account.connection_title')}</h3>
       <div class="acctGrid acctGrid3">
@@ -173,6 +187,12 @@ async function openAccountPanel() {
   `;
   openInfo(i18next.t('backend:backend.account.panel_title'), html);
   $a('btnClearCache').onclick = clearGameCache;
+  // Confiance & Sécurité depuis le panneau compte (2026-07-19) : ouvre le MÊME contenu que l'ancien
+  // bouton sidebar btnTrust (renderTrustSecurityHtml, wiki-codex.js).
+  if ($a('btnAcctTrust')) $a('btnAcctTrust').onclick = () => openInfo(LANG !== 'en' ? '🛡️ Confiance & Sécurité' : '🛡️ Trust & Security', renderTrustSecurityHtml());
+  // langue préférée : réutilise les handlers déjà câblés du toggle de langue du header (#langToggle)
+  if ($a('acctLangFr')) $a('acctLangFr').onclick = () => { const el = document.querySelector('#langToggle .langOpt[data-lang="fr"]'); if (el) el.click(); };
+  if ($a('acctLangEn')) $a('acctLangEn').onclick = () => { const el = document.querySelector('#langToggle .langOpt[data-lang="en"]'); if (el) el.click(); };
   $a('btnSavePseudo').onclick = async () => {
     const val = $a('pseudoInput').value.trim();
     const msg = $a('pseudoMsg');
