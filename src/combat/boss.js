@@ -376,7 +376,7 @@ function openCompanionsModule() {
     cont.id = 'companionsInline'; // styles dans styles.css (calque de #bossRoom) — pas de fixed/overlay
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
-    frame.src = 'src/companions/companions.html?v=21'; // bump OBLIGATOIRE dès que companions.html change (onglets/panels/shell), sinon le navigateur sert l'ancien shell en cache (cache-busting, voir companions.html)
+    frame.src = 'src/companions/companions.html?v=22'; // bump OBLIGATOIRE dès que companions.html change (onglets/panels/shell), sinon le navigateur sert l'ancien shell en cache (cache-busting, voir companions.html)
     cont.appendChild(frame);
     ($a('wrap') || document.body).appendChild(cont);
   }

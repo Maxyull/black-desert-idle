@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V496', d:'19/07/2026 22:00', name:{fr:'Compagnon : badge « Gratuit » corrigé sur les œufs payants', en:'Companion: fixed "Free" badge on paid eggs'}, fr:[
+      {t:'fix', sub:'compagnon', tx:'Le badge « Gratuit » d\'un slot d\'incubation reflète désormais l\'ŒUF (seul l\'œuf Basique est gratuit) et non le slot : un œuf payant (Argenté/Doré/Platine) démarré dans un des deux premiers slots (gratuits) n\'affiche plus « Gratuit » par erreur.'},
+    ], en:[
+      {t:'fix', sub:'compagnon', tx:'The "Free" badge on an incubation slot now reflects the EGG (only the Basic egg is free), not the slot: a paid egg (Silver/Gold/Platinum) started in one of the two first (free) slots no longer wrongly shows "Free".'},
+    ] },
   { v:'V495', d:'19/07/2026 21:00', name:{fr:'Langue : un seul sélecteur FR/EN dans le header', en:'Language: a single FR/EN selector in the header'}, fr:[
       {t:'change', sub:'interface', tx:'Le sélecteur de langue FR/EN du header adopte le look en pilule segmentée (le même que celui qui était dans le menu Compagnon), et cliquer FR ou EN sélectionne directement cette langue. Le sélecteur en double du menu Compagnon est retiré : on change désormais la langue à un seul endroit (le header), plus cohérent — le changement se répercute aussi sur le module Compagnon.'},
     ], en:[
