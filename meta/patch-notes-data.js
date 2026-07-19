@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V494', d:'19/07/2026 20:00', name:{fr:'Compagnon : affiché comme les autres menus', en:'Companion: shown like the other menus'}, fr:[
+      {t:'change', sub:'interface', tx:'Le menu Compagnon ne s\'ouvre plus dans sa propre fenêtre plein écran par-dessus le jeu : il s\'affiche désormais dans la zone de jeu, juste sous le header, exactement comme les onglets Zone et Boss. Le header et la barre d\'activités restent visibles ; on change de vue simplement en cliquant un autre onglet (plus de croix de fermeture séparée).'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The Companion menu no longer opens in its own full-screen window on top of the game: it now shows inside the game area, right under the header, exactly like the Zone and Boss tabs. The header and activity bar stay visible; you switch views just by clicking another tab (no more separate close cross).'},
+    ] },
   { v:'V493', d:'19/07/2026 19:00', name:{fr:'Compendium : nouvelle DA + fermeture Échap/clic', en:'Compendium: new look + Escape/click to close'}, fr:[
       {t:'change', sub:'interface', tx:'Le Compendium adopte la nouvelle direction artistique (mêmes couleurs froides que le reste du jeu, au lieu de l\'ancien thème doré). Il se ferme aussi avec Échap ou en cliquant en dehors de la fenêtre, et la croix de fermeture est bien calée en haut à droite. Alignement de l\'en-tête corrigé.'},
     ], en:[
