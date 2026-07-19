@@ -20,16 +20,19 @@
 // bonus fictif : seul le bonus réel (compendiumPct(), +1%/+1%/+1% par zone/boss, PEN exclu) est
 // affiché, pour ne jamais montrer une valeur de stat inventée au joueur.
 
+// Palette officielle DA (2026-07-19, demande explicite : "refaire avec la nouvelle DA") -- reprise de
+// la palette de référence (companions.css / CLAUDE.md §29, bleus froids) en remplacement de l'ancien
+// thème doré/brun fantasy ad hoc de ce panneau.
 const CMP_V = {
-  bg0: '#0d0b08', bg1: '#14110d', bg2: '#1c1710', border: '#221e18', border2: '#3a352a',
-  gold: '#c9a227', cream: '#e8dcc0', cream2: '#d8cdb8', muted: '#8a8168', muted2: '#6b6455', muted3: '#5c5645',
+  bg0: '#0b0f1a', bg1: '#0e1422', bg2: '#131a29', border: '#263049', border2: '#3a4665',
+  gold: '#d4a955', cream: '#c7d0e6', cream2: '#9aa4c0', muted: '#8a95b3', muted2: '#6b7699', muted3: '#5c6785',
 };
 const CMP_CINZEL = { fontFamily: "'Cinzel', serif" };
 const cmpH = React.createElement;
 
 // couleur d'accent par monde -- dérivée de l'icône déjà utilisée par ZONE_TIERS (renderZoneTierTabs,
 // core/game-core.js), pas une nouvelle convention : 🟢🔵🟡🟠🔴
-const CMP_WORLD_COLOR = { early: '#6b9c6b', mid: '#5c85a8', end: '#c9a227', end2: '#e0935a', end3: '#9c3b3b' };
+const CMP_WORLD_COLOR = { early: '#4a9e56', mid: '#5d7ab8', end: '#d4a955', end2: '#e8a355', end3: '#c0503c' };
 // aucun champ `world` sur BOSS_ROSTER aujourd'hui (les 2 bosses existants sont tous deux à Velia) --
 // mapping explicite ici plutôt que de supposer un champ qui n'existe pas côté data.
 const CMP_BOSS_WORLD = { kzarka: 'early', vell: 'early' };
@@ -131,7 +134,16 @@ function CompendiumApp(props) {
     return idxs;
   }, [zonesInWorld, query]);
 
-  return cmpH('div', { style: { position: 'fixed', inset: 0, zIndex: 965, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '30px 16px', overflowY: 'auto', background: 'rgba(4,3,2,.78)' } },
+  // fermeture par Échap + clic hors de la carte (2026-07-19, demande explicite : "mettre le échap
+  // clique"). Écouteur clavier monté tant que le panneau existe ; le clic-hors est géré par l'onClick
+  // de l'overlay (e.target===e.currentTarget) juste en dessous.
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') props.onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  return cmpH('div', { onClick: (e) => { if (e.target === e.currentTarget) props.onClose(); }, style: { position: 'fixed', inset: 0, zIndex: 965, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '30px 16px', overflowY: 'auto', background: 'rgba(4,4,8,.8)' } },
     cmpH('style', null, `
       .cinzelC { font-family: 'Cinzel', serif; }
       .cmpBtn:focus-visible, .cmpRow:focus-visible, .cmpItemChip:focus-visible, .cmpTabBtn:focus-visible { outline: 2px solid ${CMP_V.gold}; outline-offset: 2px; }
@@ -141,15 +153,17 @@ function CompendiumApp(props) {
       @media (max-width: 480px) { .cmpStatGrid { grid-template-columns: repeat(2, 1fr) !important; } }
     `),
     cmpH('div', {
-      style: { maxWidth: 720, width: '100%', background: 'radial-gradient(ellipse at 20% 0%, #1c1712 0%, #0d0b08 45%, #060504 100%)', color: CMP_V.cream2, fontFamily: "'EB Garamond', Georgia, serif", borderRadius: 10, border: `1px solid ${CMP_V.border2}`, padding: '30px 24px 44px', position: 'relative' },
+      style: { maxWidth: 720, width: '100%', background: 'radial-gradient(ellipse at 20% 0%, #131a29 0%, #0e1422 45%, #0b0f1a 100%)', color: CMP_V.cream2, fontFamily: "'EB Garamond', Georgia, serif", borderRadius: 10, border: `1px solid ${CMP_V.border2}`, padding: '30px 24px 44px', position: 'relative' },
     },
-      cmpH('button', { className: 'cmpBtn', onClick: props.onClose, 'aria-label': i18next.t('progression:progression.compendium_react.close_aria'), style: { position: 'absolute', top: 14, right: 16, background: 'none', border: 'none', color: CMP_V.muted2, fontSize: 18, cursor: 'pointer' } }, '✕'),
+      // croix de fermeture "tout à droite" (2026-07-19, demande explicite) : bouton icône carré ancré
+      // dans le coin haut-droit de la carte, au-dessus du contenu.
+      cmpH('button', { className: 'cmpBtn', onClick: props.onClose, title: i18next.t('progression:progression.compendium_react.close_aria'), 'aria-label': i18next.t('progression:progression.compendium_react.close_aria'), style: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: CMP_V.muted, fontSize: 18, lineHeight: 1, cursor: 'pointer', borderRadius: 6, zIndex: 3 } }, '✕'),
 
-      cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 } },
-        cmpH('span', { style: { fontSize: 20, color: CMP_V.gold } }, '📖'),
-        cmpH('div', null,
-          cmpH('div', { className: 'cinzelC', style: { fontSize: 10, letterSpacing: 3, color: CMP_V.muted2, textTransform: 'uppercase' } }, 'Black Desert Idle'),
-          cmpH('h1', { className: 'cinzelC', style: { fontSize: 22, fontWeight: 700, margin: 0, color: CMP_V.cream } }, i18next.t('progression:progression.compendium_react.title')))),
+      cmpH('div', { style: { marginBottom: 18 } },
+        cmpH('div', { className: 'cinzelC', style: { fontSize: 10, letterSpacing: 3, color: CMP_V.muted2, textTransform: 'uppercase', marginBottom: 3 } }, 'Black Desert Idle'),
+        cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+          cmpH('span', { style: { fontSize: 22, lineHeight: 1, color: CMP_V.gold } }, '📖'),
+          cmpH('h1', { className: 'cinzelC', style: { fontSize: 22, fontWeight: 700, margin: 0, lineHeight: 1, color: CMP_V.cream } }, i18next.t('progression:progression.compendium_react.title')))),
 
       cmpH('div', { className: 'cmpStatGrid', style: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 14 } },
         cmpH(CmpStatPlate, { icon: '📖', label: i18next.t('progression:progression.compendium_react.progress_label'), value: `${zc + bc}/${ZONES.length + bossMax}`, accent: CMP_V.cream }),
