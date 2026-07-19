@@ -7162,7 +7162,7 @@ function openCompanionsModule() {
     cont.id = 'companionsInline'; 
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
-    frame.src = 'src/companions/companions.html?v=21'; 
+    frame.src = 'src/companions/companions.html?v=22'; 
     cont.appendChild(frame);
     ($a('wrap') || document.body).appendChild(cont);
   }

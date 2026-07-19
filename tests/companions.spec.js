@@ -221,6 +221,43 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   expect(pageErrors).toEqual([]);
 });
 
+// bug rapporté (2026-07-19, capture à l'appui : "enlevé gratuit... il s'est pas enlevé quand j'ai
+// acheté l'œuf") -- le badge "Gratuit" d'un slot d'incubation doit refléter l'ŒUF (basique, coût 0),
+// pas le SLOT : un œuf PAYANT (Argenté/Doré/Platine) démarré dans un des 2 slots gratuits (sl.free)
+// gardait le badge. renderHatch() est le SEUL endroit qui décide -- test white-box du rendu.
+test('incubation "free" badge follows the egg (basic), not the slot: a paid egg in a free slot shows no badge', async ({ page }) => {
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const res = await frame.locator('body').evaluate(() => {
+    const badge = i18next.t('companions:companions.hatch.free_badge');
+    // états connus : slot0 gratuit + œuf BASIQUE (gratuit), slot1 gratuit + œuf DORÉ (payant),
+    // slot2 payant + œuf ARGENTÉ prêt (payant), slots 3-4 verrouillés.
+    incubSlots[0] = { free: true,  eggId: 'basic', tl: 1000, tot: 21600, ready: false };
+    incubSlots[1] = { free: true,  eggId: 'gold',  tl: 1000, tot: 21600, ready: false };
+    incubSlots[2] = { free: false, eggId: 'silver', tl: 0,   tot: 21600, ready: true  };
+    incubSlots[3] = { free: false, tl: null, tot: null, locked: true };
+    incubSlots[4] = { free: false, tl: null, tot: null, locked: true };
+    renderHatch();
+    const slots = [...document.querySelectorAll('#incub-slots > .isl')];
+    return {
+      badge,
+      slot0HasBadge: slots[0].textContent.includes(badge), // œuf gratuit -> badge attendu
+      slot1HasBadge: slots[1].textContent.includes(badge), // œuf payant dans slot gratuit -> PAS de badge (le bug)
+      slot2HasBadge: slots[2].textContent.includes(badge), // œuf payant prêt -> pas de badge
+      totalBadges: document.querySelectorAll('#incub-slots').length && slots.filter(s => s.textContent.includes(badge)).length,
+    };
+  });
+
+  expect(res.slot0HasBadge).toBe(true);
+  expect(res.slot1HasBadge).toBe(false);
+  expect(res.slot2HasBadge).toBe(false);
+  expect(res.totalBadges).toBe(1); // seul le slot avec l'œuf basique gratuit
+});
+
 // garde-fou (2026-07-20, "Colllection si petite carte alors afficher tiers rareté et section et
 // gs") -- au cran de zoom le plus dense (120px), la ligne meta normale (rareté en toutes lettres +
 // tier + section + type, séparés par "·") déborde largement de la carte et se fait tronquer
