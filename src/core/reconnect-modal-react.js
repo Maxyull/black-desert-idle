@@ -129,6 +129,15 @@ function ReconnectModal(props) {
   const grades = (typeof GEAR_TIERS !== 'undefined' ? GEAR_TIERS : []).map(g => g.grade);
   const filteredHistory = tierFilter === 'Tous' ? d.history : d.history.filter(x => x.gearGrade === tierFilter);
 
+  // fermeture par Échap (2026-07-19, demande explicite : "ajoute échap/clic hors de la fenêtre dans
+  // modal reconnexion") -- écouteur clavier monté tant que le modal existe, retiré au démontage.
+  // Le clic hors de la carte est géré par l'onClick de l'overlay (e.target===e.currentTarget) plus bas.
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   if (!open) return null;
 
   // bug corrigé (2026-07-10, rapporté explicitement : "modal de retour invisible") : le wrapper
@@ -140,7 +149,7 @@ function ReconnectModal(props) {
   // inutilisable dès que la fenêtre était plus courte que le contenu. overflowY:'auto' +
   // alignItems:'flex-start' (comme le Compendium, compendium-react.js) corrige ça : le contenu
   // démarre en haut et devient scrollable plutôt que clippé sans recours.
-  return h('div', { style: { position: 'fixed', inset: 0, zIndex: 970, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '30px 16px', overflowY: 'auto', background: 'rgba(4,4,8,.72)' } },
+  return h('div', { onClick: (e) => { if (e.target === e.currentTarget) setOpen(false); }, style: { position: 'fixed', inset: 0, zIndex: 970, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '30px 16px', overflowY: 'auto', background: 'rgba(4,4,8,.72)' } },
     h('style', null, `
       @keyframes rcRiseIn { from { opacity:0; transform:translateY(10px);} to { opacity:1; transform:translateY(0);} }
       @keyframes rcFadeSlide { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:translateY(0);} }

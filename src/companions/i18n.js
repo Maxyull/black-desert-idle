@@ -77,5 +77,21 @@ function applyCompanionsI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = i18next.t('companions:' + el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = i18next.t('companions:' + el.dataset.i18nTitle); });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = i18next.t('companions:' + el.dataset.i18nPlaceholder); });
+  // switcher de langue (2026-07-19) : surligne le bouton de la langue active
+  document.querySelectorAll('.langBtn').forEach(b => b.classList.toggle('on', b.dataset.lng === COMPANIONS_LANG));
 }
 applyCompanionsI18n();
+
+/**
+ * Switcher de langue du module Compagnon (2026-07-19, demande explicite : "ajoute un switcher langue
+ * dans compagnon"). Persiste la clé PARTAGÉE avec le jeu principal (velia-idle-lang, même origine) puis
+ * recharge l'iframe : c'est le moyen le plus sûr de tout réafficher dans la nouvelle langue (NUM_LOCALE
+ * et de nombreux libellés/rendus sont figés une fois au chargement). Le jeu principal reprendra la même
+ * langue à son prochain chargement (clé partagée). No-op si langue inchangée/inconnue.
+ * @param {'fr'|'en'} lng - langue cible.
+ */
+function setCompanionLang(lng) {
+  if ((lng !== 'fr' && lng !== 'en') || lng === COMPANIONS_LANG) return;
+  try { localStorage.setItem('velia-idle-lang', lng); } catch (e) {}
+  location.reload();
+}
