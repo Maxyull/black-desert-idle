@@ -2128,6 +2128,76 @@
      cliquables, une par section du panneau admin, chacune avec son mini graphique (réutilise les
      mêmes builders que la section complète) + un voyant 🟢/🔴 de synthèse. Clique -> ouvre la
      section complète (openAdminSection). */
+  /* ── Dashboard v2 (2026-07-19, bdi-admin-ux.md §1) : Q1 santé / Q2 KPI+deltas / Q3 à traiter ──
+     Rendu par admin-dashboard-react.js. Les graphiques passent SOUS ces trois blocs. */
+  .admDashV2 { margin-bottom:18px; }
+  .admHealthBanner {
+    border:1px solid var(--adm-border,#263049); border-left-width:4px; border-radius:10px;
+    background:var(--adm-surface,#0e1422); padding:13px 16px; margin-bottom:16px;
+  }
+  /* couleurs SÉMANTIQUES, jamais l'accent du thème : un rouge doit rester un rouge */
+  .admHealthBanner.tone-good { border-left-color:var(--adm-good,#5ec98a); }
+  .admHealthBanner.tone-warn { border-left-color:var(--adm-warn,#d9a441); }
+  .admHealthBanner.tone-crit { border-left-color:var(--adm-crit,#d4685f); }
+  .admHealthBanner.tone-muted { border-left-color:var(--adm-muted,#6b7699); }
+  .admHealthMain { display:flex; align-items:center; gap:10px; }
+  .admHealthDot { font-size:15px; line-height:1; }
+  .admHealthTitle { font-size:15px; font-weight:600; color:var(--adm-text,#c7d0e6); }
+  .admHealthAgo { margin-left:auto; font-size:10px; color:var(--adm-muted,#6b7699); }
+  .admHealthList { display:flex; flex-direction:column; gap:6px; margin-top:11px; }
+  .admHealthItem {
+    width:100%; margin:0; text-align:left; font-size:11.5px; padding:7px 10px; border-radius:7px;
+    background:var(--adm-surface-2,#131a29); border:1px solid var(--adm-border,#263049);
+    color:var(--adm-text-2,#9aa4c0); cursor:pointer;
+  }
+  .admHealthItem:hover:not(:disabled) { border-color:var(--adm-border-2,#3a4665); color:var(--adm-text,#c7d0e6); }
+  .admHealthItem:disabled { cursor:default; opacity:.75; }
+  .admHealthItem.crit { border-left:3px solid var(--adm-crit,#d4685f); }
+  .admHealthItem.warn { border-left:3px solid var(--adm-warn,#d9a441); }
+  .admDashQLabel {
+    font-size:9px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--adm-muted,#6b7699); margin:16px 0 8px;
+  }
+  .admKpiRow { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+  .admKpiCard {
+    background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049);
+    border-radius:9px; padding:11px 13px; min-width:0;
+  }
+  .admKpiLbl { font-size:9.5px; letter-spacing:.06em; color:var(--adm-muted,#6b7699); margin-bottom:6px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .admKpiVal { font-size:22px; font-weight:600; line-height:1.1; color:var(--adm-text,#c7d0e6); font-variant-numeric:tabular-nums; }
+  .admKpiDelta { font-size:11px; font-weight:600; margin-top:5px; font-variant-numeric:tabular-nums; }
+  .admKpiDelta.tone-good { color:var(--adm-good,#5ec98a); }
+  .admKpiDelta.tone-bad { color:var(--adm-crit,#d4685f); }
+  .admKpiDelta.tone-neutral { color:var(--adm-muted,#6b7699); }
+  .admKpiVs { font-weight:400; color:var(--adm-muted,#6b7699); margin-left:5px; font-size:9.5px; }
+  .admActionsList { display:flex; flex-direction:column; gap:6px; }
+  .admActionRow {
+    width:100%; margin:0; display:flex; align-items:center; gap:10px; text-align:left;
+    background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049);
+    border-radius:8px; padding:10px 13px; font-size:12px; color:var(--adm-text,#c7d0e6); cursor:pointer;
+  }
+  .admActionRow:hover { border-color:var(--adm-border-2,#3a4665); }
+  .admActionLbl { flex:1; min-width:0; }
+  .admActionGo { font-size:10.5px; color:var(--gold); white-space:nowrap; }
+  /* état vide EXPLICITE et satisfaisant, pas une zone blanche (bdi-admin-ux.md §1 Q3) */
+  .admActionsEmpty {
+    background:var(--adm-surface,#0e1422); border:1px dashed var(--adm-border,#263049);
+    border-radius:8px; padding:14px; text-align:center; font-size:12px; color:var(--adm-good,#5ec98a);
+  }
+  .admDashRefresh {
+    width:auto; margin:14px 0 0; padding:5px 12px; font-size:11px; border-radius:7px;
+    background:transparent; border:1px solid var(--adm-border,#263049); color:var(--adm-text-2,#9aa4c0); cursor:pointer;
+  }
+  .admDashRefresh:hover { border-color:var(--gold); color:var(--gold); }
+  /* squelette : évite le saut de mise en page quand les données arrivent */
+  .admSkelBanner, .admSkelKpi { background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049); border-radius:9px; animation:admSkelPulse 1.4s ease-in-out infinite; }
+  .admSkelBanner { height:56px; margin-bottom:16px; }
+  .admSkelKpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+  .admSkelKpi { height:78px; }
+  @keyframes admSkelPulse { 0%,100% { opacity:.55; } 50% { opacity:.85; } }
+  @media (prefers-reduced-motion:reduce) { .admSkelBanner, .admSkelKpi { animation:none; } }
+
   .admDashGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(268px, 1fr)); gap:12px; }
   .admDashCard {
     background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049); border-radius:9px;

@@ -1140,6 +1140,9 @@
 <!-- charge APRÈS admin-panel.js ET admin-economy.js : lit ADMIN_SECTIONS au chargement immédiat
      (push de la catégorie "Supervision" + câblage des items planned PvP/Donations), et complète la
      catégorie "economy" créée par admin-economy.js -- voir src/admin/admin-monitoring.js -->
+<!-- Dashboard admin en React (5e exception React du projet, cf. CLAUDE.md) -- charge APRES
+     admin-panel.js (utilise openAdminSection + renderAdminDashboardWidgets) et apres React/ReactDOM
+     charges en tete de page. Refonte bdi-admin-ux.md §1 (Q1 sante / Q2 KPI+deltas / Q3 a traiter). -->
 <!-- chat (mondial/trade/annonce + mentions @joueur) -- extrait de game-supabase.js le 2026-07-14 --
      charge APRÈS lui : appelle immédiatement fetchChatMessages/pollChatUnread (setInterval au
      top-level), qui ont besoin de $a/sb/currentUser déjà définis -->
