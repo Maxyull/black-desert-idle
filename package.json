@@ -12,7 +12,8 @@
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report",
     "serve": "python3 -m http.server 8000",
-    "check-assets": "node scripts/check-asset-weight.js"
+    "check-assets": "node scripts/check-asset-weight.js",
+    "worktree-setup": "node scripts/worktree-setup.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
