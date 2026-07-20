@@ -126,6 +126,29 @@ async function dismissTutorialsAndClick(page, locator, attempts = 5) {
   }
 }
 
+// Barrière de démarrage du module Compagnon (2026-07-20). Les 47 tests attendaient
+// `.hdr-logo` avant leur premier evaluate() dans l'iframe -- ce qui ne prouve RIEN : ce logo est
+// du markup statique de companions.html (ligne 35), donc présent dès le parse du HTML, alors que
+// PET_CATALOG / PETS / migratePetUidV1 / COMPANION_MODEL_MAP viennent des ~30 <script> qui ne
+// commencent qu'à la ligne 491. Entre les deux, il y a une fenêtre où l'iframe est "visible" mais
+// vide de toute fonction.
+//
+// À vide la fenêtre est nulle (le logo répond en ~140 ms, catalog.js a déjà tourné) -- c'est
+// pourquoi ça passait en local et échouait au hasard dans la suite complète. Mesuré sous
+// contention (6 workers, le serveur python http.server étant mono-thread et servant les ~30
+// scripts en file) : le logo répond entre 130 et 1180 ms, et `typeof PET_CATALOG` valait encore
+// `undefined` à cet instant dans 1 run sur 3 -> `ReferenceError: PET_CATALOG is not defined` sur
+// le premier evaluate(). C'était la cause des échecs intermittents que `retries: 2` rattrapait et
+// masquait en "flaky".
+//
+// #companion-version est rempli par la DERNIÈRE instruction de main.js, lui-même dernier script
+// chargé, après renderAll() : c'est le seul signal qui prouve que TOUT le module a booté. Vide
+// dans le markup (companions.html:476), non vide après boot -- et mesuré non vide encore après
+// que PET_CATALOG soit défini, donc strictement plus sûr.
+async function waitCompanionsReady(frame) {
+  await expect(frame.locator('#companion-version')).toHaveText(/\S/, { timeout: 30_000 });
+}
+
 // Fiabilité (2026-07-18) : le jeu principal tourne en fond pendant ces tests et déclenche parfois un
 // tutoriel d'OBJET (ITEM_TUTORIALS, ex. "Pierre de Cron") dont l'overlay hôte plein écran bloque
 // tout clic DANS l'iframe Compagnon -> timeouts intermittents, sans rapport avec le module testé.
@@ -163,7 +186,7 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   await expect(overlay).toBeVisible();
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   // roster de départ : 0 pet (2026-07-10, demande explicite -- voir roster.js)
   await expect(frame.locator('#tb2')).toHaveText('0');
@@ -230,7 +253,7 @@ test('incubation "free" badge follows the egg (basic), not the slot: a paid egg 
   await signInForTest(page);
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const res = await frame.locator('body').evaluate(() => {
     const badge = i18next.t('companions:companions.hatch.free_badge');
@@ -273,7 +296,7 @@ test('collection cards show a compact tier/rarity/section/GS summary that never 
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG[0];
@@ -329,7 +352,7 @@ test('collection pagination toggle limits visible cards per page and paginates c
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const setup = await frame.locator('body').evaluate(() => {
     for (let i = 0; i < 30; i++) {
@@ -379,7 +402,7 @@ test('reserve defaults to sorting by Tier (GS as tiebreak), not insertion order'
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG[0];
@@ -408,7 +431,7 @@ test('reserve list in Sections can be sorted by GS and by Tier', async ({ page }
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const secIdx = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG[0];
@@ -460,6 +483,7 @@ test('terrain card is width-capped and the reserve sits to its right with room f
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Sections' }).click();
 
   await frame.locator('body').evaluate(() => {
@@ -508,7 +532,7 @@ test('module version is displayed bottom-left, reusing the shared VNNN numbering
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const versionEl = frame.locator('#companion-version');
   await expect(versionEl).toBeVisible();
@@ -542,7 +566,7 @@ test('companion index completion counts distinct species×tier combos, capped at
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG[0];
@@ -576,7 +600,7 @@ test('trimRosterToCapIfNeeded() prunes an oversized roster to 96, always keeping
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const savedPets = PETS;
@@ -617,7 +641,7 @@ test('hatching is blocked once the collection reaches the 96-pet cap, silver is 
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   await setSharedSilver(frame, 999_999_999); // silver côté jeu large : le blocage doit venir du plafond, pas du silver
   const result = await frame.locator('body').evaluate(() => {
@@ -654,7 +678,7 @@ test('incubation: choose+pay egg on start, timer runs, and the slot goes empty a
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
 
   await setSharedSilver(frame, 10_000_000);
@@ -691,7 +715,7 @@ test('eggs roll a starting tier from tierOdds (well-formed, honored by rollAndCr
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
 
   const result = await frame.locator('body').evaluate(() => {
@@ -738,7 +762,7 @@ test('the Tutorial tab renders an illustrated, concise guide of the companion me
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Tutoriel' }).click();
 
   const content = frame.locator('#tutorial-content');
@@ -779,7 +803,7 @@ test('incubation slots unlock in order for 1M/10M/100M, spending the exact cost 
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
 
   await setSharedSilver(frame, 200_000_000); // assez pour les 3 paliers (1M + 10M + 100M) côté jeu
@@ -832,7 +856,7 @@ test('incubation is capped at 5 fixed slots and an unaffordable unlock spends no
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
 
   await setSharedSilver(frame, 10); // très en dessous du coût du 3e slot (1M), côté jeu
@@ -862,7 +886,7 @@ test('companion silver is the shared game pool: a spend debits the game and an e
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
 
   await setSharedSilver(frame, 5_000_000);
@@ -896,7 +920,7 @@ test('claimPvpRewards credits the shared game silver with the server-authoritati
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'PvP' }).click();
 
   await setSharedSilver(frame, 1000);
@@ -933,7 +957,7 @@ test('terrain 3D viewer reuses its WebGL context across re-renders of the same p
   await signInForTest(page);
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(async () => {
     const cat = PET_CATALOG.find(c => typeof companionModelUrlFor === 'function' && companionModelUrlFor({ cat: c, tier: 3 }));
@@ -973,7 +997,7 @@ test('hatch reveal 3D viewer is disposed when the modal closes', async ({ page }
   await signInForTest(page);
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(async () => {
     const cat = PET_CATALOG.find(c => typeof companionModelUrlFor === 'function' && companionModelUrlFor({ cat: c, tier: 1 }));
@@ -1014,7 +1038,7 @@ test('companion "Tes stats" tab shows real eggs-opened/money-spent counters and 
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   // dépense réelle : achète un œuf pour que "Œufs ouverts"/"Argent dépensé" ne soient pas juste 0 par défaut
   await setSharedSilver(frame, 10_000_000); // silver côté jeu suffisant pour n'importe quel œuf
@@ -1072,7 +1096,7 @@ test('syncCompanionStatsToServer reaches the RPC call and never throws with a ca
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await page.evaluate(async () => {
     const origGetSb = window.getSbClient;
@@ -1122,7 +1146,7 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
   // "0" est AUSSI l'état par défaut d'un tout nouveau joueur (roster.js) -- ne prouve
   // pas à lui seul que loadGame()/la migration ont fini de tourner, donc pas fiable comme seule
   // condition d'attente. On poll directement petsRosterResetV1 (posé synchroneement à la toute fin
@@ -1175,7 +1199,7 @@ test('prod economy wipe clears pets/inventory/slots once, keeps earned achieveme
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
   await expect.poll(() => frame.locator('body').evaluate(() => petsEconomyWipeV1)).toBe(true);
 
   const after = await frame.locator('body').evaluate(() => ({
@@ -1215,6 +1239,11 @@ test('header shows title, close button, and collection legend/sort/zoom controls
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
+
+  // titre du header : c'est le SEUL test dont c'est le sujet, donc il garde l'assertion explicite.
+  // Ailleurs, `.hdr-logo` ne servait que de (fausse) barrière de démarrage -- voir
+  // waitCompanionsReady.
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   // bandeau "test en cours" RETIRÉ au passage en prod (2026-07-18) -- ne doit plus exister
@@ -1266,6 +1295,7 @@ test('hatch countdown keeps updating live while the tab stays open', async ({ pa
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
 
   // le 2e slot (non gratuit, non prêt au démarrage) affiche un vrai compte à rebours -- on lit son
@@ -1293,7 +1323,7 @@ test('fusing an Ancestral into a weaker pet that downgrades unlocks the hard ach
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const origRandom = Math.random;
@@ -1343,7 +1373,7 @@ test('fusion result modal shows a green up arrow on gain and a red down arrow on
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   // Le tier grimpe toujours d'au moins 1 cran par rapport au meilleur parent (baseTier =
   // max(tiers)+1) -> ⬆️ vert garanti. MAIS ce n'est vrai QUE hors "breakthrough" de rareté :
@@ -1399,7 +1429,7 @@ test('fusion of two identical pets never shows a red arrow on tier (tier can onl
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     // Parents à la rareté MAXIMALE (5) pour rendre le test déterministe : l'invariant "le Tier ne peut
@@ -1436,6 +1466,7 @@ test('PvP tab shows the daily-tournament banner and a real GS-sorted ranking of 
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'PvP' }).click();
   // bannière ré-encadrée (2026-07-18, "ouvrir pvp") : le tournoi quotidien est jouable, plus de "🔒 Bientôt".
   await expect(frame.locator('text=PvP — Tournoi quotidien')).toBeVisible();
@@ -1472,6 +1503,7 @@ test('"Voir en 3D" button only appears for a pet with an uploaded model, and ope
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Sections' }).click();
 
   const noModelState = await frame.locator('body').evaluate(() => {
@@ -1533,7 +1565,7 @@ test('COMPANION_MODEL_MAP covers all 11 loot/combat species at every tier, and t
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const mapCheck = await frame.locator('body').evaluate(() => {
     const lootSpecies = PET_CATALOG.filter(c => c.sec === 'loot').map(c => c.name);
@@ -1577,7 +1609,7 @@ test('body is scaled 1.25x via transform (not CSS zoom) and fixed-position modal
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const bodyStyle = await frame.locator('body').evaluate(el => {
     const cs = getComputedStyle(el);
@@ -1618,6 +1650,7 @@ test('opening the 3D preview for many companions in a row never fails to render 
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();
 
   const results = await frame.locator('body').evaluate(async () => {
@@ -1661,7 +1694,7 @@ test('rollAndCreatePet assigns a stable uid, and petSnapshotOf/petFromSnapshot r
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const { pet } = rollAndCreatePet(EGG_TYPES[0]);
@@ -1698,7 +1731,7 @@ test('migratePetUidV1 assigns a uid to legacy pets missing one, without touching
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG[0];
@@ -1729,7 +1762,7 @@ test('Marché tab renders its 3 sub-tabs and never throws even without a real Su
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   await frame.locator('.tabs .tab', { hasText: 'Marché' }).click();
   await expect(frame.locator('#market-body')).toBeVisible();
@@ -1757,6 +1790,7 @@ test('auto-feed only spends common food (never Caphras/Dopi stones) and refreshe
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Nourrir' }).click();
 
   const setup = await frame.locator('body').evaluate(() => {
@@ -1806,6 +1840,7 @@ test('switching to Sections/Collection tabs always re-renders the current GS (no
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Nourrir' }).click(); // onglet quelconque, PAS Sections/Collection
 
   const result = await frame.locator('body').evaluate(() => {
@@ -1845,7 +1880,7 @@ test('offline catch-up fires on visibilitychange after a long hidden gap, not ju
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG.find(c => c.sec === 'loot');
@@ -1878,6 +1913,7 @@ test('onboarding modal shows on first visit only, and never reopens once dismiss
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   await expect(frame.locator('#onboarding-modal')).toHaveClass(/open/);
   await frame.locator('#onboarding-body button', { hasText: 'Passer' }).click();
   await expect(frame.locator('#onboarding-modal')).not.toHaveClass(/open/);
@@ -1905,6 +1941,7 @@ test('a pet that breaks through in rarity shows the SAME current rarity in Index
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Sections' }).click(); // déjà sur Sections quand la percée survient
 
   const result = await frame.locator('body').evaluate(() => {
@@ -1958,7 +1995,7 @@ test('clicking Marché then Tutoriel highlights the right tab and panel (DOM-pos
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   await frame.locator('.tabs .tab', { hasText: 'Marché' }).click();
   await expect(frame.locator('.tabs .tab', { hasText: 'Marché' })).toHaveClass(/active/);
@@ -1985,6 +2022,7 @@ test('quickAddToMarket switches to the Marché tab and preselects the clicked pe
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();
 
   const petId = await frame.locator('body').evaluate(() => {
@@ -2029,6 +2067,7 @@ test('counter-offer pet list badges species the offer creator does not own yet',
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   await frame.locator('.tabs .tab', { hasText: 'Marché' }).click();
 
   const result = await frame.locator('body').evaluate(() => {
@@ -2070,6 +2109,7 @@ test('speciesForSectionAndRarity returns the exact species for every section×ra
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   const result = await frame.locator('body').evaluate(() => {
     const mismatches = [];
     SECTIONS.forEach(s => {
@@ -2098,6 +2138,7 @@ test('migratePetSpeciesRarityV1 fixes a legacy breakthrough pet but leaves a nor
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
+  await waitCompanionsReady(frame);
   const result = await frame.locator('body').evaluate(() => {
     // pet "légende" avant le correctif : espèce Épique (rar=3) de la section farming, mais p.rar
     // a percé jusqu'à 5 (Ancestral) sans jamais réassigner p.cat -- écart de 2, signature d'une
@@ -2140,7 +2181,7 @@ test('hatch reveal screen shows the odds recap of the egg that was used', async 
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   await setSharedSilver(frame, 10_000_000); // silver côté jeu suffisant (pool partagé)
   const result = await frame.locator('body').evaluate(async () => {
@@ -2173,7 +2214,7 @@ test('progressiveTierProbability() ramps linearly around a threshold and feeds i
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const pure = {
@@ -2223,7 +2264,7 @@ test('offline catch-up advances incubation slot timers, tier XP, and special loo
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG.find(c => c.sec === 'minage'); // section avec du Caphras/Dopi (catalog.js)
@@ -2270,7 +2311,7 @@ test('auto-feed toggle state persists across a save/load cycle', async ({ page }
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     // désactive puis sauvegarde
@@ -2301,7 +2342,7 @@ test('auto-feed tick is a safe no-op when no food is available', async ({ page }
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG[0];
@@ -2341,7 +2382,7 @@ test('hardinage tab displays per-pet loot odds matching the real drop calculatio
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG.find(c => c.sec === 'peche');
@@ -2373,7 +2414,7 @@ test('reserve cards in Sections are expanded by default with a rarity-colored GS
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG.find(c => c.sec === 'combat');
@@ -2414,7 +2455,7 @@ test('market "new offer" pet selector is a clickable grid (not a native select) 
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG[0];
@@ -2464,7 +2505,7 @@ test('deriveCombatStats/computeTeamPower are pure and computeTeamPower is an AVE
   await signInForTest(page);
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const mk = (rar, tier) => ({ id: petId++, uid: crypto.randomUUID(), cat: PET_CATALOG.find(c=>c.rar===rar), rar, stats: mkStats(rar), hunger: 100, terrain: true, tier, tierXp: 0, tierMult: (TIER_MULT_RANGE[tier-1][0]+TIER_MULT_RANGE[tier-1][1])/2 });
@@ -2500,7 +2541,7 @@ test('buildBracket pads an odd entrant count with byes to the next power of two,
   await signInForTest(page);
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   const result = await frame.locator('body').evaluate(() => {
     const entrants5 = [1,2,3,4,5].map(i => ({ userId: 'u'+i, pseudo: 'P'+i, power: i*100 }));
@@ -2533,7 +2574,7 @@ test('PvP tab shows the tournament countdown card, disables registration with ze
   await signInForTest(page);
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   await dismissTutorialsAndClick(page, frame.locator('.tabs .tab', { hasText: 'PvP' }));
   await expect(frame.locator('#pvp-tournament-card')).toBeVisible();
@@ -2601,7 +2642,7 @@ test('register_pvp_team RPC call never throws an unhandled exception when the ac
   await signInForTest(page);
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
   await dismissTutorialsAndClick(page, frame.locator('.tabs .tab', { hasText: 'PvP' }));
 
   await frame.locator('body').evaluate(async () => {
@@ -2636,7 +2677,7 @@ test('companion module renders in English when velia-idle-lang=en (own i18next i
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await waitCompanionsReady(frame);
 
   // shell statique traduit par applyCompanionsI18n() (data-i18n, i18n.js)
   await expect(frame.locator('.tabs .tab', { hasText: 'Hatchery' })).toBeVisible();
