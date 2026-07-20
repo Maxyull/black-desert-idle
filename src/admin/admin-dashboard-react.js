@@ -110,7 +110,7 @@ function AdmKpiRow({ kpis, hours }) {
         admH('div', { className: 'admKpiLbl' }, def.icon + ' ' + def.label()),
         admH('div', { className: 'admKpiVal' }, admDashNum(row.current)),
         admH('div', { className: 'admKpiDelta tone-' + d.tone }, d.text,
-          admH('span', { className: 'admKpiVs' }, i18next.t('admin:admin.dash.vs_previous', { hours })))
+          admH('span', { className: 'admKpiVs' }, i18next.t('admin:admin.dash.vs_previous', { period: adminPeriodLabel() })))
       );
     })
   );
@@ -137,7 +137,7 @@ let admDashRoot = null;
 /** Composant racine du dashboard : charge santé + KPI + actions, puis rend Q1/Q2/Q3. */
 function AdmDashboard() {
   const [state, setState] = React.useState({ loading: true, checks: [], kpis: {}, actions: [] });
-  const hours = 24;
+  const hours = adminPeriodHours();
 
   const load = React.useCallback(async () => {
     if (!sb) return;
@@ -172,7 +172,7 @@ function AdmDashboard() {
   }
   return admH('div', { className: 'admDashV2' },
     admH(AdmHealthBanner, { checks: state.checks, checkedAt: state.checkedAt }),
-    admH('div', { className: 'admDashQLabel' }, i18next.t('admin:admin.dash.q2_title', { hours })),
+    admH('div', { className: 'admDashQLabel' }, i18next.t('admin:admin.dash.q2_title', { period: adminPeriodLabel() })),
     admH(AdmKpiRow, { kpis: state.kpis, hours }),
     admH('div', { className: 'admDashQLabel' }, i18next.t('admin:admin.dash.q3_title')),
     admH(AdmActionList, { actions: state.actions }),

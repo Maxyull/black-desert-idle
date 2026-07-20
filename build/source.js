@@ -104,14 +104,14 @@ const I18N_RESOURCES = {
       "admin.dash.n_problems_one": "{{count}} problème",
       "admin.dash.n_problems_other": "{{count}} problèmes",
       "admin.dash.nothing_todo": "Rien à traiter",
-      "admin.dash.q2_title": "Ce qui a changé ({{hours}} h)",
+      "admin.dash.q2_title": "Ce qui a changé ({{period}})",
       "admin.dash.q3_title": "À traiter",
       "admin.dash.refresh": "Rafraîchir",
       "admin.dash.todo_errors_one": "{{count}} erreur client",
       "admin.dash.todo_errors_other": "{{count}} erreurs client",
       "admin.dash.todo_reports_one": "{{count}} signalement de patch note",
       "admin.dash.todo_reports_other": "{{count}} signalements de patch note",
-      "admin.dash.vs_previous": "vs {{hours}} h préc.",
+      "admin.dash.vs_previous": "vs {{period}} préc.",
       "admin.dashboard.active_bans_label": "Bannissement(s) actif(s)",
       "admin.dashboard.active_bans_stat": "Bannissements actifs",
       "admin.dashboard.companions_none_synced": "Aucun joueur synchronisé",
@@ -246,11 +246,11 @@ const I18N_RESOURCES = {
       "admin.errors.none": "Aucune erreur sur la période.",
       "admin.errors.recent_sub": "Les 30 plus récentes, toutes versions confondues.",
       "admin.errors.recent_title": "Dernières erreurs",
-      "admin.errors.sub": "Exceptions remontées par le jeu (14 derniers jours). Triées par occurrences : le haut de la liste est ce qu'il faut corriger en premier.",
+      "admin.errors.sub": "Exceptions remontées par le jeu ({{period}}). Triées par occurrences : le haut de la liste est ce qu'il faut corriger en premier.",
       "admin.errors.tile_days_with_errors": "Jours concernés",
       "admin.errors.tile_distinct_messages": "Messages distincts",
       "admin.errors.tile_last": "Dernière",
-      "admin.errors.tile_total_14d": "Erreurs (14 j)",
+      "admin.errors.tile_total_period": "Erreurs ({{period}})",
       "admin.errors.title": "Erreurs client",
       "admin.loot.active_version": "Version active :",
       "admin.loot.table_gear": "Armure/Arme",
@@ -399,6 +399,7 @@ const I18N_RESOURCES = {
       "admin.system.close_btn_title": "Fermer",
       "admin.system.danger_title": "Pour les joueurs — actions serveur",
       "admin.system.palette_label": "Palette",
+      "admin.system.period_title": "Période appliquée à tout le panneau",
       "admin.system.planned_badge": "🔜 prévu",
       "admin.system.planned_pane_text": "Prévu sur la roadmap, mais aucun code jeu derrière pour l'instant (pas de table, pas de mécanique côté client). Cet onglet deviendra utile une fois qu'une première brique réelle existera — voir ADMIN_MENU_PLAN.md.",
       "admin.system.reset_all_accounts_btn": "Réinitialiser TOUS les comptes",
@@ -1273,14 +1274,14 @@ const I18N_RESOURCES = {
       "admin.dash.n_problems_one": "{{count}} problem",
       "admin.dash.n_problems_other": "{{count}} problems",
       "admin.dash.nothing_todo": "Nothing to handle",
-      "admin.dash.q2_title": "What changed ({{hours}}h)",
+      "admin.dash.q2_title": "What changed ({{period}})",
       "admin.dash.q3_title": "To handle",
       "admin.dash.refresh": "Refresh",
       "admin.dash.todo_errors_one": "{{count}} client error",
       "admin.dash.todo_errors_other": "{{count}} client errors",
       "admin.dash.todo_reports_one": "{{count}} patch note report",
       "admin.dash.todo_reports_other": "{{count}} patch note reports",
-      "admin.dash.vs_previous": "vs prev. {{hours}}h",
+      "admin.dash.vs_previous": "vs prev. {{period}}",
       "admin.dashboard.active_bans_label": "Active ban(s)",
       "admin.dashboard.active_bans_stat": "Active bans",
       "admin.dashboard.companions_none_synced": "No player synced",
@@ -1415,11 +1416,11 @@ const I18N_RESOURCES = {
       "admin.errors.none": "No error over the period.",
       "admin.errors.recent_sub": "The 30 most recent, across all versions.",
       "admin.errors.recent_title": "Latest errors",
-      "admin.errors.sub": "Exceptions reported by the game (last 14 days). Sorted by occurrences: the top of the list is what to fix first.",
+      "admin.errors.sub": "Exceptions reported by the game ({{period}}). Sorted by occurrences: the top of the list is what to fix first.",
       "admin.errors.tile_days_with_errors": "Days affected",
       "admin.errors.tile_distinct_messages": "Distinct messages",
       "admin.errors.tile_last": "Latest",
-      "admin.errors.tile_total_14d": "Errors (14d)",
+      "admin.errors.tile_total_period": "Errors ({{period}})",
       "admin.errors.title": "Client errors",
       "admin.loot.active_version": "Active version:",
       "admin.loot.table_gear": "Armor/Weapon",
@@ -1568,6 +1569,7 @@ const I18N_RESOURCES = {
       "admin.system.close_btn_title": "Close",
       "admin.system.danger_title": "For players — server-wide",
       "admin.system.palette_label": "Palette",
+      "admin.system.period_title": "Period applied to the whole panel",
       "admin.system.planned_badge": "🔜 planned",
       "admin.system.planned_pane_text": "On the roadmap, but no game code behind it yet (no table, no client-side mechanic). This tab becomes useful once a first real piece exists — see ADMIN_MENU_PLAN.md.",
       "admin.system.reset_all_accounts_btn": "Reset ALL accounts",
@@ -18240,6 +18242,43 @@ const ADMIN_THEMES = [
 ];
 const ADMIN_THEME_STORAGE_KEY = 'bdiAdminTheme';
 
+const ADMIN_PERIODS = [
+  { id:'24h', hours:24,   days:1,  label:{fr:'24 h',en:'24h'} },
+  { id:'7d',  hours:168,  days:7,  label:{fr:'7 j', en:'7d'}  },
+  { id:'30d', hours:720,  days:30, label:{fr:'30 j',en:'30d'} },
+  { id:'90d', hours:2160, days:90, label:{fr:'90 j',en:'90d'} },
+];
+const ADMIN_PERIOD_STORAGE_KEY = 'bdiAdminPeriod';
+
+function getAdminPeriod() {
+  let saved = null;
+  try { saved = localStorage.getItem(ADMIN_PERIOD_STORAGE_KEY); } catch (e) {}
+  return ADMIN_PERIODS.find(p => p.id === saved) || ADMIN_PERIODS[2];
+}
+
+function adminPeriodDays() { return getAdminPeriod().days; }
+
+function adminPeriodHours() { return getAdminPeriod().hours; }
+
+function adminPeriodLabel() { return getAdminPeriod().label[LANG]; }
+
+function setAdminPeriod(id) {
+  if (!ADMIN_PERIODS.some(p => p.id === id)) return;
+  try { localStorage.setItem(ADMIN_PERIOD_STORAGE_KEY, id); } catch (e) {}
+  renderAdminPeriodPicker();
+  if (currentAdminSection) openAdminSection(currentAdminSection.cat, currentAdminSection.id);
+}
+
+let currentAdminSection = null;
+
+function renderAdminPeriodPicker() {
+  const host = $a('adminPeriodPicker'); if (!host) return;
+  const active = getAdminPeriod().id;
+  host.innerHTML = ADMIN_PERIODS.map(p =>
+    `<button class="admPeriodBtn${p.id === active ? ' on' : ''}" data-period="${p.id}">${p.label[LANG]}</button>`).join('');
+  host.querySelectorAll('.admPeriodBtn').forEach(b => { b.onclick = () => setAdminPeriod(b.dataset.period); });
+}
+
 function getAdminTheme() {
   let saved = null;
   try { saved = localStorage.getItem(ADMIN_THEME_STORAGE_KEY); } catch (e) {}
@@ -18399,7 +18438,7 @@ const DASHBOARD_WIDGETS = [
       };
     } },
   { id:'dw-market', cat:'economy', sec:'market', icon:'🏛️', title:{fr:'Marché',en:'Market'},
-    fetch: () => Promise.all([sb.rpc('get_market_open'), sb.rpc('admin_market_top_items', { p_days:30 })]),
+    fetch: () => Promise.all([sb.rpc('get_market_open'), sb.rpc('admin_market_top_items', { p_days: adminPeriodDays() })]),
     build: ([{ data: openData }, { data: topItems }]) => {
       const open = openData !== false;
       const rows = topItems || [];
@@ -18410,7 +18449,7 @@ const DASHBOARD_WIDGETS = [
       };
     } },
   { id:'dw-signups', cat:'overview', sec:'signups', icon:'📈', title:{fr:'Inscriptions (30j)',en:'Signups (30d)'},
-    fetch: () => Promise.all([sb.rpc('admin_signups_by_day', { p_days:30 }), sb.rpc('admin_signups_by_provider')]),
+    fetch: () => Promise.all([sb.rpc('admin_signups_by_day', { p_days: adminPeriodDays() }), sb.rpc('admin_signups_by_provider')]),
     build: ([{ data: byDay }, { data: byProvider }]) => {
       const rows = byDay || [];
       const { accent } = currentAdminAccentColors();
@@ -18746,6 +18785,7 @@ function findAdminSection(cat, id) {
 function openAdminSection(cat, id) {
   const item = findAdminSection(cat, id);
   if (!item) return;
+  currentAdminSection = { cat, id }; 
   $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
     el.classList.toggle('active', el.dataset.cat === cat && el.dataset.id === id);
   });
@@ -18786,7 +18826,10 @@ async function openAdminPanel() {
   const overlay = $a('adminOverlay');
   overlay.classList.add('admThemeRoot');
   overlay.dataset.admTheme = currentTheme;
-  $a('adminMainHead').innerHTML = `<span id="adminMainTitle" style="flex:1"></span>`;
+  
+  $a('adminMainHead').innerHTML = `<span id="adminMainTitle" style="flex:1"></span>` +
+    `<span id="adminPeriodPicker" class="admPeriodPicker" title="${i18next.t('admin:admin.system.period_title')}"></span>`;
+  renderAdminPeriodPicker();
   $a('adminSidebar').innerHTML = `<div class="admNavHead">` +
       `<span class="admNavTitle">🛠️ Admin</span>` +
       renderAdminThemeSwatchesHtml(currentTheme) +
@@ -19594,7 +19637,7 @@ function renderAdminMarket(el) {
 
 function renderAdminMarketVolume(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
-  sb.rpc('admin_market_top_items', { p_days: 30 }).then(({data, error}) => {
+  sb.rpc('admin_market_top_items', { p_days: adminPeriodDays() }).then(({data, error}) => {
     if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
     const rows = data || [];
     const totalVolume = rows.reduce((a,r) => a + Number(r.total_silver_value||0), 0);
@@ -19621,7 +19664,7 @@ function renderAdminMarketVolume(el) {
 function renderAdminSignups(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
-    sb.rpc('admin_signups_by_day', { p_days: 30 }),
+    sb.rpc('admin_signups_by_day', { p_days: adminPeriodDays() }),
     sb.rpc('admin_signups_by_provider'),
   ]).then(([{data, error}, { data: byProvider, error: provError }]) => {
     if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
@@ -19736,7 +19779,7 @@ function admMonTiles(tiles) {
 
 function renderAdminClientErrors(el) {
   el.innerHTML =
-    admMonSkeleton('🐞 ' + i18next.t('admin:admin.errors.title'), i18next.t('admin:admin.errors.sub'), 'admErrTop') +
+    admMonSkeleton('🐞 ' + i18next.t('admin:admin.errors.title'), i18next.t('admin:admin.errors.sub', { period: adminPeriodLabel() }), 'admErrTop') +
     admMonSkeleton('📋 ' + i18next.t('admin:admin.errors.recent_title'), i18next.t('admin:admin.errors.recent_sub'), 'admErrRecent');
   refreshAdminClientErrors();
 }
@@ -19745,8 +19788,8 @@ async function refreshAdminClientErrors() {
   if (!isAdmin() || !sb) return;
   const topEl = $a('admErrTop'), recentEl = $a('admErrRecent');
   const [sum, top, recent] = await Promise.all([
-    sb.rpc('admin_client_errors_summary', { p_days: 14 }),
-    sb.rpc('admin_client_errors_top', { p_days: 14, p_limit: 15 }),
+    sb.rpc('admin_client_errors_summary', { p_days: adminPeriodDays() }),
+    sb.rpc('admin_client_errors_top', { p_days: adminPeriodDays(), p_limit: 15 }),
     sb.rpc('admin_client_errors_recent', { p_limit: 30 }),
   ]);
   if (topEl) {
@@ -19758,7 +19801,7 @@ async function refreshAdminClientErrors() {
       const chart = typeof buildBarSeriesSvg === 'function'
         ? buildBarSeriesSvg(days.map(d => ({ label:d.day, value:Number(d.errors||0) })), colors.danger || '#c96a5a') : '';
       topEl.innerHTML = admMonTiles([
-        { lbl:'🐞 ' + i18next.t('admin:admin.errors.tile_total_14d'), val: admMonNum(total) },
+        { lbl:'🐞 ' + i18next.t('admin:admin.errors.tile_total_period', { period: adminPeriodLabel() }), val: admMonNum(total) },
         { lbl:'📅 ' + i18next.t('admin:admin.errors.tile_days_with_errors'), val: admMonNum(days.length) },
         { lbl:'🔁 ' + i18next.t('admin:admin.errors.tile_distinct_messages'), val: admMonNum(rows.length) },
         { lbl:'🕒 ' + i18next.t('admin:admin.errors.tile_last'), val: admMonDate(rows.length ? rows[0].last_seen : null) },
@@ -20131,7 +20174,7 @@ function AdmKpiRow({ kpis, hours }) {
         admH('div', { className: 'admKpiLbl' }, def.icon + ' ' + def.label()),
         admH('div', { className: 'admKpiVal' }, admDashNum(row.current)),
         admH('div', { className: 'admKpiDelta tone-' + d.tone }, d.text,
-          admH('span', { className: 'admKpiVs' }, i18next.t('admin:admin.dash.vs_previous', { hours })))
+          admH('span', { className: 'admKpiVs' }, i18next.t('admin:admin.dash.vs_previous', { period: adminPeriodLabel() })))
       );
     })
   );
@@ -20155,7 +20198,7 @@ let admDashRoot = null;
 
 function AdmDashboard() {
   const [state, setState] = React.useState({ loading: true, checks: [], kpis: {}, actions: [] });
-  const hours = 24;
+  const hours = adminPeriodHours();
 
   const load = React.useCallback(async () => {
     if (!sb) return;
@@ -20190,7 +20233,7 @@ function AdmDashboard() {
   }
   return admH('div', { className: 'admDashV2' },
     admH(AdmHealthBanner, { checks: state.checks, checkedAt: state.checkedAt }),
-    admH('div', { className: 'admDashQLabel' }, i18next.t('admin:admin.dash.q2_title', { hours })),
+    admH('div', { className: 'admDashQLabel' }, i18next.t('admin:admin.dash.q2_title', { period: adminPeriodLabel() })),
     admH(AdmKpiRow, { kpis: state.kpis, hours }),
     admH('div', { className: 'admDashQLabel' }, i18next.t('admin:admin.dash.q3_title')),
     admH(AdmActionList, { actions: state.actions }),
