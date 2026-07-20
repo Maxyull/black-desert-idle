@@ -235,6 +235,9 @@ function applyI18n() {
   // déjà (jamais de création anticipée -- le module reste chargé à la demande, au 1er clic).
   const companionsFrame = document.getElementById('companionsFrame');
   if (companionsFrame) { try { companionsFrame.contentWindow.location.reload(); } catch (e) { companionsFrame.src = companionsFrame.src; } }
+  // le texte légal du footer n'a pas la même longueur en FR et en EN : il peut donc gagner ou
+  // perdre une ligne, et la hauteur réservée au footer fixe doit suivre (voir syncFooterSpacer).
+  if (typeof syncFooterSpacer === 'function') syncFooterSpacer();
   hudFast();
 }
 // Sélecteur de langue segmenté (2026-07-19) : chaque segment FR/EN sélectionne DIRECTEMENT sa

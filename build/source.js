@@ -7421,9 +7421,16 @@ function openCompanionsModule() {
     cont.id = 'companionsInline'; 
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
-    frame.src = 'src/companions/companions.html?v=22'; 
+    frame.src = 'src/companions/companions.html?v=23'; 
     cont.appendChild(frame);
     ($a('wrap') || document.body).appendChild(cont);
+    
+    window.addEventListener('message', (e) => {
+      if (!e.data || e.data.bdi !== 'companions-modal-open') return;
+      if (e.source !== frame.contentWindow) return;
+      
+      cont.scrollIntoView({ block: 'center' });
+    });
   }
   cont.style.display = 'flex';
 }
@@ -16408,6 +16415,8 @@ function applyI18n() {
   
   const companionsFrame = document.getElementById('companionsFrame');
   if (companionsFrame) { try { companionsFrame.contentWindow.location.reload(); } catch (e) { companionsFrame.src = companionsFrame.src; } }
+  
+  if (typeof syncFooterSpacer === 'function') syncFooterSpacer();
   hudFast();
 }
 
@@ -16545,6 +16554,19 @@ function toggleRightDock(widgetId) {
   const bar = $a('activitiesBar');
   dock.style.top = (bar ? Math.round(bar.getBoundingClientRect().bottom + 6) : 120) + 'px';
   updateDockBtnActive(RIGHT_DOCK_BTN[widgetId]);
+}
+
+function syncFooterSpacer() {
+  const f = $a('siteFooter');
+  if (!f) return;
+  document.documentElement.style.setProperty('--footer-h', Math.ceil(f.getBoundingClientRect().height) + 'px');
+}
+syncFooterSpacer();
+
+addEventListener('resize', syncFooterSpacer);
+
+if (typeof ResizeObserver !== 'undefined' && $a('siteFooter')) {
+  new ResizeObserver(syncFooterSpacer).observe($a('siteFooter'));
 }
 
 // ==== src/backend/client-health.js ====

@@ -498,6 +498,19 @@ rareté du pet (`--r0..--r5`, variable CSS `--pcard-color`) — jamais une coule
   l'origine (2026-07-20) pour passer au-dessus de l'ancien `#companionsOverlay` plein écran (950).
   Depuis 2026-07-19 le module s'affiche en vue INLINE dans `#wrap` (`#companionsInline`, calqué sur
   `#bossRoom`, plus d'overlay) — le 960 est conservé par sécurité, au-dessus de toute modale.
+- **Corollaire de la vue inline : `position:fixed` ne veut plus dire « au centre de l'écran »**
+  (2026-07-20, « regarde où pop le modal d'éclosion d'œuf, bien au centre de l'écran »).
+  `.modal-bg{position:fixed;inset:0}` se cale sur le viewport de l'**iframe**. Tant que le module
+  était un overlay plein écran, viewport de l'iframe = écran ; en vue inline le cadre est un bloc
+  au milieu d'une page de ~5 000 px, et l'éclosion s'affichait donc au centre du *cadre*, souvent
+  très loin du champ visible (mesuré : 1 495 px du centre de l'écran sur un viewport de 720 px).
+  Correctif : `OM()` (`hatch.js`, seul point d'ouverture des modales — `market.js` y a été ramené)
+  poste `{bdi:'companions-modal-open'}` au parent, et `openCompanionsModule()` (`src/combat/boss.js`)
+  recentre `#companionsInline` via `scrollIntoView({block:'center'})`. Le cadre faisant presque
+  toute la hauteur du viewport, son centre redevient celui de l'écran (mesuré après : 22 px).
+  Deux pièges vérifiés : le filtre doit porter sur `e.source`, pas sur `e.origin` (en `file://`
+  l'origine d'une iframe vaut la chaîne `"null"`), et le défilement doit être **instantané** — en
+  `behavior:'smooth'` le recentrage n'aboutissait pas du tout quand les animations sont throttlées.
 
 **Marché d'échange réel entre joueurs (2026-07-10, demande explicite : "vrai backend d'échange...
 c'est fini la sauvegarde locale c'est sur supabase déjà")** : premier point de ce module qui fait

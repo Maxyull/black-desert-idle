@@ -269,7 +269,7 @@ function openCreateOfferModal(){
     <button class="btn btn-gold" style="width:100%;margin-top:14px" onclick="submitCreateOffer()">${i18next.t('companions:companions.market.publish_btn')}</button>
   `;
   paintMarketChips(document.getElementById('market-create-pet-list'));
-  document.getElementById('market-modal').classList.add('open');
+  OM('market-modal');  // via OM() : l'hote doit etre prevenu pour recentrer le cadre inline
 }
 /** Sélectionne le pet à proposer dans la modale de création d'offre et met à jour le surlignage visuel. @param {string} uid - uid du pet choisi. */
 function pickCreatePet(uid){
@@ -362,7 +362,7 @@ async function openCounterModal(offerId){
       renderCounterPetList(offerId);
     }catch(e){ marketOpponentOwnedSpecies = null; }
   }
-  document.getElementById('market-modal').classList.add('open');
+  OM('market-modal');  // via OM() : l'hote doit etre prevenu pour recentrer le cadre inline
 }
 /** Rend la grille de sélection des pets à proposer en contre-offre, avec badge "🆕" pour les espèces que le créateur de l'offre ne possède pas encore. @param {number} offerId */
 function renderCounterPetList(offerId){

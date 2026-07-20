@@ -9,7 +9,11 @@
     font-family: Georgia, 'Times New Roman', serif;
     background:#0b0a0e; color:var(--ink);
     display:flex; flex-direction:column; align-items:center;
-    min-height:100vh; padding:12px 12px 30px;
+    min-height:100vh;
+    /* la marge basse réserve la hauteur du footer FIXE (#siteFooter), sinon il recouvre la fin de
+       la page en permanence -- --footer-h est mesurée en JS (syncFooterSpacer, ui-layout.js),
+       30px n'est que le repli avant la première mesure. */
+    padding:12px 12px var(--footer-h, 30px);
   }
   #wrap { position:relative; width:1240px; max-width:100%; }
   #gameFrame {
@@ -2880,7 +2884,9 @@
        lisible qu'une grille à 2 colonnes trop étroites pour leur contenu (tableaux, boutons) */
     #panel { grid-template-columns:1fr !important; }
     #wrap { padding:0 2px; }
-    body { padding:8px 4px 20px; }
+    /* même réserve pour le footer fixe qu'en grand écran -- et elle compte DAVANTAGE ici : le
+       texte légal s'y enroule sur bien plus de lignes, donc le footer y est bien plus haut. */
+    body { padding:8px 4px var(--footer-h, 20px); }
     /* La zone de jeu (canvas) est déjà responsive (width:100%), mais toute sa surcouche HTML
        (textes/icônes positionnés en absolu par-dessus) est calibrée en pixels fixes pour un canvas
        ~1240px de large — une fois le canvas réduit à la largeur d'un téléphone (~360-380px), ces

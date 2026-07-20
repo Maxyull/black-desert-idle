@@ -376,9 +376,28 @@ function openCompanionsModule() {
     cont.id = 'companionsInline'; // styles dans styles.css (calque de #bossRoom) — pas de fixed/overlay
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
-    frame.src = 'src/companions/companions.html?v=22'; // bump OBLIGATOIRE dès que companions.html change (onglets/panels/shell), sinon le navigateur sert l'ancien shell en cache (cache-busting, voir companions.html)
+    frame.src = 'src/companions/companions.html?v=23'; // bump OBLIGATOIRE dès que companions.html change (onglets/panels/shell), sinon le navigateur sert l'ancien shell en cache (cache-busting, voir companions.html)
     cont.appendChild(frame);
     ($a('wrap') || document.body).appendChild(cont);
+    // Recentrage du cadre quand le module ouvre une modale (2026-07-20, "regarde où pop le modal
+    // d'éclosion d'œuf, bien au centre de l'écran"). Les modales du module sont en
+    // position:fixed -- ce qui, dans une iframe, veut dire "fixe par rapport au VIEWPORT DE
+    // L'IFRAME", pas à l'écran. Tant que le module était un overlay plein écran les deux
+    // coïncidaient ; en vue inline le cadre est un bloc au milieu d'une page de ~5000 px, et
+    // l'éclosion se jouait donc à moitié hors champ. Le cadre fait presque toute la hauteur du
+    // viewport : le remettre au centre de l'écran remet sa modale au centre de l'écran.
+    // e.source et non e.origin : en file:// l'origine d'une iframe est la chaîne "null", donc
+    // inutilisable comme filtre -- l'identité de la fenêtre émettrice, elle, est fiable partout.
+    window.addEventListener('message', (e) => {
+      if (!e.data || e.data.bdi !== 'companions-modal-open') return;
+      if (e.source !== frame.contentWindow) return;
+      // recentrage INSTANTANÉ, pas 'smooth' : la modale est déjà visible au moment du message, une
+      // animation ne ferait que retarder son arrivée au centre -- et un défilement lissé n'aboutit
+      // pas du tout quand les animations sont throttlées (onglet en arrière-plan, moteur de rendu
+      // au ralenti, prefers-reduced-motion), ce qui laisserait la modale hors champ. Vérifié : en
+      // 'smooth' le recentrage ne se produisait pas du tout dans le navigateur de test.
+      cont.scrollIntoView({ block: 'center' });
+    });
   }
   cont.style.display = 'flex';
 }
