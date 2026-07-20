@@ -163,8 +163,8 @@ function renderAdminZoneProgression(el) {
       gsCounts[idx >= 0 ? idx : GS_BRACKETS.length-1]++;
     });
     const gsItems = GS_BRACKETS.map((b,i) => ({ label:b.label, value:gsCounts[i] }));
-    const zonePie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(zoneItems) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
-    const gsPie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(gsItems, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : '';
+    const zonePie = typeof buildPieWithLegendHtml === 'function' ? buildHBarsSvg(zoneItems, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
+    const gsPie = typeof buildPieWithLegendHtml === 'function' ? buildHBarsSvg(gsItems, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue: v => String(Math.round(v)) }) : '';
     el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.zone_progression_summary')}</div>
       <div class="admChartsRow">
         <div><h3 style="margin-top:0">${i18next.t('admin:admin.content.by_zone_title')}</h3>${zonePie}</div>
@@ -195,7 +195,7 @@ function renderAdminCompendium(el) {
     });
     const items = PCT_BRACKETS.map((b,i) => ({ label:b.label, value:counts[i] }));
     const avg = rows.length ? Math.round(rows.reduce((s,r) => s + Number(r.compendium_pct||0), 0) / rows.length) : 0;
-    const pie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(items, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
+    const pie = typeof buildPieWithLegendHtml === 'function' ? buildHBarsSvg(items, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue: v => String(Math.round(v)) }) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
     el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.compendium_summary', { avg, count: rows.length })}</div>
       <div class="admChartsRow"><div><h3 style="margin-top:0">${i18next.t('admin:admin.content.compendium_distribution_title')}</h3>${pie}</div></div>`;
   });
@@ -394,9 +394,9 @@ function renderAdminCompanions(el) {
     const sectionItems = Object.entries(sectionTotals)
       .map(([id,v]) => ({ label: COMPANION_SECTION_LABELS[id] || id, value:v }));
     const rarityPie = typeof buildPieWithLegendHtml === 'function'
-      ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : '';
+      ? buildHBarsSvg(rarityItems, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : '';
     const sectionPie = typeof buildPieWithLegendHtml === 'function'
-      ? buildPieWithLegendHtml(sectionItems, { thresholdPct:0 }) : '';
+      ? buildHBarsSvg(sectionItems, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : '';
     const tierPoints = [1,2,3,4,5].map(t => ({ label:'T'+t, value:tierTotals[t]||0 }));
     const tierBar = typeof buildBarSeriesSvg === 'function'
       ? buildBarSeriesSvg(tierPoints, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : '';

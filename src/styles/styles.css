@@ -2198,6 +2198,10 @@
   @keyframes admSkelPulse { 0%,100% { opacity:.55; } 50% { opacity:.85; } }
   @media (prefers-reduced-motion:reduce) { .admSkelBanner, .admSkelKpi { animation:none; } }
 
+  /* barres horizontales (2026-07-20, bdi-admin-ux.md §6) : remplacent les camemberts dès 4
+     tranches. currentColor -> le texte suit la couleur du panneau, y compris au changement de thème. */
+  .admHBarsSvg { color:var(--adm-text,#c7d0e6); margin:2px 0 6px; }
+
   /* ── Sélecteur de période global (2026-07-20, bdi-admin-ux.md §4) ──
      Vit dans #adminMainHead à côté du titre : un seul contrôle pilote toutes les sections
      temporelles, au lieu des fenêtres qui étaient codées en dur section par section. */

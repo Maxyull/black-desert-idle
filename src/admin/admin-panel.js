@@ -244,7 +244,7 @@ const DASHBOARD_WIDGETS = [
       const sources = rows.filter(r=>r.gained>0).map(r=>({label:label(r.category), value:r.gained}));
       return {
         light: dashboardLight(alerts.length===0),
-        chart: buildPieWithLegendHtml(sources, { thresholdPct:6 }),
+        chart: buildHBarsSvg(sources, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')),
         note: alerts.length ? alerts[0].text : i18next.t('admin:admin.dashboard.econ_healthy_note'),
       };
     } },
@@ -277,7 +277,7 @@ const DASHBOARD_WIDGETS = [
       const skewed = med > 0 && avg > med * 4;
       return {
         light: dashboardLight(!skewed),
-        chart: buildPieWithLegendHtml(brackets.map((b,i)=>({label:b.label, value:counts[i]})), { thresholdPct:0, formatValue:v=>String(Math.round(v)) }),
+        chart: buildHBarsSvg(brackets.map((b,i)=>({label:b.label, value:counts[i]})), (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue:v=>String(Math.round(v)) }),
         note: skewed ? i18next.t('admin:admin.dashboard.wealth_skewed_note') : i18next.t('admin:admin.dashboard.wealth_reasonable_note'),
       };
     } },
@@ -288,7 +288,7 @@ const DASHBOARD_WIDGETS = [
       const rows = topItems || [];
       return {
         light: dashboardLight(open && rows.length > 0),
-        chart: buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name)||r.item_name, value: Number(r.total_silver_value||0) }))),
+        chart: buildHBarsSvg(rows.map(r => ({ label: tr(r.item_name)||r.item_name, value: Number(r.total_silver_value||0) })), (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')),
         note: !open ? i18next.t('admin:admin.dashboard.market_closed_note') : (rows.length ? i18next.t('admin:admin.dashboard.market_active_note') : i18next.t('admin:admin.dashboard.market_no_trades_note')),
       };
     } },
@@ -300,7 +300,7 @@ const DASHBOARD_WIDGETS = [
       const last7 = rows.slice(-7).reduce((a,r) => a + Number(r.signups||0), 0);
       const chart = rows.length
         ? buildBarSeriesSvg(rows.map(r => ({ label:r.day, value:Number(r.signups||0) })), accent)
-        : buildPieWithLegendHtml((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon+' '+providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), { thresholdPct:0 });
+        : buildHBarsSvg((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon+' '+providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue:v=>String(Math.round(v)) });
       return {
         light: dashboardLight(last7 > 0),
         chart,
@@ -361,7 +361,7 @@ const DASHBOARD_WIDGETS = [
       const rarityItems = COMPANION_RARITY_LABELS.filter(r => rarityTotals[r.id]).map(r => ({ label:r.name, value:rarityTotals[r.id] }));
       return {
         light: dashboardLight(playersSynced > 0),
-        chart: playersSynced ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.companions_none_synced')}</div>`,
+        chart: playersSynced ? buildHBarsSvg(rarityItems, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.companions_none_synced')}</div>`,
         note: i18next.t('admin:admin.dashboard.companions_synced_note', { count: playersSynced }),
       };
     } },
@@ -373,7 +373,7 @@ const DASHBOARD_WIDGETS = [
       const items = [...zoneCounts.entries()].sort((a,b)=>a[0]-b[0]).map(([zi,cnt]) => ({ label: ZONES[zi] ? tr(ZONES[zi].name) : `#${zi}`, value: cnt }));
       return {
         light: dashboardLight(items.length > 0),
-        chart: buildPieWithLegendHtml(items),
+        chart: buildHBarsSvg(items, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue: v => String(Math.round(v)) }),
         note: i18next.t('admin:admin.dashboard.players_count_note', { count: (data||[]).length }),
       };
     } },
