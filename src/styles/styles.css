@@ -2198,6 +2198,69 @@
   @keyframes admSkelPulse { 0%,100% { opacity:.55; } 50% { opacity:.85; } }
   @media (prefers-reduced-motion:reduce) { .admSkelBanner, .admSkelKpi { animation:none; } }
 
+  /* ── Page Joueurs unifiée (2026-07-19, bdi-admin-ux.md §2) : recherche + liste + fiche ── */
+  .admPSearch {
+    width:100%; margin:0 0 12px; padding:10px 13px; font-size:13px; border-radius:9px;
+    background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049);
+    color:var(--adm-text,#c7d0e6); outline:none;
+  }
+  .admPSearch:focus { border-color:var(--gold); }
+  .admPSearch::placeholder { color:var(--adm-muted,#6b7699); }
+  .admPBar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+  .admPChips { display:flex; gap:6px; flex-wrap:wrap; }
+  .admPChip {
+    width:auto; margin:0; padding:5px 11px; font-size:11px; border-radius:99px; cursor:pointer;
+    background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049); color:var(--adm-text-2,#9aa4c0);
+  }
+  .admPChip:hover { border-color:var(--adm-border-2,#3a4665); }
+  .admPChip.on { background:var(--gold); border-color:var(--gold); color:#1a1712; font-weight:600; }
+  .admPSel {
+    width:auto; margin:0; padding:5px 9px; font-size:11px; border-radius:7px;
+    background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049); color:var(--adm-text,#c7d0e6);
+  }
+  .admPCount { font-size:10px; color:var(--adm-muted,#6b7699); margin-bottom:8px; }
+  .admPTable tbody tr { cursor:pointer; }
+  /* fiche */
+  .admPBack { width:auto; margin:0 0 12px; padding:5px 11px; font-size:11px; border-radius:7px; cursor:pointer;
+    background:transparent; border:1px solid var(--adm-border,#263049); color:var(--adm-text-2,#9aa4c0); }
+  .admPBack:hover { border-color:var(--gold); color:var(--gold); }
+  .admPHead { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:14px; }
+  .admPName { font-size:17px; font-weight:600; color:var(--adm-text,#c7d0e6); }
+  .admPMeta { font-size:11px; color:var(--adm-muted,#6b7699); }
+  .admPUuid { font-size:10px; color:var(--adm-muted,#6b7699); font-family:'JetBrains Mono',monospace; }
+  .admPBanTag { font-size:10px; color:var(--adm-crit,#d4685f); border:1px solid var(--adm-crit,#d4685f);
+    border-radius:99px; padding:2px 8px; }
+  .admPRoleTag { font-size:10px; color:var(--gold); border:1px solid var(--gold-dim); border-radius:99px; padding:2px 8px; }
+  .admPBanTag.mini, .admPRoleTag.mini { border:none; padding:0 0 0 5px; }
+  .admPStats { display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:9px; margin-bottom:14px; }
+  .admPStat { background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049); border-radius:8px; padding:9px 11px; }
+  .admPStatLbl { font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--adm-muted,#6b7699); margin-bottom:4px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .admPStatVal { font-size:15px; font-weight:600; color:var(--adm-text,#c7d0e6); font-variant-numeric:tabular-nums; }
+  /* blocs dépliables (inventaire, reconnexion) */
+  .admFold { border:1px solid var(--adm-border,#263049); border-radius:9px; margin-bottom:10px; overflow:hidden; }
+  .admFoldHead {
+    width:100%; margin:0; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 13px; font-size:12px; text-align:left; cursor:pointer;
+    background:var(--adm-surface,#0e1422); border:none; color:var(--adm-text,#c7d0e6);
+  }
+  .admFoldHead:hover { background:var(--adm-surface-2,#131a29); }
+  .admFoldChevron { color:var(--adm-muted,#6b7699); }
+  .admFoldBody { padding:12px 13px; border-top:1px solid var(--adm-border,#263049); }
+  /* actions : sur la fiche, à côté des données (doc UX §3) */
+  .admPActions { border:1px solid var(--adm-border,#263049); border-left:3px solid var(--adm-warn,#d9a441);
+    border-radius:9px; padding:13px; background:var(--adm-surface,#0e1422); }
+  .admPActionsTitle { font-size:11.5px; font-weight:600; color:var(--adm-text,#c7d0e6); margin-bottom:10px; }
+  .admPActionRow { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+  .admPBtn {
+    width:auto; margin:0; padding:6px 12px; font-size:11px; border-radius:7px; cursor:pointer;
+    background:var(--adm-surface-2,#131a29); border:1px solid var(--adm-border,#263049); color:var(--adm-text,#c7d0e6);
+  }
+  .admPBtn:hover:not(:disabled) { border-color:var(--adm-border-2,#3a4665); }
+  .admPBtn.danger { border-color:var(--adm-crit,#d4685f); color:var(--adm-crit,#d4685f); }
+  .admPBtn.danger:hover:not(:disabled) { background:rgba(212,104,95,.12); }
+  .admPBtn:disabled { opacity:.5; cursor:default; }
+
   .admDashGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(268px, 1fr)); gap:12px; }
   .admDashCard {
     background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049); border-radius:9px;
