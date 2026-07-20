@@ -323,9 +323,7 @@ const I18N_RESOURCES = {
       "admin.players.level": "Niveau",
       "admin.players.none": "Aucun joueur ne correspond.",
       "admin.players.reset_btn": "Réinitialiser",
-      "admin.players.reset_this_player_btn": "Réinitialiser ce joueur",
       "admin.players.sanctions_and_role": "Sanctions & rôle",
-      "admin.players.screenshot_btn": "Screenshot",
       "admin.players.search_placeholder": "🔍 Rechercher : pseudo ou UUID",
       "admin.players.signup_platform_title": "Plateforme d'inscription",
       "admin.players.sort_gs": "Gearscore",
@@ -335,13 +333,9 @@ const I18N_RESOURCES = {
       "admin.players.summary_online_registered": "{{online}} en ligne · {{total}} inscrits",
       "admin.players.table_platform": "Plate-forme",
       "admin.players.table_player": "Joueur",
-      "admin.players.target_hint": "Trouve l'UUID d'un joueur via le Classement ou ses messages en jeu (bouton \"Copier UUID\" dans son propre menu). \"Screenshot\" affiche son équipement/inventaire en lecture seule (aucune modification). Le reset envoie le même message d'explication que le reset global, mais montré UNIQUEMENT à ce joueur.",
-      "admin.players.target_sub": "Efface silver/équipement/niveau/sac de CE joueur uniquement.",
-      "admin.players.target_title": "Un joueur précis — par UUID",
       "admin.players.tester": "Testeur",
       "admin.players.unban_btn": "Lever le ban",
       "admin.players.uuid_copied": "UUID copié ✓",
-      "admin.players.uuid_placeholder": "UUID du joueur",
       "admin.pvp.col_day": "Jour",
       "admin.pvp.col_registrants": "Inscrits",
       "admin.pvp.col_resolved": "Résolu le",
@@ -381,61 +375,26 @@ const I18N_RESOURCES = {
       "admin.rates.title": "Cadence joueurs (anti-triche)",
       "admin.reconnect.avg_per_session": "Moyenne / session",
       "admin.reconnect.logged_sessions": "Sessions journalisées",
-      "admin.reconnect.no_session_yet": "Aucune session pour le moment.",
       "admin.reconnect.players_involved": "Joueurs concernés",
-      "admin.reconnect.sub": "Volume agrégé du modal \"Bon retour\" — silver récupéré pendant les absences, tous joueurs confondus.",
-      "admin.reconnect.table_date": "Date",
-      "admin.reconnect.table_player_uuid": "Joueur (UUID)",
-      "admin.reconnect.table_zone": "Zone",
       "admin.reconnect.title": "Sessions de reconnexion",
-      "admin.reconnect.top10_title": "Top 10 sessions (par silver)",
       "admin.reconnect.total_silver_recovered": "Silver total récupéré",
       "admin.reset.confirm_all_accounts_1": "💥 Réinitialiser TOUS les comptes de TOUS les joueurs (silver, équipement, niveau, sac) ? Un message d'explication leur sera montré à leur prochaine connexion. Action IRRÉVERSIBLE.",
       "admin.reset.confirm_all_accounts_2": "Es-tu VRAIMENT sûr ? Il n'y a aucun moyen de récupérer la progression perdue.",
       "admin.reset.confirm_all_quests": "Réinitialiser les quêtes de TOUS les joueurs ? Chacun se verra retirer sa progression de quêtes en cours (journalières et hebdomadaires) et de nouvelles seront tirées à leur prochaine connexion. Action irréversible.",
       "admin.reset.confirm_demo": "Réinitialiser la démo ? Toute ta progression (silver, équipement, niveau, sac) sera perdue et remise à zéro. Cette action est irréversible.",
-      "admin.reset.confirm_reset_uuid": "🔄 Réinitialiser le compte du joueur {{uuid}} (silver, équipement, niveau, sac) ? Un message d'explication lui sera montré à sa prochaine connexion. Action IRRÉVERSIBLE.",
       "admin.reset.default_zone_name": "Velia",
       "admin.reset.empty_bag": "Sac vide",
       "admin.reset.no_gear": "Aucun équipement",
-      "admin.reset.no_player_for_uuid": "Aucun joueur trouvé avec cet UUID",
-      "admin.reset.no_save_for_uuid": "Aucune sauvegarde pour cet UUID",
-      "admin.reset.online_warn": "\n\n⚠️ CE JOUEUR EST ACTUELLEMENT EN LIGNE : sa propre sauvegarde automatique (toutes les 30s environ) risque de RÉÉCRIRE son ancien état par-dessus ce reset dans les secondes qui suivent, l'annulant silencieusement. Pour un reset fiable, attends qu'il soit déconnecté.",
       "admin.reset.saved_on": "Sauvegardé le",
-      "admin.reset.screenshot_title_prefix": "📸 Screenshot — ",
       "admin.reset.section_equipment": "Équipement",
       "admin.reset.section_inventory": "Inventaire",
       "admin.reset.stat_level": "Niveau",
       "admin.reset.stat_silver": "Silver",
       "admin.reset.stat_zone": "Zone",
-      "admin.reset.toast_account_reset": "Compte réinitialisé ✓",
       "admin.reset.toast_all_accounts_reset": "{{data}} comptes réinitialisés ✓",
       "admin.reset.toast_all_quests_reset": "Quêtes de tous les joueurs réinitialisées ✓",
       "admin.reset.toast_demo_reset": "Démo réinitialisée",
       "admin.reset.toast_my_quests_reset": "Quêtes réinitialisées",
-      "admin.roles.add_btn": "➕ Ajouter",
-      "admin.roles.moderator_label": "Modérateur",
-      "admin.roles.no_nickname": "(sans pseudo)",
-      "admin.roles.no_roles": "Aucun rôle attribué",
-      "admin.roles.remove_mod_btn": "Retirer MOD",
-      "admin.roles.remove_tester_btn": "Retirer Testeur",
-      "admin.roles.sub": "🛡️ Modérateur : peut supprimer des messages de chat. 🧪 Testeur : accès en avant-première aux fonctionnalités pas encore publiques. Un joueur peut cumuler les deux.",
-      "admin.roles.tester_label": "Testeur",
-      "admin.roles.title": "Rôles (Modérateur / Testeur)",
-      "admin.sanctions.active_bans_title": "Bannissements actifs",
-      "admin.sanctions.ban_a_player_sub": "Bloque temporairement l'accès au jeu pour ce joueur (durée + motif prédéfini).",
-      "admin.sanctions.ban_a_player_title": "Bannir un joueur",
-      "admin.sanctions.ban_btn": "Bannir",
-      "admin.sanctions.ban_hint": "L'admin ne peut jamais se bannir lui-même (vérifié côté client avant l'appel serveur). Trouve l'UUID via le Classement ou la section Joueurs.",
-      "admin.sanctions.confirm_ban": "🚫 Bannir le joueur {{uuid}} pour {{hours}}h (motif : {{reasonLabel}}) ?",
-      "admin.sanctions.invalid_uuid": "UUID invalide ou identique au tien — action bloquée",
-      "admin.sanctions.no_active_bans": "Aucun bannissement actif",
-      "admin.sanctions.table_ban_ends": "Fin du ban",
-      "admin.sanctions.table_player": "Joueur",
-      "admin.sanctions.table_reason": "Motif",
-      "admin.sanctions.toast_banned": "Joueur banni ✓",
-      "admin.sanctions.toast_unbanned": "Ban levé ✓",
-      "admin.sanctions.unban_btn": "Lever",
       "admin.system.close_btn_title": "Fermer",
       "admin.system.danger_title": "Pour les joueurs — actions serveur",
       "admin.system.palette_label": "Palette",
@@ -1532,9 +1491,7 @@ const I18N_RESOURCES = {
       "admin.players.level": "Level",
       "admin.players.none": "No player matches.",
       "admin.players.reset_btn": "Reset",
-      "admin.players.reset_this_player_btn": "Reset this player",
       "admin.players.sanctions_and_role": "Sanctions & role",
-      "admin.players.screenshot_btn": "Screenshot",
       "admin.players.search_placeholder": "🔍 Search: nickname or UUID",
       "admin.players.signup_platform_title": "Signup platform",
       "admin.players.sort_gs": "Gearscore",
@@ -1544,13 +1501,9 @@ const I18N_RESOURCES = {
       "admin.players.summary_online_registered": "{{online}} online · {{total}} registered",
       "admin.players.table_platform": "Platform",
       "admin.players.table_player": "Player",
-      "admin.players.target_hint": "Find a player's UUID via the Leaderboard or their in-game messages (the \"Copy UUID\" button in their own menu). \"Screenshot\" shows their gear/inventory read-only (no changes made). The reset sends the same explanation message as the global reset, but shown ONLY to that player.",
-      "admin.players.target_sub": "Wipes silver/gear/level/bag for THAT player only.",
-      "admin.players.target_title": "A specific player — by UUID",
       "admin.players.tester": "Tester",
       "admin.players.unban_btn": "Unban",
       "admin.players.uuid_copied": "UUID copied ✓",
-      "admin.players.uuid_placeholder": "Player UUID",
       "admin.pvp.col_day": "Day",
       "admin.pvp.col_registrants": "Registrants",
       "admin.pvp.col_resolved": "Resolved at",
@@ -1590,61 +1543,26 @@ const I18N_RESOURCES = {
       "admin.rates.title": "Player rates (anti-cheat)",
       "admin.reconnect.avg_per_session": "Avg / session",
       "admin.reconnect.logged_sessions": "Logged sessions",
-      "admin.reconnect.no_session_yet": "No session yet.",
       "admin.reconnect.players_involved": "Players involved",
-      "admin.reconnect.sub": "Aggregate view of the \"Welcome back\" modal — silver recovered while away, across all players.",
-      "admin.reconnect.table_date": "Date",
-      "admin.reconnect.table_player_uuid": "Player (UUID)",
-      "admin.reconnect.table_zone": "Zone",
       "admin.reconnect.title": "Reconnect sessions",
-      "admin.reconnect.top10_title": "Top 10 sessions (by silver)",
       "admin.reconnect.total_silver_recovered": "Total silver recovered",
       "admin.reset.confirm_all_accounts_1": "💥 Reset ALL accounts of ALL players (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.",
       "admin.reset.confirm_all_accounts_2": "Are you REALLY sure? There is no way to recover the lost progress.",
       "admin.reset.confirm_all_quests": "Reset quests for ALL players? Everyone's in-progress quests (daily and weekly) will be cleared and new ones drawn on their next login. This action is irreversible.",
       "admin.reset.confirm_demo": "Reset the demo? All your progress (silver, gear, level, bag) will be lost and set back to zero. This action is irreversible.",
-      "admin.reset.confirm_reset_uuid": "🔄 Reset player {{uuid}}'s account (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.",
       "admin.reset.default_zone_name": "Velia",
       "admin.reset.empty_bag": "Empty bag",
       "admin.reset.no_gear": "No gear",
-      "admin.reset.no_player_for_uuid": "No player found with that UUID",
-      "admin.reset.no_save_for_uuid": "No save found for that UUID",
-      "admin.reset.online_warn": "\n\n⚠️ THIS PLAYER IS CURRENTLY ONLINE: their own autosave (roughly every 30s) may OVERWRITE their old state back over this reset within seconds, silently undoing it. For a reliable reset, wait until they're disconnected.",
       "admin.reset.saved_on": "Saved on",
-      "admin.reset.screenshot_title_prefix": "📸 Screenshot — ",
       "admin.reset.section_equipment": "Equipment",
       "admin.reset.section_inventory": "Inventory",
       "admin.reset.stat_level": "Level",
       "admin.reset.stat_silver": "Silver",
       "admin.reset.stat_zone": "Zone",
-      "admin.reset.toast_account_reset": "Account reset ✓",
       "admin.reset.toast_all_accounts_reset": "{{data}} accounts reset ✓",
       "admin.reset.toast_all_quests_reset": "All players' quests reset ✓",
       "admin.reset.toast_demo_reset": "Demo reset",
       "admin.reset.toast_my_quests_reset": "Quests reset",
-      "admin.roles.add_btn": "➕ Add",
-      "admin.roles.moderator_label": "Moderator",
-      "admin.roles.no_nickname": "(no nickname)",
-      "admin.roles.no_roles": "No roles assigned",
-      "admin.roles.remove_mod_btn": "Remove MOD",
-      "admin.roles.remove_tester_btn": "Remove Tester",
-      "admin.roles.sub": "🛡️ Moderator: can delete chat messages. 🧪 Tester: early access to not-yet-public features. A player can hold both roles.",
-      "admin.roles.tester_label": "Tester",
-      "admin.roles.title": "Roles (Moderator / Tester)",
-      "admin.sanctions.active_bans_title": "Active bans",
-      "admin.sanctions.ban_a_player_sub": "Temporarily blocks game access for this player (duration + predefined reason).",
-      "admin.sanctions.ban_a_player_title": "Ban a player",
-      "admin.sanctions.ban_btn": "Ban",
-      "admin.sanctions.ban_hint": "The admin can never ban themselves (checked client-side before the server call). Find the UUID via the Leaderboard or the Players section.",
-      "admin.sanctions.confirm_ban": "🚫 Ban player {{uuid}} for {{hours}}h (reason: {{reasonLabel}})?",
-      "admin.sanctions.invalid_uuid": "Invalid UUID or same as yours — action blocked",
-      "admin.sanctions.no_active_bans": "No active bans",
-      "admin.sanctions.table_ban_ends": "Ban ends",
-      "admin.sanctions.table_player": "Player",
-      "admin.sanctions.table_reason": "Reason",
-      "admin.sanctions.toast_banned": "Player banned ✓",
-      "admin.sanctions.toast_unbanned": "Ban lifted ✓",
-      "admin.sanctions.unban_btn": "Unban",
       "admin.system.close_btn_title": "Close",
       "admin.system.danger_title": "For players — server-wide",
       "admin.system.palette_label": "Palette",
@@ -18903,16 +18821,6 @@ function openTesterPanel() {
 $a('btnTester').onclick = openTesterPanel;
 
 // ==== src/admin/admin-players.js ====
-async function adminScreenshotPlayer() {
-  if (!isAdmin() || !sb) return;
-  const uuid = ($a('admResetUuidInput').value || '').trim();
-  if (!uuid) return;
-  const { data, error } = await sb.rpc('admin_get_player_save', { p_user_id: uuid });
-  if (error) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true }); return; }
-  if (!data) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.no_save_for_uuid'), { hurt:true }); return; }
-  openInfo(i18next.t('admin:admin.reset.screenshot_title_prefix') + escapeHtml(data._pseudo||'?'), renderAdminScreenshotHtml(data));
-}
-
 function renderAdminScreenshotHtml(save) {
   const s = save.S || {};
   const eq = save.EQUIP || {};
@@ -18938,44 +18846,6 @@ function renderAdminScreenshotHtml(save) {
   `;
 }
 
-async function resetAccountByUuid() {
-  if (!isAdmin() || !sb) return;
-  const input = $a('admResetUuidInput');
-  const uuid = (input.value || '').trim();
-  if (!uuid) return;
-  
-  let online = false;
-  try {
-    const { data } = await sb.rpc('admin_is_player_online', { p_user_id: uuid, p_window_seconds: 90 });
-    online = !!data;
-  } catch(e) {}
-  const onlineWarn = online
-    ? i18next.t('admin:admin.reset.online_warn')
-    : '';
-  const msg = i18next.t('admin:admin.reset.confirm_reset_uuid', { uuid }) + onlineWarn;
-  if (!confirm(msg)) return;
-  const title_fr = '🔄 Ton compte a été réinitialisé';
-  const title_en = '🔄 Your account has been reset';
-  const body_fr = 'Un membre du staff a réinitialisé ton compte (silver, équipement, niveau, sac).<br><br>' +
-    'Si tu penses qu\'il s\'agit d\'une erreur, contacte-nous sur Discord.';
-  const body_en = 'A staff member has reset your account (silver, gear, level, bag).<br><br>' +
-    'If you believe this is a mistake, please reach out to us on Discord.';
-  const { data, error } = await sb.rpc('admin_reset_account_by_uuid', {
-    p_user_id: uuid, p_title_fr: title_fr, p_title_en: title_en, p_body_fr: body_fr, p_body_en: body_en
-  });
-  if (error) {
-    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
-    return;
-  }
-  if (!data) {
-    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.no_player_for_uuid'), { hurt:true });
-    return;
-  }
-  logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé le compte du joueur \`${uuid}\``, 0xc05545);
-  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.toast_account_reset'), { gold:true });
-  input.value = '';
-}
-
 const BAN_REASONS = [
   { id:'cheat', label:{fr:'Triche',en:'Cheating'} },
   { id:'exploit', label:{fr:'Exploit',en:'Exploit'} },
@@ -18990,92 +18860,9 @@ const BAN_DURATIONS = [
   { hours:24*30, label:{fr:'30 jours',en:'30 days'} },
 ];
 
-async function refreshBanList() {
-  const el = $a('admBanList'); if (!el || !sb) return;
-  const { data, error } = await sb.rpc('admin_list_bans');
-  if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
-  const rows = data || [];
-  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.sanctions.no_active_bans')}</div>`; return; }
-  el.innerHTML = `<table class="admTable">
-    <thead><tr><th>${i18next.t('admin:admin.sanctions.table_player')}</th><th>${i18next.t('admin:admin.sanctions.table_reason')}</th><th>${i18next.t('admin:admin.sanctions.table_ban_ends')}</th><th></th></tr></thead>
-    <tbody>${rows.map(r => `<tr>
-      <td>${escapeHtml(r.pseudo || (r.user_id||'').slice(0,8)+'…')}</td>
-      <td>${escapeHtml(r.ban_reason || '—')}</td>
-      <td>${r.banned_until ? new Date(r.banned_until).toLocaleString(LANG==='fr'?'fr-FR':'en-US') : '—'}</td>
-      <td><button class="admUnbanBtn" data-uuid="${r.user_id}">${i18next.t('admin:admin.sanctions.unban_btn')}</button></td>
-    </tr>`).join('')}</tbody>
-  </table>`;
-  el.querySelectorAll('.admUnbanBtn').forEach(btn => {
-    btn.onclick = () => unbanPlayer(btn.dataset.uuid);
-  });
-}
-
-async function banPlayerByUuid() {
-  if (!isAdmin() || !sb) return;
-  const input = $a('admBanUuidInput');
-  const uuid = (input.value || '').trim();
-  const reasonId = $a('admBanReasonSelect').value;
-  const hours = Number($a('admBanDurationSelect').value) || 24;
-  const reasonLabel = (BAN_REASONS.find(r => r.id === reasonId) || BAN_REASONS[BAN_REASONS.length-1]).label[LANG];
-  if (!canBanUuid(uuid, currentUser && currentUser.id)) {
-    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.sanctions.invalid_uuid'), { hurt:true });
-    return;
-  }
-  const msg = i18next.t('admin:admin.sanctions.confirm_ban', { uuid, hours, reasonLabel });
-  if (!confirm(msg)) return;
-  const { error } = await sb.rpc('admin_ban_player', { p_user_id: uuid, p_duration_hours: hours, p_reason: reasonLabel });
-  if (error) {
-    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
-    return;
-  }
-  logToDiscord('🚫 Sanction', `**${myPseudo||'Admin'}** a banni le joueur \`${uuid}\` pour ${hours}h (motif : ${reasonLabel})`, 0xc05545);
-  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.sanctions.toast_banned'), { gold:true });
-  input.value = '';
-  refreshBanList();
-}
-
-async function unbanPlayer(uuid) {
-  if (!isAdmin() || !sb || !uuid) return;
-  const { error } = await sb.rpc('admin_unban_player', { p_user_id: uuid });
-  if (error) {
-    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
-    return;
-  }
-  logToDiscord('✅ Sanction levée', `**${myPseudo||'Admin'}** a levé le ban du joueur \`${uuid}\``, 0x8fc98a);
-  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.sanctions.toast_unbanned'), { gold:true });
-  refreshBanList();
-}
-
 function fmtAdmPlaytime(sec) {
   const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
   return `${h}h${String(m).padStart(2,'0')}`;
-}
-
-async function refreshRoleList() {
-  const el = $a('admRoleList'); if (!el || !sb) return;
-  const [{ data: mods, error: modErr }, { data: testers, error: testErr }] = await Promise.all([
-    sb.rpc('admin_list_mods'), sb.rpc('admin_list_testers'),
-  ]);
-  if (modErr || testErr) { el.innerHTML = `<div class="admHint">${escapeHtml((modErr||testErr).message)}</div>`; return; }
-  const byUser = new Map();
-  (mods || []).forEach(m => byUser.set(m.user_id, { ...(byUser.get(m.user_id)||{}), user_id:m.user_id, pseudo:m.pseudo, mod:true }));
-  (testers || []).forEach(m => byUser.set(m.user_id, { ...(byUser.get(m.user_id)||{}), user_id:m.user_id, pseudo:m.pseudo, tester:true }));
-  const rows = [...byUser.values()];
-  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.roles.no_roles')}</div>`; return; }
-  el.innerHTML = rows.map(r => `<div class="modRow">` +
-    `<span class="modPseudo">${escapeHtml(r.pseudo || i18next.t('admin:admin.roles.no_nickname'))}</span>` +
-    `<code class="modUuid">${r.user_id}</code>` +
-    `<span class="roleBadges">${r.mod?'🛡️ MOD':''}${r.mod&&r.tester?' · ':''}${r.tester?'🧪 Testeur':''}</span>` +
-    `${r.mod?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="mod">${i18next.t('admin:admin.roles.remove_mod_btn')}</button>`:''}` +
-    `${r.tester?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="tester">${i18next.t('admin:admin.roles.remove_tester_btn')}</button>`:''}` +
-    `</div>`).join('');
-  el.querySelectorAll('.modRemBtn').forEach(btn => {
-    btn.onclick = async () => {
-      const rpc = btn.dataset.role === 'mod' ? 'admin_remove_mod' : 'admin_remove_tester';
-      const { error } = await sb.rpc(rpc, { p_user_id: btn.dataset.uuid });
-      if (!error) refreshRoleList();
-    };
-  });
 }
 
 function providerInfo(provider) {
@@ -19116,116 +18903,6 @@ function renderAdminPlayerList(el) {
       btn.onclick = e => { e.stopPropagation(); showPlayerInventoryWindow(btn.dataset.uuid, btn.dataset.name); };
     });
   });
-}
-
-function renderAdminTargetPlayer(el) {
-  el.innerHTML = `
-    <div class="admSection riskSingle">
-      <div class="admSectionTitle">🎯 ${i18next.t('admin:admin.players.target_title')}</div>
-      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.players.target_sub')}</div>
-      <div class="admActions">
-        <input type="text" id="admResetUuidInput" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="width:230px">
-        <button id="btnScreenshotPlayer">📸 ${i18next.t('admin:admin.players.screenshot_btn')}</button>
-        <button id="btnResetAccountByUuid" style="border-color:var(--danger);color:#e8a89f">🔄 ${i18next.t('admin:admin.players.reset_this_player_btn')}</button>
-      </div>
-      <div class="admHint">${i18next.t('admin:admin.players.target_hint')}</div>
-    </div>`;
-  $a('btnScreenshotPlayer').onclick = adminScreenshotPlayer;
-  $a('btnResetAccountByUuid').onclick = resetAccountByUuid;
-}
-
-function renderAdminSanctions(el) {
-  el.innerHTML = `
-    <div class="admSection">
-      <div class="admSectionTitle">🚫 ${i18next.t('admin:admin.sanctions.ban_a_player_title')}</div>
-      <div class="admSectionSub">${i18next.t('admin:admin.sanctions.ban_a_player_sub')}</div>
-      <div class="admActions">
-        <input type="text" id="admBanUuidInput" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="width:230px">
-        <select id="admBanReasonSelect">${BAN_REASONS.map(r => `<option value="${r.id}">${r.label[LANG]}</option>`).join('')}</select>
-        <select id="admBanDurationSelect">${BAN_DURATIONS.map(d => `<option value="${d.hours}"${d.hours===24?' selected':''}>${d.label[LANG]}</option>`).join('')}</select>
-        <button id="btnBanPlayer" style="border-color:var(--danger);color:#e8a89f">🚫 ${i18next.t('admin:admin.sanctions.ban_btn')}</button>
-      </div>
-      <div class="admHint warn">${i18next.t('admin:admin.sanctions.ban_hint')}</div>
-    </div>
-    <div class="admSection">
-      <div class="admSectionTitle">📋 ${i18next.t('admin:admin.sanctions.active_bans_title')}</div>
-      <div id="admBanList"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
-    </div>`;
-  $a('btnBanPlayer').onclick = banPlayerByUuid;
-  refreshBanList();
-}
-
-function renderAdminRoles(el) {
-  el.innerHTML = `
-    <div class="admSection riskMgmt">
-      <div class="admSectionTitle">🎭 ${i18next.t('admin:admin.roles.title')}</div>
-      <div class="admSectionSub">${i18next.t('admin:admin.roles.sub')}</div>
-      <div class="admBossSpawn">
-        <input type="text" id="admRoleUuid" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
-        <select id="admRoleSelect" style="flex:0 0 auto;width:auto;">
-          <option value="mod">🛡️ ${i18next.t('admin:admin.roles.moderator_label')}</option>
-          <option value="tester">🧪 ${i18next.t('admin:admin.roles.tester_label')}</option>
-        </select>
-        <button id="btnAddRole" style="flex:0 0 auto;width:auto;">${i18next.t('admin:admin.roles.add_btn')}</button>
-      </div>
-      <div id="admRoleList"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
-    </div>`;
-  $a('btnAddRole').onclick = async () => {
-    if (!isAdmin() || !sb) return;
-    const uuid = $a('admRoleUuid').value.trim(); if (!uuid) return;
-    const role = $a('admRoleSelect').value;
-    const rpc = role === 'mod' ? 'admin_add_mod' : 'admin_add_tester';
-    const { error } = await sb.rpc(rpc, { p_user_id: uuid });
-    if (error) { $a('admRoleList').insertAdjacentHTML('afterbegin', `<div class="admHint">${escapeHtml(error.message)}</div>`); return; }
-    logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ajouté le rôle ${role==='mod'?'Modérateur':'Testeur'} à \`${uuid}\``, 0x9cc9e8);
-    $a('admRoleUuid').value = ''; refreshRoleList();
-  };
-  refreshRoleList();
-}
-
-function renderAdminReconnect(el) {
-  el.innerHTML = `
-    <div class="admSection">
-      <div class="admSectionTitle">🔄 ${i18next.t('admin:admin.reconnect.title')}</div>
-      <div class="admSectionSub">${i18next.t('admin:admin.reconnect.sub')}</div>
-      <div id="admReconnectStats"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
-    </div>
-    <div class="admSection">
-      <div class="admSectionTitle">🏆 ${i18next.t('admin:admin.reconnect.top10_title')}</div>
-      <div id="admReconnectTop"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
-    </div>`;
-  refreshAdminReconnect();
-}
-
-async function refreshAdminReconnect() {
-  if (!isAdmin() || !sb) return;
-  const statsEl = $a('admReconnectStats'), topEl = $a('admReconnectTop');
-  if (!statsEl || !topEl) return;
-  const { data, error } = await sb.rpc('admin_afk_sessions_summary');
-  if (error || !data || !data[0]) {
-    statsEl.innerHTML = `<div class="admHint">${escapeHtml(error ? error.message : 'no data')}</div>`;
-    topEl.innerHTML = '';
-    return;
-  }
-  const s = data[0];
-  statsEl.innerHTML = `
-    <div class="admStatsGrid">
-      <div class="admStatCard"><b>${(s.total_sessions||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.logged_sessions')}</span></div>
-      <div class="admStatCard"><b>${(s.total_players||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.players_involved')}</span></div>
-      <div class="admStatCard"><b>${Math.round(s.total_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.total_silver_recovered')}</span></div>
-      <div class="admStatCard"><b>${Math.round(s.avg_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.avg_per_session')}</span></div>
-    </div>`;
-  const top = Array.isArray(s.top_sessions) ? s.top_sessions : [];
-  topEl.innerHTML = top.length === 0
-    ? `<div class="admEmpty">${i18next.t('admin:admin.reconnect.no_session_yet')}</div>`
-    : `<table class="admTable"><thead><tr>
-        <th>Silver</th><th>${i18next.t('admin:admin.reconnect.table_zone')}</th><th>${i18next.t('admin:admin.reconnect.table_date')}</th><th>${i18next.t('admin:admin.reconnect.table_player_uuid')}</th>
-      </tr></thead><tbody>${top.map(t => `<tr>
-        <td>${Math.round(t.silver_gained||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</td>
-        <td>${escapeHtml(t.zone_name||'—')}</td>
-        <td>${new Date(t.ended_at).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</td>
-        <td style="font-family:monospace;font-size:10px">${escapeHtml((t.user_id||'').slice(0,8))}…</td>
-      </tr>`).join('')}</tbody></table>`;
 }
 
 // ==== src/admin/admin-content.js ====
