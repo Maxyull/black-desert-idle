@@ -407,7 +407,7 @@ def gen_patch_version():
         print(f"ERREUR: version introuvable dans {PATCH_DATA_PATH.name} (structure changee ?)", file=sys.stderr)
         sys.exit(1)
     # meme forme JSON que ce que checkForUpdate() attend ; \n final pour rester diff-friendly
-    PATCH_VERSION_PATH.write_text('{"v":"%s"}\n' % m.group(1), encoding="utf-8")
+    PATCH_VERSION_PATH.write_text('{"v":"%s"}\n' % m.group(1), encoding="utf-8", newline="\n")
     print(f"meta/{PATCH_VERSION_PATH.name} : {m.group(1)}")
 
 
