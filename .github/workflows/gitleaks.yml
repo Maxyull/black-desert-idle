@@ -19,7 +19,31 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0 # historique complet : un secret leaké dans un vieux commit reste exploitable
-      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+      # On lance le BINAIRE gitleaks directement, au lieu de gitleaks/gitleaks-action (2026-07-20).
+      # Pourquoi : en mode pull_request, cette action appelle l'API GitHub
+      # `GET /repos/{o}/{r}/pulls/{n}/commits` pour reconstituer la liste des commits de la PR.
+      # Quand cet endpoint répond 503 (rafale constatée sur les PR #62 et #63), l'action crashe
+      # AVANT d'avoir scanné quoi que ce soit : le job passait rouge sans qu'aucun secret n'existe,
+      # pendant que le MÊME code scanné sur `main` (mode push, qui n'utilise pas cette API) passait
+      # vert. Un check rouge en permanence sur un dépôt sain finit par être ignoré -- c'est
+      # exactement ce qui s'est produit.
+      # Le binaire scanne l'historique git local déjà récupéré par le checkout ci-dessus : zéro
+      # appel à l'API GitHub, donc comportement IDENTIQUE sur push, pull_request et schedule.
+      - name: Install gitleaks
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
+          GITLEAKS_VERSION: 8.30.1
+          # empreinte publiée dans gitleaks_<version>_checksums.txt de la release ; la vérifier
+          # évite qu'une release retaguée ou un miroir compromis n'injecte un binaire modifié
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          set -euo pipefail
+          curl -sSfL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks version
+
+      # `git` = scan de l'historique (nouveau nom de l'ancien `detect`). --redact : ne jamais
+      # imprimer la valeur d'un secret dans des logs de CI publics. Sortie != 0 si trouvaille.
+      - name: Scan
+        run: ./gitleaks git . --config .gitleaks.toml --redact --no-banner
