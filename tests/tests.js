@@ -613,6 +613,19 @@
     assert('UUID identique à celui de l\'admin refusé (anti-auto-ban)', !canBanUuid('admin-uuid', 'admin-uuid'));
     assert('UUID différent et non vide accepté', canBanUuid('joueur-uuid', 'admin-uuid'));
   }
+  // resetter un joueur EN LIGNE ne marche pas : sa propre autosave (~30 s) réécrit son ancien état
+  // par-dessus et annule le reset en silence. L'ancienne section "Joueur précis" avertissait donc
+  // l'admin (2026-07-16) ; la fusion des 5 sections Joueurs (PR #63) a perdu l'avertissement sans
+  // qu'aucun test ne bronche. Garde-fou statique pour que ça ne puisse plus repartir en silence :
+  // la fiche React doit consulter admin_is_player_online AVANT le confirm() de reset.
+  function testReactResetWarnsWhenPlayerIsOnline() {
+    if (typeof AdmPlayerCard !== 'function') return;
+    const src = AdmPlayerCard.toString();
+    assert('la fiche joueur interroge admin_is_player_online avant un reset',
+      src.includes('admin_is_player_online'), `src contient online_warn? ${src.includes('online_warn')}`);
+    assert('l\'avertissement est bien concaténé au message de confirmation',
+      /confirm\(confirms\[kind\]\(\) \+ onlineWarn\)/.test(src));
+  }
   // données du formulaire de ban bien formées (BAN_REASONS/BAN_DURATIONS) -- openAdminPanel()
   // n'est pas appelable directement en test (gaté par isAdmin() + appels RPC réseau), donc on
   // verrouille ici les données réellement utilisées pour construire le sous-onglet Sanctions.
@@ -7146,6 +7159,7 @@
     testTreasureCraftRecipeTargetsUnnumberedTreasure();
     testIsBannedRespectsExpiry();
     testCanBanUuidBlocksSelfBan();
+    testReactResetWarnsWhenPlayerIsOnline();
     testBanReasonsAndDurationsWellFormed();
     testAdminThemesWellFormedAndPersist();
     testAdminSectionsWellFormed();

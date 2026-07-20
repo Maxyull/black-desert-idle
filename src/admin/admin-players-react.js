@@ -82,7 +82,22 @@ function AdmPlayerCard({ player, ban, roles, onBack, onChanged }) {
       unban: () => i18next.t('admin:admin.players.confirm_unban', { name: player.display_name }),
       reset: () => i18next.t('admin:admin.players.confirm_reset', { name: player.display_name }),
     };
-    if (confirms[kind] && !confirm(confirms[kind]())) return;
+    // avertissement "joueur en ligne" avant un reset — existait sur l'ancienne section "Joueur
+    // précis" (demande du 2026-07-16 : "oui averti le joueurs pour le reset"), perdu à la fusion
+    // des 5 sections, restauré le 2026-07-20. Un joueur CONNECTÉ garde son ancien état en mémoire
+    // et le RÉÉCRIT dans game_saves à sa prochaine sauvegarde automatique (~30 s), ce qui annule
+    // le reset en quelques secondes, en silence. On ne BLOQUE pas (l'admin peut avoir une bonne
+    // raison, ex. ban immédiat suivi d'une déconnexion forcée), on renforce la confirmation.
+    // Relecture serveur plutôt que player.online : la liste est chargée au montage et peut dater
+    // de plusieurs minutes, alors que la fenêtre de risque, elle, est de 30 s.
+    let onlineWarn = '';
+    if (kind === 'reset') {
+      try {
+        const { data } = await sb.rpc('admin_is_player_online', { p_user_id: uuid, p_window_seconds: 90 });
+        if (data) onlineWarn = i18next.t('admin:admin.reset.online_warn');
+      } catch (e) {}
+    }
+    if (confirms[kind] && !confirm(confirms[kind]() + onlineWarn)) return;
     setBusy(kind); setMsg(null);
     let error = null;
     if (kind === 'ban') {

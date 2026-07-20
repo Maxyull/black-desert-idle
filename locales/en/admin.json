@@ -381,6 +381,7 @@
   "admin.reset.default_zone_name": "Velia",
   "admin.reset.empty_bag": "Empty bag",
   "admin.reset.no_gear": "No gear",
+  "admin.reset.online_warn": "\n\n⚠️ THIS PLAYER IS CURRENTLY ONLINE: their own autosave (roughly every 30s) may OVERWRITE their old state back over this reset within seconds, silently undoing it. For a reliable reset, wait until they're disconnected.",
   "admin.reset.saved_on": "Saved on",
   "admin.reset.section_equipment": "Equipment",
   "admin.reset.section_inventory": "Inventory",

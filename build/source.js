@@ -385,6 +385,7 @@ const I18N_RESOURCES = {
       "admin.reset.default_zone_name": "Velia",
       "admin.reset.empty_bag": "Sac vide",
       "admin.reset.no_gear": "Aucun équipement",
+      "admin.reset.online_warn": "\n\n⚠️ CE JOUEUR EST ACTUELLEMENT EN LIGNE : sa propre sauvegarde automatique (toutes les 30s environ) risque de RÉÉCRIRE son ancien état par-dessus ce reset dans les secondes qui suivent, l'annulant silencieusement. Pour un reset fiable, attends qu'il soit déconnecté.",
       "admin.reset.saved_on": "Sauvegardé le",
       "admin.reset.section_equipment": "Équipement",
       "admin.reset.section_inventory": "Inventaire",
@@ -1553,6 +1554,7 @@ const I18N_RESOURCES = {
       "admin.reset.default_zone_name": "Velia",
       "admin.reset.empty_bag": "Empty bag",
       "admin.reset.no_gear": "No gear",
+      "admin.reset.online_warn": "\n\n⚠️ THIS PLAYER IS CURRENTLY ONLINE: their own autosave (roughly every 30s) may OVERWRITE their old state back over this reset within seconds, silently undoing it. For a reliable reset, wait until they're disconnected.",
       "admin.reset.saved_on": "Saved on",
       "admin.reset.section_equipment": "Equipment",
       "admin.reset.section_inventory": "Inventory",
@@ -20264,7 +20266,15 @@ function AdmPlayerCard({ player, ban, roles, onBack, onChanged }) {
       unban: () => i18next.t('admin:admin.players.confirm_unban', { name: player.display_name }),
       reset: () => i18next.t('admin:admin.players.confirm_reset', { name: player.display_name }),
     };
-    if (confirms[kind] && !confirm(confirms[kind]())) return;
+    
+    let onlineWarn = '';
+    if (kind === 'reset') {
+      try {
+        const { data } = await sb.rpc('admin_is_player_online', { p_user_id: uuid, p_window_seconds: 90 });
+        if (data) onlineWarn = i18next.t('admin:admin.reset.online_warn');
+      } catch (e) {}
+    }
+    if (confirms[kind] && !confirm(confirms[kind]() + onlineWarn)) return;
     setBusy(kind); setMsg(null);
     let error = null;
     if (kind === 'ban') {
