@@ -3,6 +3,19 @@ const I18N_NAMESPACES = ["admin","backend","combat","common","core","inventory",
 const I18N_RESOURCES = {
   "fr": {
     "admin": {
+      "admin.audit.col_action": "Action",
+      "admin.audit.col_actor": "Par",
+      "admin.audit.col_details": "Détails",
+      "admin.audit.col_target": "Cible",
+      "admin.audit.col_when": "Quand",
+      "admin.audit.heavy": "Lourde",
+      "admin.audit.none": "Aucune entrée pour l'instant — le journal se remplit à la prochaine action admin.",
+      "admin.audit.sub": "Qui a fait quoi, quand, sur qui. Les 18 RPC qui modifient l'état du jeu y écrivent une entrée. Journal en append-only : ni modifiable ni supprimable, y compris depuis la base.",
+      "admin.audit.tile_actors": "Comptes staff",
+      "admin.audit.tile_entries": "Entrées affichées",
+      "admin.audit.tile_heavy": "Actions lourdes",
+      "admin.audit.tile_last": "Dernière action",
+      "admin.audit.title": "Journal d'audit",
       "admin.common.chart_unavailable": "Graphique indisponible",
       "admin.common.failed": "Échec",
       "admin.common.failed_prefix": "Échec — ",
@@ -1198,6 +1211,19 @@ const I18N_RESOURCES = {
   },
   "en": {
     "admin": {
+      "admin.audit.col_action": "Action",
+      "admin.audit.col_actor": "By",
+      "admin.audit.col_details": "Details",
+      "admin.audit.col_target": "Target",
+      "admin.audit.col_when": "When",
+      "admin.audit.heavy": "Heavy",
+      "admin.audit.none": "No entry yet — the log fills up on the next admin action.",
+      "admin.audit.sub": "Who did what, when, to whom. All 18 state-changing RPCs write an entry here. Append-only: it cannot be edited or deleted, not even from the database.",
+      "admin.audit.tile_actors": "Staff accounts",
+      "admin.audit.tile_entries": "Entries shown",
+      "admin.audit.tile_heavy": "Heavy actions",
+      "admin.audit.tile_last": "Last action",
+      "admin.audit.title": "Audit log",
       "admin.common.chart_unavailable": "Chart unavailable",
       "admin.common.failed": "Failed",
       "admin.common.failed_prefix": "Failed — ",
@@ -20287,6 +20313,82 @@ const admMonitoringGroup = ADMIN_SECTIONS.find(g => g.cat === 'monitoring');
 if (admMonitoringGroup) admMonitoringGroup.items.unshift(
   { id:'integrity', icon:'🛡️', label:{fr:'Intégrité',en:'Integrity'}, render:(el)=>renderAdminIntegrity(el) }
 );
+
+// ==== src/admin/admin-audit.js ====
+const AUDIT_HEAVY_ACTIONS = [
+  'admin_reset_all_accounts', 'admin_reset_account_by_uuid', 'admin_reset_all_quests',
+  'admin_ban_player', 'admin_set_loot_rates', 'admin_cancel_all_market_orders',
+];
+
+function auditActionIcon(action) {
+  if (!action) return '•';
+  if (action.indexOf('ban') !== -1) return '🚫';
+  if (action.indexOf('reset') !== -1) return '♻️';
+  if (action.indexOf('mod') !== -1 || action.indexOf('tester') !== -1) return '🧑‍🤝‍🧑';
+  if (action.indexOf('boss') !== -1) return '🌍';
+  if (action.indexOf('market') !== -1) return '🏛️';
+  if (action.indexOf('loot') !== -1) return '🎲';
+  if (action.indexOf('donation') !== -1) return '💝';
+  if (action.indexOf('notice') !== -1) return '📢';
+  return '•';
+}
+
+function auditDetailsText(details) {
+  if (!details || typeof details !== 'object') return '';
+  const parts = Object.keys(details)
+    .filter(k => details[k] !== null && details[k] !== undefined && details[k] !== '')
+    .map(k => k + ' : ' + (typeof details[k] === 'object' ? JSON.stringify(details[k]) : String(details[k])));
+  return parts.join(' · ');
+}
+
+function renderAdminAudit(el) {
+  el.innerHTML = admMonSkeleton('📒 ' + i18next.t('admin:admin.audit.title'),
+    i18next.t('admin:admin.audit.sub'), 'admAuditBody');
+  loadAdminAudit();
+}
+
+async function loadAdminAudit() {
+  const el = $a('admAuditBody');
+  if (!el) return;
+  const { data, error } = await sb.rpc('admin_list_audit_log', { p_limit: 200, p_action: null });
+  if (error) return admMonFail(el, error);
+  const rows = data || [];
+  const heavy = rows.filter(r => AUDIT_HEAVY_ACTIONS.indexOf(r.action) !== -1).length;
+  const acteurs = new Set(rows.map(r => r.actor_email).filter(Boolean));
+
+  el.innerHTML = admMonTiles([
+    { lbl:'📒 ' + i18next.t('admin:admin.audit.tile_entries'), val: admMonNum(rows.length) },
+    { lbl:'⚠️ ' + i18next.t('admin:admin.audit.tile_heavy'), val: admMonNum(heavy) },
+    { lbl:'🧑 ' + i18next.t('admin:admin.audit.tile_actors'), val: admMonNum(acteurs.size) },
+    { lbl:'🕒 ' + i18next.t('admin:admin.audit.tile_last'), val: admMonDate(rows.length ? rows[0].created_at : null) },
+  ]) + (rows.length === 0
+    
+    ? `<div class="admEmpty">${i18next.t('admin:admin.audit.none')}</div>`
+    : `<table class="admTable"><thead><tr>
+        <th>${i18next.t('admin:admin.audit.col_when')}</th>
+        <th>${i18next.t('admin:admin.audit.col_actor')}</th>
+        <th>${i18next.t('admin:admin.audit.col_action')}</th>
+        <th>${i18next.t('admin:admin.audit.col_target')}</th>
+        <th>${i18next.t('admin:admin.audit.col_details')}</th>
+      </tr></thead><tbody>${rows.map(r => `<tr>
+        <td style="font-size:10px;white-space:nowrap">${admMonDate(r.created_at)}</td>
+        <td style="font-size:10px">${escapeHtml(r.actor_email || '—')}</td>
+        <td>${auditActionIcon(r.action)} ${escapeHtml(r.action)}${
+            AUDIT_HEAVY_ACTIONS.indexOf(r.action) !== -1
+              ? ` <span class="admSevPill tone-warn">${i18next.t('admin:admin.audit.heavy')}</span>` : ''}</td>
+        <td>${r.target_user_id
+            ? `<a href="${escapeHtml(buildAdminHash('players','all', r.target_user_id))}">${escapeHtml(r.target_name || r.target_user_id.slice(0,8))}</a>`
+            : '<span class="admHint">—</span>'}</td>
+        <td style="font-size:10px">${escapeHtml(auditDetailsText(r.details))}</td>
+      </tr>`).join('')}</tbody></table>`);
+}
+
+const admAuditGroup = ADMIN_SECTIONS.find(g => g.cat === 'monitoring');
+if (admAuditGroup) {
+  const apresIntegrite = admAuditGroup.items.findIndex(i => i.id === 'integrity') + 1;
+  admAuditGroup.items.splice(apresIntegrite, 0,
+    { id:'audit', icon:'📒', label:{fr:'Journal d\'audit',en:'Audit log'}, render:(el)=>renderAdminAudit(el) });
+}
 
 // ==== src/admin/admin-dashboard-react.js ====
 const admH = React.createElement;

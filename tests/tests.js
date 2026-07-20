@@ -770,6 +770,34 @@
         integritySeverityPill('perdu_dans_le_futur').indexOf('tone-muted') !== -1);
     }
   }
+  // journal d'audit admin (2026-07-20, bdi-admin-monitoring-plan.md §7). Les deux fonctions testées
+  // ici sont celles qui doivent survivre à une action AJOUTÉE PLUS TARD CÔTÉ SERVEUR : le serveur
+  // peut auditer une nouvelle RPC sans que ce fichier bouge, et une entrée inconnue doit rester
+  // lisible plutôt que d'apparaître vide ou de faire planter la ligne (ce qui la ferait disparaître
+  // du journal -- exactement l'inverse du but d'un journal d'audit).
+  function testAuditRendersUnknownActionsAndDetails() {
+    if (typeof auditActionIcon !== 'function' || typeof auditDetailsText !== 'function') return;
+    assert('une action connue reçoit son icône', auditActionIcon('admin_ban_player') === '🚫');
+    assert('une action ajoutée plus tard reste affichable', auditActionIcon('admin_truc_futur') === '•');
+    assert('auditActionIcon(null) ne jette pas', auditActionIcon(null) === '•');
+    assert('auditActionIcon(undefined) ne jette pas', auditActionIcon(undefined) === '•');
+    // détails : rendu générique clé/valeur, donc aucune forme n'est "non prévue"
+    assert('détails simples', auditDetailsText({ reason: 'triche', duration_hours: 24 }) === 'reason : triche · duration_hours : 24');
+    assert('détails imbriqués sérialisés plutôt que rendus [object Object]',
+      auditDetailsText({ rates: { grey: 1 } }).indexOf('[object Object]') === -1);
+    assert('les valeurs vides sont écartées, pas affichées à moitié',
+      auditDetailsText({ a: 1, b: null, c: '', d: undefined }) === 'a : 1');
+    assert('objet vide -> chaîne vide', auditDetailsText({}) === '');
+    assert('null/undefined -> chaîne vide, pas de throw', auditDetailsText(null) === '' && auditDetailsText(undefined) === '');
+    // les actions "lourdes" doivent toutes exister sous forme de RPC réellement instrumentée :
+    // une faute de frappe ici ne se verrait nulle part, la pastille manquerait simplement.
+    if (typeof AUDIT_HEAVY_ACTIONS !== 'undefined') {
+      assert('AUDIT_HEAVY_ACTIONS non vide et sans doublon',
+        AUDIT_HEAVY_ACTIONS.length > 0 && new Set(AUDIT_HEAVY_ACTIONS).size === AUDIT_HEAVY_ACTIONS.length);
+      assert('toutes les actions lourdes sont préfixées admin_',
+        AUDIT_HEAVY_ACTIONS.every(a => a.indexOf('admin_') === 0), AUDIT_HEAVY_ACTIONS.join(','));
+    }
+  }
   // dashboard consolidé (2026-07-20, demande explicite : "ajoute toutes les graphique de tout les
   // panel dans dashboard avec des voyant vert rouge pour plus dinfos") -- chaque widget doit
   // pointer vers une VRAIE section du registre ADMIN_SECTIONS (sinon un clic sur la carte ne ferait
@@ -7230,6 +7258,7 @@
     testBuildHBarsSvgSortsAndSurvivesEmpty();
     testParseAdminHashRoutesAndIgnoresForeignHashes();
     testIntegrityKindFallsBackOnUnknownServerKinds();
+    testAuditRendersUnknownActionsAndDetails();
     testDashboardWidgetsPointToRealSections();
     testDashboardLightDistinguishesHealthy();
     testBuildSilverChartSvgGeometry();
