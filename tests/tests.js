@@ -3402,16 +3402,20 @@
   // admin-panel.js:refreshRoleList) -- pas d'exploitation trouvée avec les RPC actuelles, mais
   // fragile si une future RPC échoue avec de l'input utilisateur dans le message. Garde-fou
   // statique : vérifie que ces 2 points passent bien error.message par escapeHtml().
+  // 2026-07-20 : refreshRoleList a disparu avec la fusion de la page Joueurs (la fiche React range
+  // ses erreurs dans un état rendu comme ENFANT React, donc échappé par React lui-même). Le 2e
+  // volet suit désormais le SEUL chemin error.message -> HTML brut qui reste dans le panneau
+  // admin : AdmReconnectFold, qui compose une chaîne HTML posée en dangerouslySetInnerHTML.
   function testErrorMessagesAreEscapedBeforeInnerHtml() {
     if (typeof showPlayerGear === 'function') {
       const src = showPlayerGear.toString();
       assert('showPlayerGear() échappe error.message avant innerHTML (escapeHtml)',
         /escapeHtml\(error\.message\)/.test(src), `src contient escapeHtml? ${src.includes('escapeHtml')}`);
     }
-    if (typeof refreshRoleList === 'function') {
-      const src = refreshRoleList.toString();
-      assert('refreshRoleList() échappe (modErr||testErr).message avant innerHTML (escapeHtml)',
-        /escapeHtml\(\(modErr\|\|testErr\)\.message\)/.test(src));
+    if (typeof AdmReconnectFold === 'function') {
+      const src = AdmReconnectFold.toString();
+      assert('AdmReconnectFold() échappe error.message avant dangerouslySetInnerHTML (escapeHtml)',
+        /escapeHtml\(error \? error\.message/.test(src), `src contient escapeHtml? ${src.includes('escapeHtml')}`);
     }
   }
   // "ça ne revient pas au classement du tout" (2026-07-13) : showPlayerGear() n'est atteignable
