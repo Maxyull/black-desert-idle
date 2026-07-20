@@ -28,6 +28,14 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      # 2026-07-20 : scripts/build.py n'avait aucun test alors qu'il reecrit tout le code
+      # expedie en prod. Une regex mal analysee par strip_js_comments_safe peut produire un
+      # bundle syntaxiquement valide mais FAUX -- que check-build ne verrait pas, puisqu'il
+      # compare le bundle a un rebuild frais (donc corrompu a l'identique). Ce test passe
+      # AVANT check-build : il localise la panne dans le scanner plutot que dans le diff.
+      - name: Test the build script (JS comment scanner)
+        run: npm run test:build
+
       # audit repo-audit-todo.md point 2 : echoue si build/source.js, build/source.min.js,
       # build/styles.min.css, index.html ou src/core/i18n-resources.generated.js divergent du
       # resultat d'un rebuild frais -- CI ne commit jamais a la place du dev (voir

@@ -66,14 +66,91 @@ def extract_script_order(html_text):
     return ordered
 
 
+# Mots-cles apres lesquels un "/" ouvre forcement une regex et jamais une division :
+# ils terminent un contexte ou l'on attend une EXPRESSION, pas un operateur binaire.
+# (`in`/`of`/`instanceof` sont des operateurs binaires : leur operande droit est une
+# expression, donc `x in /re/` est valide -- rare mais gratuit a couvrir.)
+REGEX_PRECEDING_KEYWORDS = frozenset((
+    "return", "typeof", "instanceof", "in", "of", "new", "delete", "void",
+    "throw", "case", "do", "else", "yield", "await",
+))
+
+# Jeton fictif place apres une chaine / un template / une regex : comme un identifiant,
+# il fait qu'un "/" suivant est lu comme une division (`"a" / 2`), pas comme une regex.
+LITERAL_TOKEN = "0"
+
+
+def regex_can_start(last_tok):
+    """
+    Un "/" ouvre-t-il une regex (True) ou est-ce une division (False) ?
+
+    Heuristique standard : on regarde le dernier token significatif. Apres quelque chose
+    qui TERMINE une valeur (identifiant, nombre, `)`, `]`, litteral) le "/" ne peut etre
+    qu'une division ; partout ailleurs (debut de fichier, ponctuation, operateur,
+    mot-cle de REGEX_PRECEDING_KEYWORDS) c'est une regex.
+
+    `}` est classe cote regex : il ferme presque toujours un bloc (`if (a) {} /re/.test(s)`),
+    et diviser un objet litteral n'a aucun sens. En cas d'erreur, scan_regex_literal
+    retombe de toute facon sur "c'etait une division" (voir son garde-fou).
+    """
+    if last_tok is None:
+        return True  # debut de fichier : rien ne precede, donc pas de division possible
+    if last_tok in (")", "]"):
+        return False
+    if last_tok[-1].isalnum() or last_tok[-1] in ("_", "$"):
+        return last_tok in REGEX_PRECEDING_KEYWORDS
+    return True
+
+
+def scan_regex_literal(code, i, n):
+    """
+    Consomme un litteral regex commencant au "/" d'indice i (drapeaux compris).
+    Retourne (texte, nouvel_index), ou (None, i) si aucun "/" fermant n'est trouve
+    avant la fin de ligne.
+
+    Ce (None, i) est le garde-fou de l'heuristique regex_can_start : si on s'est
+    trompe et que c'etait une division, on ne trouve pas de terminateur sur la ligne
+    et l'appelant se contente d'emettre le "/" comme un caractere ordinaire.
+
+    Subtilites gerees : `\\/` echappe (ne termine pas la regex) et classe de
+    caracteres `[...]` a l'interieur de laquelle un "/" n'est pas non plus un
+    terminateur (`/[/]/`).
+    """
+    j = i + 1
+    in_class = False
+    while j < n:
+        c = code[j]
+        if c == "\\":
+            j += 2  # \/ , \\ , \[ ... : le caractere suivant n'a aucune valeur syntaxique
+            continue
+        if c == "\n":
+            return None, i  # une regex ne peut pas contenir de saut de ligne brut
+        if c == "[":
+            in_class = True
+        elif c == "]":
+            in_class = False
+        elif c == "/" and not in_class:
+            j += 1
+            while j < n and code[j].isalpha():  # drapeaux : g i m s u y d v
+                j += 1
+            return code[i:j], j
+        j += 1
+    return None, i
+
+
 def strip_js_comments_safe(code):
     """
     Analyseur caractere par caractere (pas une regex naive) : retire les commentaires
-    // et /* */ en dehors des chaines/template literals. Les ${...} a l'interieur d'un
-    template literal sont traites comme du VRAI code JS (via scan_expr, recursif sur les
-    accolades), donc leurs propres chaines/commentaires sont geres correctement -- sans
-    ca, un commentaire ou un guillemet a l'interieur d'un ${...} casserait le reste du
-    fichier.
+    // et /* */ en dehors des chaines/template literals/regex. Les ${...} a l'interieur
+    d'un template literal sont traites comme du VRAI code JS (via scan_expr, recursif sur
+    les accolades), donc leurs propres chaines/commentaires sont geres correctement --
+    sans ca, un commentaire ou un guillemet a l'interieur d'un ${...} casserait le reste
+    du fichier.
+
+    Les litteraux regex sont consommes d'un bloc (2026-07-20) : sans ca, `/^\\//` etait lu
+    comme le debut d'un commentaire `//` et la ligne etait TRONQUEE dans build/source.js.
+    Le cas `/a\\/*b/` etait pire encore : `/*` avalait tout jusqu'au prochain `*/`, ce qui
+    peut produire un bundle syntaxiquement valide mais FAUX (corruption silencieuse).
     """
     out = []
     i, n = 0, len(code)
@@ -82,6 +159,9 @@ def strip_js_comments_safe(code):
         """Retourne (texte_nettoye, nouvel_index) ; s'arrete a la fin du fichier, ou si
         in_template est vrai, a la fin du template literal (backtick fermant)."""
         buf = []
+        # dernier token significatif + mot en cours d'accumulation, pour distinguer une
+        # regex d'une division (voir regex_can_start) ; inutilises en mode template.
+        last_tok, cur_word = None, ""
         while i < n:
             c = code[i]
             two = code[i:i + 2]
@@ -93,6 +173,13 @@ def strip_js_comments_safe(code):
                 j = code.find("*/", i + 2)
                 i = n if j == -1 else j + 2
                 continue
+            if c == "/" and not in_template and regex_can_start(cur_word or last_tok):
+                literal, i2 = scan_regex_literal(code, i, n)
+                if literal is not None:
+                    buf.append(literal)
+                    i = i2
+                    last_tok, cur_word = LITERAL_TOKEN, ""
+                    continue
             if c in ("'", '"') and not in_template:
                 buf.append(c)
                 i += 1
@@ -107,12 +194,14 @@ def strip_js_comments_safe(code):
                         i += 1
                         break
                     i += 1
+                last_tok, cur_word = LITERAL_TOKEN, ""
                 continue
             if not in_template and c == "`":
                 buf.append(c)
                 i += 1
                 inner, i = scan(i, in_template=True)
                 buf.append(inner)
+                last_tok, cur_word = LITERAL_TOKEN, ""
                 continue
             if in_template and c == "\\" and i + 1 < n:
                 buf.append(code[i:i + 2])
@@ -128,6 +217,14 @@ def strip_js_comments_safe(code):
                 buf.append(c)
                 i += 1
                 return "".join(buf), i
+            if not in_template:
+                if c.isalnum() or c in ("_", "$"):
+                    cur_word += c
+                else:
+                    if cur_word:
+                        last_tok, cur_word = cur_word, ""
+                    if not c.isspace():
+                        last_tok = c
             buf.append(c)
             i += 1
         return "".join(buf), i
@@ -137,6 +234,7 @@ def strip_js_comments_safe(code):
         correspondante (profondeur d'accolades), puis consomme le '}'."""
         buf = []
         depth = 1
+        last_tok, cur_word = None, ""
         while i < n:
             c = code[i]
             two = code[i:i + 2]
@@ -148,6 +246,13 @@ def strip_js_comments_safe(code):
                 j = code.find("*/", i + 2)
                 i = n if j == -1 else j + 2
                 continue
+            if c == "/" and regex_can_start(cur_word or last_tok):
+                literal, i2 = scan_regex_literal(code, i, n)
+                if literal is not None:
+                    buf.append(literal)
+                    i = i2
+                    last_tok, cur_word = LITERAL_TOKEN, ""
+                    continue
             if c in ("'", '"'):
                 buf.append(c)
                 i += 1
@@ -162,17 +267,20 @@ def strip_js_comments_safe(code):
                         i += 1
                         break
                     i += 1
+                last_tok, cur_word = LITERAL_TOKEN, ""
                 continue
             if c == "`":
                 buf.append(c)
                 i += 1
                 inner, i = scan(i, in_template=True)
                 buf.append(inner)
+                last_tok, cur_word = LITERAL_TOKEN, ""
                 continue
             if c == "{":
                 depth += 1
                 buf.append(c)
                 i += 1
+                last_tok, cur_word = "{", ""
                 continue
             if c == "}":
                 depth -= 1
@@ -182,7 +290,15 @@ def strip_js_comments_safe(code):
                     return "".join(buf), i
                 buf.append(c)
                 i += 1
+                last_tok, cur_word = "}", ""
                 continue
+            if c.isalnum() or c in ("_", "$"):
+                cur_word += c
+            else:
+                if cur_word:
+                    last_tok, cur_word = cur_word, ""
+                if not c.isspace():
+                    last_tok = c
             buf.append(c)
             i += 1
         return "".join(buf), i
