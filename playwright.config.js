@@ -39,6 +39,20 @@ module.exports = defineConfig({
   webServer: {
     command: `python3 -m http.server ${port}`,
     url: `${baseURL}/index.dev.html`,
+    // PIÈGE quand on enchaîne les suites en local (2026-07-20, après une fausse piste qui a coûté
+    // du temps) : `reuseExistingServer` est vrai hors CI, donc un run peut s'attacher au serveur
+    // que le run PRÉCÉDENT est en train d'éteindre. Des <script> de index.dev.html partent alors
+    // en net::ERR_CONNECTION_REFUSED -- sans aucune erreur visible : le script manquant ne casse
+    // rien tout de suite, ses globales restent juste indéfinies, et ça ressort BEAUCOUP plus tard
+    // en `ReferenceError: ZONES is not defined` (ou fmtXpPct) au fond de refreshStatsOnly, dans un
+    // test compagnon qui n'a rien à voir. On croit tenir un bug de l'appli, c'est le serveur.
+    //
+    // Ce n'est PAS le backlog TCP de http.server (request_queue_size = 5) : mesuré, rafales de 60
+    // connexions simultanées x6, 0/360 refus à 5 comme à 128. Inutile d'aller le gonfler.
+    //
+    // Pour reproduire fidèlement la CI en local : `CI=1 npx playwright test` (un serveur dédié par
+    // run, jamais réutilisé). Vérifié : 3 runs enchaînés, 77/77, zéro refus -- alors que les mêmes
+    // runs sans CI=1 en produisaient. À utiliser dès qu'on soupçonne un test instable.
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',
     stderr: 'pipe'
