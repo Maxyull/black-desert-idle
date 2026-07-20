@@ -85,6 +85,48 @@ async function signInForTest(page) {
     // localStorage (beforeEach). N'affecte que le contexte de test, pas le jeu.
     try { tutorialAutoShown = true; } catch (e) {}
     await onAuthed({ id:'00000000-0000-4000-8000-000000000001', email:'playwright-test@local.invalid', is_anonymous:false, identities:[] });
+  }).catch(async (err) => {
+    // Diagnostic d'échec (2026-07-20). Cet appel a échoué de façon INTERMITTENTE avec
+    // `Cannot access 'cloudSaveInterval' before initialization`, et le même symptôme s'est vu
+    // ailleurs en `ZONES is not defined` / `fmtXpPct is not defined`. Jamais reproduit malgré
+    // 3 suites complètes et 15 répétitions isolées du test concerné : sans trace, chaque
+    // occurrence repart de zéro. D'où cette capture, qui ne coûte rien tant que tout passe.
+    //
+    // CE QU'IL FAUT LIRE. Ces deux erreurs décrivent une page en cours de RECHARGEMENT : un
+    // script pas encore exécuté n'a aucune liaison (« X is not defined »), un script interrompu
+    // en cours laisse ses `let` en TDZ (« cannot access before initialization »). Le
+    // rechargement pendant les tests est un fait AVÉRÉ ici -- un meta/patch-notes-version.json
+    // périmé fait recharger toutes les ~30 s via checkForUpdate() (src/backend/client-health.js,
+    // mesuré : 3 navigations en 75 s avec écart de version, 1 sans). Mais ce n'était PAS la
+    // cause de l'occurrence observée, où les deux versions concordaient : il reste donc une
+    // seconde cause inconnue, et c'est elle que ces champs doivent permettre de nommer.
+    //
+    // COMMENT L'INTERPRÉTER :
+    //   readyState !== 'complete'  -> la page se rechargeait, chercher QUI l'a déclenché
+    //   navType === 'reload'       -> idem, confirmé côté navigateur
+    //   un champ à 'TDZ'           -> script interrompu en cours d'exécution
+    //   un champ à 'ABSENT'        -> script jamais exécuté
+    //   tout normal                -> la piste du rechargement est morte, chercher ailleurs
+    const diag = await page.evaluate(() => {
+      // `typeof X` ne lève PAS sur une variable non déclarée mais lève bien sur une TDZ : c'est
+      // ce qui distingue « jamais exécuté » de « interrompu en cours ». Pas d'eval() ici, une
+      // flèche par symbole suffit et reste analysable statiquement.
+      const probe = (f) => { try { return f() === 'undefined' ? 'ABSENT' : 'ok'; } catch (e) { return 'TDZ'; } };
+      const nav = performance.getEntriesByType('navigation')[0] || {};
+      return {
+        readyState: document.readyState,
+        navType: nav.type,
+        ZONES: probe(() => typeof ZONES),                           // chargé tôt
+        fmtXpPct: probe(() => typeof fmtXpPct),                     // milieu de chaîne
+        cloudSaveInterval: probe(() => typeof cloudSaveInterval),   // game-supabase.js, tard
+        onAuthed: probe(() => typeof onAuthed),                     // auth.js, dernier
+        runRegressionTests: probe(() => typeof runRegressionTests), // tests.js, après auth.js
+      };
+    }).catch(e => ({ evaluateFailed: e.message.split('\n')[0] }));
+    // attaché au message plutôt que console.log : ça suit l'échec dans le rapport Playwright et
+    // dans les logs CI, au lieu de se perdre au milieu de la sortie du serveur web.
+    err.message += '\n\n[diagnostic signInForTest] ' + JSON.stringify(diag);
+    throw err;
   });
   await expect(page.locator('#authOverlay')).toBeHidden({ timeout: 10_000 });
   // pré-marque l'onboarding du module Compagnon comme vu (2026-07-11) -- l'iframe est same-origin,
