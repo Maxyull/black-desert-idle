@@ -218,6 +218,34 @@ function toggleRightDock(widgetId) {
   updateDockBtnActive(RIGHT_DOCK_BTN[widgetId]);
 }
 
+// ---------- place réservée au footer fixe (2026-07-20) ----------
+// Demande explicite : « il ne doit pas cacher un contenu, le bas de page se fait au-dessus de cet
+// avertissement ». #siteFooter (bandeau 🚧 « jeu en développement » + mentions légales) est en
+// position:fixed, donc HORS du flux : il ne prenait aucune hauteur, et recouvrait en permanence la
+// fin de la page. On réserve sa hauteur en bas du body.
+//
+// Mesurée, pas codée en dur : ce bloc s'enroule sur 2, 3 ou 4 lignes selon la largeur et la langue
+// (le texte légal anglais est plus long), une constante serait fausse la moitié du temps. Le
+// `padding-bottom:30px` de la règle body reste le repli avant la première mesure.
+/** Reporte la hauteur réelle du footer fixe dans --footer-h, pour que le contenu s'arrête au-dessus. */
+function syncFooterSpacer() {
+  const f = $a('siteFooter');
+  if (!f) return;
+  document.documentElement.style.setProperty('--footer-h', Math.ceil(f.getBoundingClientRect().height) + 'px');
+}
+syncFooterSpacer();
+// les deux causes réelles d'un footer qui change de hauteur : la largeur disponible (le texte
+// légal se ré-enroule) et la langue (le texte anglais n'a pas la même longueur). La seconde est
+// rappelée depuis applyI18n() (i18n-legacy.js), qui est le seul point de bascule FR/EN.
+addEventListener('resize', syncFooterSpacer);
+// filet supplémentaire pour tout ce qui changerait la hauteur sans passer par les deux ci-dessus
+// (police système, zoom navigateur). Non vérifiable dans le navigateur de preview utilisé ici,
+// qui ne délivre aucun callback ResizeObserver -- d'où les deux déclencheurs explicites au-dessus,
+// eux testés, plutôt que de tout faire reposer sur l'observateur.
+if (typeof ResizeObserver !== 'undefined' && $a('siteFooter')) {
+  new ResizeObserver(syncFooterSpacer).observe($a('siteFooter'));
+}
+
 // (NAME_EN et tr() sont maintenant déclarés en haut du script)
 
 // PATCH_NOTES est desormais defini dans patch-notes-data.js (charge AVANT ce fichier, voir index.html)

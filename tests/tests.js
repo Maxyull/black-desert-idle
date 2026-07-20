@@ -743,6 +743,33 @@
     const hostile = buildHBarsSvg([{ label:'<script>x</script>', value:5 }], '#fff');
     assert('buildHBarsSvg échappe les libellés', hostile.indexOf('<script>') === -1 && hostile.indexOf('&lt;script&gt;') !== -1);
   }
+  // intégrité (2026-07-20, bdi-admin-monitoring-plan.md §8). Le point sensible n'est pas
+  // l'affichage : c'est que le client NE DOIT PAS avaler une violation d'un type qu'il ne connaît
+  // pas. Les contrôles vivent côté serveur (admin_run_integrity_checks) et peuvent en gagner un
+  // nouveau sans que ce fichier bouge -- si integrityKind() renvoyait undefined pour un type
+  // inconnu, la ligne planterait au rendu et la violation disparaîtrait de la file, exactement
+  // l'inverse du but recherché.
+  function testIntegrityKindFallsBackOnUnknownServerKinds() {
+    if (typeof integrityKind !== 'function') return;
+    const connu = integrityKind('clock_drift');
+    assert('integrityKind connaît clock_drift', !!connu && typeof connu.label === 'function' && !!connu.ico);
+    const inconnu = integrityKind('kind_ajoute_plus_tard_cote_serveur');
+    assert('integrityKind rend un descriptif utilisable pour un type inconnu',
+      !!inconnu && typeof inconnu.label === 'function' && !!inconnu.ico);
+    assert('le repli affiche le type brut plutôt que "undefined"',
+      inconnu.label() === 'kind_ajoute_plus_tard_cote_serveur');
+    assert('integrityKind(null) ne jette pas', integrityKind(null).label() === '—');
+    // piège classique : 'constructor' remonte la chaîne de prototypes et rend un objet truthy
+    assert('integrityKind("constructor") ne renvoie pas Object.prototype.constructor',
+      integrityKind('constructor').label() === 'constructor');
+    assert('integrityKind("toString") reste utilisable', typeof integrityKind('toString').label === 'function');
+    if (typeof integritySeverityPill === 'function') {
+      assert('gravité critique -> ton critique', integritySeverityPill('critical').indexOf('tone-crit') !== -1);
+      assert('gravité warn -> ton warn', integritySeverityPill('warn').indexOf('tone-warn') !== -1);
+      assert('gravité inconnue -> ton neutre, jamais de plantage',
+        integritySeverityPill('perdu_dans_le_futur').indexOf('tone-muted') !== -1);
+    }
+  }
   // dashboard consolidé (2026-07-20, demande explicite : "ajoute toutes les graphique de tout les
   // panel dans dashboard avec des voyant vert rouge pour plus dinfos") -- chaque widget doit
   // pointer vers une VRAIE section du registre ADMIN_SECTIONS (sinon un clic sur la carte ne ferait
@@ -7215,6 +7242,7 @@
     testAdminSectionsWellFormed();
     testBuildHBarsSvgSortsAndSurvivesEmpty();
     testParseAdminHashRoutesAndIgnoresForeignHashes();
+    testIntegrityKindFallsBackOnUnknownServerKinds();
     testDashboardWidgetsPointToRealSections();
     testDashboardLightDistinguishesHealthy();
     testBuildSilverChartSvgGeometry();

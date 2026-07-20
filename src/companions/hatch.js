@@ -43,8 +43,22 @@ function ST(i){
 }
 /** Affiche une notification toast éphémère (auto-retirée après ~2.9s). @param {string} ico - emoji. @param {string} msg - texte. */
 function toast(ico,msg){const w=document.getElementById('toast-wrap');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span style="font-size:15px">${ico}</span><span>${msg}</span>`;w.appendChild(t);setTimeout(()=>t.remove(),2900);}
-/** Ouvre une modale (ajoute la classe 'open'). @param {string} id - id DOM de la modale. */
-function OM(id){document.getElementById(id).classList.add('open');}
+/**
+ * Ouvre une modale (ajoute la classe 'open'). @param {string} id - id DOM de la modale.
+ *
+ * Et prévient le jeu hôte (2026-07-20, "regarde où pop le modal d'éclosion d'œuf, bien au centre
+ * de l'écran"). Depuis que le module s'affiche INLINE dans #wrap au lieu d'un overlay plein écran,
+ * `.modal-bg{position:fixed;inset:0}` se cale sur le viewport de l'IFRAME, pas sur l'écran : la
+ * modale se centrait donc au milieu du cadre, qui est lui-même quelque part dans une page de
+ * ~5000 px -- souvent à moitié hors champ. L'hôte recentre le cadre, et comme le cadre fait
+ * presque toute la hauteur du viewport, son centre redevient le centre de l'écran.
+ */
+function OM(id){
+  document.getElementById(id).classList.add('open');
+  if(window.parent && window.parent !== window){
+    try{ window.parent.postMessage({ bdi:'companions-modal-open', id:id }, '*'); }catch(e){}
+  }
+}
 /** Ferme une modale (retire la classe 'open'). @param {string} id - id DOM de la modale. */
 function CM(id){document.getElementById(id).classList.remove('open');}
 /** @param {number} s - secondes restantes. @returns {string} 'PRÊT' si ≤0, sinon durée formatée HH:MM:SS. */

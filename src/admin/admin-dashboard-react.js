@@ -141,10 +141,13 @@ function AdmDashboard() {
 
   const load = React.useCallback(async () => {
     if (!sb) return;
-    const [health, kpi, reports] = await Promise.all([
+    const [health, kpi, reports, integrity] = await Promise.all([
       sb.rpc('admin_health'),
       sb.rpc('admin_dashboard_kpis', { p_hours: hours }),
       sb.rpc('admin_patch_note_pending_reports').catch(() => ({ data: [] })),
+      // .catch : un client déployé avant la migration 20260724180000 n'a pas encore cette RPC.
+      // Le dashboard doit continuer de répondre à Q1/Q2 dans ce cas, pas rester bloqué.
+      sb.rpc('admin_integrity_summary').catch(() => ({ data: [] })),
     ]);
     const kpis = {};
     (kpi.data || []).forEach(r => { kpis[r.metric] = { current: r.current_value, previous: r.previous_value }; });
@@ -152,6 +155,11 @@ function AdmDashboard() {
     const actions = [];
     const nReports = (reports && reports.data || []).length;
     if (nReports > 0) actions.push({ icon: '🚩', label: i18next.t('admin:admin.dash.todo_reports', { count: nReports }), cat: 'content', id: 'patchnotesmod' });
+    // l'intégrité passe DEVANT le reste : une duplication d'or ou une horloge forgée coûte plus
+    // cher que n'importe quel signalement de commentaire (bdi-admin-monitoring-plan.md §8).
+    const nCrit = ((integrity && integrity.data) || [])
+      .filter(r => r.severity === 'critical').reduce((n, r) => n + Number(r.n || 0), 0);
+    if (nCrit > 0) actions.unshift({ icon: '🛡️', label: i18next.t('admin:admin.dash.todo_integrity', { count: nCrit }), cat: 'monitoring', id: 'integrity' });
     const errs = Number((kpis.client_errors || {}).current || 0);
     if (errs > 0) actions.push({ icon: '🐞', label: i18next.t('admin:admin.dash.todo_errors', { count: errs }), cat: 'monitoring', id: 'errors' });
     (health.data || []).filter(c => c.status === 'down').forEach(c => {
