@@ -18232,8 +18232,7 @@ function parseAdminHash(hash) {
       && hash.indexOf(ADMIN_HASH_PREFIX + '?') !== 0) return null;
   const rest = hash.slice(ADMIN_HASH_PREFIX.length);
   const qi = rest.indexOf('?');
-  
-  const path = (qi === -1 ? rest : rest.slice(0, qi)).replace(/^[/]/, '');
+  const path = (qi === -1 ? rest : rest.slice(0, qi)).replace(/^\//, '');
   const query = qi === -1 ? '' : rest.slice(qi + 1);
   const parts = path ? path.split('/').filter(Boolean) : [];
   const out = { cat: parts[0] || 'overview', id: parts[1] || 'dashboard', uuid: null, period: null };
