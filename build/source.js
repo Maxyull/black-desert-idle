@@ -109,6 +109,8 @@ const I18N_RESOURCES = {
       "admin.dash.refresh": "Rafraîchir",
       "admin.dash.todo_errors_one": "{{count}} erreur client",
       "admin.dash.todo_errors_other": "{{count}} erreurs client",
+      "admin.dash.todo_integrity_one": "{{count}} violation d'intégrité critique",
+      "admin.dash.todo_integrity_other": "{{count}} violations d'intégrité critiques",
       "admin.dash.todo_reports_one": "{{count}} signalement de patch note",
       "admin.dash.todo_reports_other": "{{count}} signalements de patch note",
       "admin.dash.vs_previous": "vs {{period}} préc.",
@@ -252,6 +254,29 @@ const I18N_RESOURCES = {
       "admin.errors.tile_last": "Dernière",
       "admin.errors.tile_total_period": "Erreurs ({{period}})",
       "admin.errors.title": "Erreurs client",
+      "admin.integrity.col_actual": "Constaté",
+      "admin.integrity.col_expected": "Attendu",
+      "admin.integrity.col_kind": "Contrôle",
+      "admin.integrity.col_player": "Joueur",
+      "admin.integrity.col_seen": "Vu le",
+      "admin.integrity.col_severity": "Gravité",
+      "admin.integrity.global": "Économie globale",
+      "admin.integrity.kind_clock_drift": "Horloge incohérente",
+      "admin.integrity.kind_pet_cap": "Plafond compagnons dépassé",
+      "admin.integrity.kind_silver_conservation": "Conservation du silver",
+      "admin.integrity.kind_silver_rate": "Gain hors bornes",
+      "admin.integrity.none": "Aucune violation ouverte : tous les contrôles passent.",
+      "admin.integrity.resolve_btn": "Clore",
+      "admin.integrity.resolve_prompt": "Motif de clôture (obligatoire, conservé avec ton nom et la date) :",
+      "admin.integrity.sev_critical": "Critique",
+      "admin.integrity.sev_info": "Info",
+      "admin.integrity.sev_warn": "Alerte",
+      "admin.integrity.sub": "Contrôles serveur horaires : horloge client, bornes physiques de gain, plafond de collection, conservation du silver. Aucun bannissement automatique — chaque ligne se clôt par une décision humaine tracée.",
+      "admin.integrity.tile_critical": "Critiques ouvertes",
+      "admin.integrity.tile_last": "Dernier constat",
+      "admin.integrity.tile_open_period": "Ouvertes ({{period}})",
+      "admin.integrity.tile_warn": "Alertes ouvertes",
+      "admin.integrity.title": "Intégrité (anti-triche)",
       "admin.loot.active_version": "Version active :",
       "admin.loot.table_gear": "Armure/Arme",
       "admin.loot.table_jewel": "Bijou",
@@ -1279,6 +1304,8 @@ const I18N_RESOURCES = {
       "admin.dash.refresh": "Refresh",
       "admin.dash.todo_errors_one": "{{count}} client error",
       "admin.dash.todo_errors_other": "{{count}} client errors",
+      "admin.dash.todo_integrity_one": "{{count}} critical integrity violation",
+      "admin.dash.todo_integrity_other": "{{count}} critical integrity violations",
       "admin.dash.todo_reports_one": "{{count}} patch note report",
       "admin.dash.todo_reports_other": "{{count}} patch note reports",
       "admin.dash.vs_previous": "vs prev. {{period}}",
@@ -1422,6 +1449,29 @@ const I18N_RESOURCES = {
       "admin.errors.tile_last": "Latest",
       "admin.errors.tile_total_period": "Errors ({{period}})",
       "admin.errors.title": "Client errors",
+      "admin.integrity.col_actual": "Observed",
+      "admin.integrity.col_expected": "Expected",
+      "admin.integrity.col_kind": "Check",
+      "admin.integrity.col_player": "Player",
+      "admin.integrity.col_seen": "Seen",
+      "admin.integrity.col_severity": "Severity",
+      "admin.integrity.global": "Whole economy",
+      "admin.integrity.kind_clock_drift": "Inconsistent clock",
+      "admin.integrity.kind_pet_cap": "Companion cap exceeded",
+      "admin.integrity.kind_silver_conservation": "Silver conservation",
+      "admin.integrity.kind_silver_rate": "Gain out of bounds",
+      "admin.integrity.none": "No open violation: every check passes.",
+      "admin.integrity.resolve_btn": "Close",
+      "admin.integrity.resolve_prompt": "Closing reason (required, stored with your name and the date):",
+      "admin.integrity.sev_critical": "Critical",
+      "admin.integrity.sev_info": "Info",
+      "admin.integrity.sev_warn": "Warning",
+      "admin.integrity.sub": "Hourly server checks: client clock, physical gain bounds, collection cap, silver conservation. No automatic bans — every row is closed by a traced human decision.",
+      "admin.integrity.tile_critical": "Open criticals",
+      "admin.integrity.tile_last": "Last detection",
+      "admin.integrity.tile_open_period": "Open ({{period}})",
+      "admin.integrity.tile_warn": "Open warnings",
+      "admin.integrity.title": "Integrity (anti-cheat)",
       "admin.loot.active_version": "Active version:",
       "admin.loot.table_gear": "Armor/Weapon",
       "admin.loot.table_jewel": "Jewel",
@@ -20123,6 +20173,97 @@ if (admEconomyGroup) admEconomyGroup.items.push(
 admAttachSection('players', 'pvp', renderAdminPvp);
 admAttachSection('economy', 'donations', renderAdminDonations);
 
+// ==== src/admin/admin-integrity.js ====
+const INTEGRITY_KINDS = {
+  clock_drift:         { ico:'🕒', label: () => i18next.t('admin:admin.integrity.kind_clock_drift') },
+  silver_rate:         { ico:'💰', label: () => i18next.t('admin:admin.integrity.kind_silver_rate') },
+  pet_cap:             { ico:'🐾', label: () => i18next.t('admin:admin.integrity.kind_pet_cap') },
+  silver_conservation: { ico:'⚖️', label: () => i18next.t('admin:admin.integrity.kind_silver_conservation') },
+};
+
+function integrityKind(kind) {
+  if (kind && Object.prototype.hasOwnProperty.call(INTEGRITY_KINDS, kind)) return INTEGRITY_KINDS[kind];
+  return { ico:'❓', label: () => String(kind || '—') };
+}
+
+function integritySeverityPill(sev) {
+  const tone = sev === 'critical' ? 'crit' : (sev === 'warn' ? 'warn' : 'muted');
+  const txt = sev === 'critical' ? i18next.t('admin:admin.integrity.sev_critical')
+            : sev === 'warn' ? i18next.t('admin:admin.integrity.sev_warn')
+            : i18next.t('admin:admin.integrity.sev_info');
+  return `<span class="admSevPill tone-${tone}">${escapeHtml(txt)}</span>`;
+}
+
+function renderAdminIntegrity(el) {
+  el.innerHTML = admMonSkeleton('🛡️ ' + i18next.t('admin:admin.integrity.title'),
+    i18next.t('admin:admin.integrity.sub'), 'admIntegrityBody');
+  loadAdminIntegrity();
+}
+
+async function loadAdminIntegrity() {
+  const el = $a('admIntegrityBody');
+  if (!el) return;
+  const [list, sum] = await Promise.all([
+    sb.rpc('admin_integrity_violations', { p_days: adminPeriodDays(), p_include_resolved: false }),
+    sb.rpc('admin_integrity_summary'),
+  ]);
+  if (list.error) return admMonFail(el, list.error);
+  const rows = list.data || [];
+  const bySev = {};
+  (sum.data || []).forEach(r => { bySev[r.severity] = Number(r.n) || 0; });
+
+  el.innerHTML = admMonTiles([
+    { lbl:'🚨 ' + i18next.t('admin:admin.integrity.tile_critical'), val: admMonNum(bySev.critical) },
+    { lbl:'⚠️ ' + i18next.t('admin:admin.integrity.tile_warn'), val: admMonNum(bySev.warn) },
+    { lbl:'📋 ' + i18next.t('admin:admin.integrity.tile_open_period', { period: adminPeriodLabel() }), val: admMonNum(rows.length) },
+    { lbl:'🕒 ' + i18next.t('admin:admin.integrity.tile_last'), val: admMonDate(rows.length ? rows[0].last_seen_at : null) },
+  ]) + (rows.length === 0
+    
+    ? `<div class="admEmpty">✅ ${i18next.t('admin:admin.integrity.none')}</div>`
+    : `<table class="admTable"><thead><tr>
+        <th>${i18next.t('admin:admin.integrity.col_kind')}</th>
+        <th>${i18next.t('admin:admin.integrity.col_severity')}</th>
+        <th>${i18next.t('admin:admin.integrity.col_player')}</th>
+        <th>${i18next.t('admin:admin.integrity.col_expected')}</th>
+        <th>${i18next.t('admin:admin.integrity.col_actual')}</th>
+        <th>${i18next.t('admin:admin.integrity.col_seen')}</th>
+        <th></th>
+      </tr></thead><tbody>${rows.map(r => {
+        const k = integrityKind(r.kind);
+        return `<tr>
+          <td>${k.ico} ${escapeHtml(k.label())}</td>
+          <td>${integritySeverityPill(r.severity)}</td>
+          <td>${r.user_id
+              
+              ? `<a href="${escapeHtml(buildAdminHash('players','all', r.user_id))}">${escapeHtml(r.display_name || r.user_id.slice(0,8))}</a>`
+              : `<span class="admHint">${i18next.t('admin:admin.integrity.global')}</span>`}</td>
+          <td>${admMonNum(Math.round(Number(r.expected) || 0))}</td>
+          <td>${admMonNum(Math.round(Number(r.actual) || 0))}</td>
+          <td style="font-size:10px">${admMonDate(r.last_seen_at)}${
+              Number(r.occurrences) > 1 ? ` <span class="admHint">×${admMonNum(r.occurrences)}</span>` : ''}</td>
+          <td><button class="admIntegrityResolve" data-id="${r.id}">${i18next.t('admin:admin.integrity.resolve_btn')}</button></td>
+        </tr>`;
+      }).join('')}</tbody></table>`);
+
+  el.querySelectorAll('.admIntegrityResolve').forEach(btn => {
+    btn.onclick = () => resolveAdminIntegrity(Number(btn.dataset.id));
+  });
+}
+
+async function resolveAdminIntegrity(id) {
+  const motif = prompt(i18next.t('admin:admin.integrity.resolve_prompt'));
+  
+  if (motif == null || !motif.trim()) return;
+  const { error } = await sb.rpc('admin_resolve_violation', { p_id: id, p_resolution: motif.trim() });
+  if (error) { alert(i18next.t('admin:admin.common.failed_prefix') + ' ' + error.message); return; }
+  loadAdminIntegrity();
+}
+
+const admMonitoringGroup = ADMIN_SECTIONS.find(g => g.cat === 'monitoring');
+if (admMonitoringGroup) admMonitoringGroup.items.unshift(
+  { id:'integrity', icon:'🛡️', label:{fr:'Intégrité',en:'Integrity'}, render:(el)=>renderAdminIntegrity(el) }
+);
+
 // ==== src/admin/admin-dashboard-react.js ====
 const admH = React.createElement;
 
@@ -20234,10 +20375,12 @@ function AdmDashboard() {
 
   const load = React.useCallback(async () => {
     if (!sb) return;
-    const [health, kpi, reports] = await Promise.all([
+    const [health, kpi, reports, integrity] = await Promise.all([
       sb.rpc('admin_health'),
       sb.rpc('admin_dashboard_kpis', { p_hours: hours }),
       sb.rpc('admin_patch_note_pending_reports').catch(() => ({ data: [] })),
+      
+      sb.rpc('admin_integrity_summary').catch(() => ({ data: [] })),
     ]);
     const kpis = {};
     (kpi.data || []).forEach(r => { kpis[r.metric] = { current: r.current_value, previous: r.previous_value }; });
@@ -20245,6 +20388,10 @@ function AdmDashboard() {
     const actions = [];
     const nReports = (reports && reports.data || []).length;
     if (nReports > 0) actions.push({ icon: '🚩', label: i18next.t('admin:admin.dash.todo_reports', { count: nReports }), cat: 'content', id: 'patchnotesmod' });
+    
+    const nCrit = ((integrity && integrity.data) || [])
+      .filter(r => r.severity === 'critical').reduce((n, r) => n + Number(r.n || 0), 0);
+    if (nCrit > 0) actions.unshift({ icon: '🛡️', label: i18next.t('admin:admin.dash.todo_integrity', { count: nCrit }), cat: 'monitoring', id: 'integrity' });
     const errs = Number((kpis.client_errors || {}).current || 0);
     if (errs > 0) actions.push({ icon: '🐞', label: i18next.t('admin:admin.dash.todo_errors', { count: errs }), cat: 'monitoring', id: 'errors' });
     (health.data || []).filter(c => c.status === 'down').forEach(c => {

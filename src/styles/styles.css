@@ -2171,6 +2171,16 @@
   .admKpiDelta.tone-bad { color:var(--adm-crit,#d4685f); }
   .admKpiDelta.tone-neutral { color:var(--adm-muted,#6b7699); }
   .admKpiVs { font-weight:400; color:var(--adm-muted,#6b7699); margin-left:5px; font-size:9.5px; }
+  /* pastille de gravité de la file d'intégrité -- mêmes variables de ton que le bandeau de santé,
+     pour qu'un "critique" ait exactement la même couleur partout dans le panneau. */
+  .admSevPill {
+    display:inline-block; padding:2px 7px; border-radius:99px; font-size:9px; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; white-space:nowrap;
+    border:1px solid currentColor;
+  }
+  .admSevPill.tone-crit { color:var(--adm-crit,#d4685f); }
+  .admSevPill.tone-warn { color:var(--adm-warn,#d9a441); }
+  .admSevPill.tone-muted { color:var(--adm-muted,#6b7699); }
   .admActionsList { display:flex; flex-direction:column; gap:6px; }
   .admActionRow {
     width:100%; margin:0; display:flex; align-items:center; gap:10px; text-align:left;
