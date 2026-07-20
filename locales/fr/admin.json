@@ -381,6 +381,7 @@
   "admin.reset.default_zone_name": "Velia",
   "admin.reset.empty_bag": "Sac vide",
   "admin.reset.no_gear": "Aucun équipement",
+  "admin.reset.online_warn": "\n\n⚠️ CE JOUEUR EST ACTUELLEMENT EN LIGNE : sa propre sauvegarde automatique (toutes les 30s environ) risque de RÉÉCRIRE son ancien état par-dessus ce reset dans les secondes qui suivent, l'annulant silencieusement. Pour un reset fiable, attends qu'il soit déconnecté.",
   "admin.reset.saved_on": "Sauvegardé le",
   "admin.reset.section_equipment": "Équipement",
   "admin.reset.section_inventory": "Inventaire",
