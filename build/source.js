@@ -295,21 +295,51 @@ const I18N_RESOURCES = {
       "admin.pettrade.title": "Marché Compagnon",
       "admin.pettrade.wants_pets": "familiers",
       "admin.pettrade.wants_silver": "silver",
+      "admin.players.action_done": "Action effectuée.",
       "admin.players.ap_title": "PA (Puissance d'Attaque)",
+      "admin.players.back_to_list": "Retour à la liste",
+      "admin.players.ban_btn": "Bannir",
+      "admin.players.banned_until": "Banni jusqu'au {{date}}",
       "admin.players.best_kpm_title": "Record personnel de kills/min (à vie)",
+      "admin.players.cannot_self_ban": "Tu ne peux pas te bannir toi-même.",
+      "admin.players.col_last_seen": "Dernière connexion",
+      "admin.players.col_level": "Niv.",
+      "admin.players.col_player": "Joueur",
+      "admin.players.confirm_ban": "Bannir {{name}} ?",
+      "admin.players.confirm_reset": "Réinitialiser le compte de {{name}} ? Cette action est irréversible.",
+      "admin.players.confirm_unban": "Lever le ban de {{name}} ?",
+      "admin.players.count_one": "{{count}} joueur",
+      "admin.players.count_other": "{{count}} joueurs",
       "admin.players.dp_title": "PD (Puissance de Défense)",
+      "admin.players.filter_all": "Tous",
+      "admin.players.filter_banned": "Bannis",
+      "admin.players.filter_online": "En ligne",
+      "admin.players.filter_staff": "Staff",
+      "admin.players.fold_inventory": "Équipement / Sac",
       "admin.players.inventory_btn": "Inventaire",
       "admin.players.inventory_btn_title": "Ouvre l'équipement porté et le sac complet (192 cases) de ce joueur, en lecture seule, dans une nouvelle fenêtre",
       "admin.players.kpm_record_title": "Record kills/min",
+      "admin.players.last_seen": "Dernière connexion",
+      "admin.players.level": "Niveau",
+      "admin.players.none": "Aucun joueur ne correspond.",
+      "admin.players.reset_btn": "Réinitialiser",
       "admin.players.reset_this_player_btn": "Réinitialiser ce joueur",
+      "admin.players.sanctions_and_role": "Sanctions & rôle",
       "admin.players.screenshot_btn": "Screenshot",
+      "admin.players.search_placeholder": "🔍 Rechercher : pseudo ou UUID",
       "admin.players.signup_platform_title": "Plateforme d'inscription",
+      "admin.players.sort_gs": "Gearscore",
+      "admin.players.sort_last_seen": "Dernière connexion",
+      "admin.players.sort_lvl": "Niveau",
+      "admin.players.sort_silver": "Silver",
       "admin.players.summary_online_registered": "{{online}} en ligne · {{total}} inscrits",
       "admin.players.table_platform": "Plate-forme",
       "admin.players.table_player": "Joueur",
       "admin.players.target_hint": "Trouve l'UUID d'un joueur via le Classement ou ses messages en jeu (bouton \"Copier UUID\" dans son propre menu). \"Screenshot\" affiche son équipement/inventaire en lecture seule (aucune modification). Le reset envoie le même message d'explication que le reset global, mais montré UNIQUEMENT à ce joueur.",
       "admin.players.target_sub": "Efface silver/équipement/niveau/sac de CE joueur uniquement.",
       "admin.players.target_title": "Un joueur précis — par UUID",
+      "admin.players.tester": "Testeur",
+      "admin.players.unban_btn": "Lever le ban",
       "admin.players.uuid_copied": "UUID copié ✓",
       "admin.players.uuid_placeholder": "UUID du joueur",
       "admin.pvp.col_day": "Jour",
@@ -1474,21 +1504,51 @@ const I18N_RESOURCES = {
       "admin.pettrade.title": "Companion market",
       "admin.pettrade.wants_pets": "pets",
       "admin.pettrade.wants_silver": "silver",
+      "admin.players.action_done": "Done.",
       "admin.players.ap_title": "AP (Attack Power)",
+      "admin.players.back_to_list": "Back to list",
+      "admin.players.ban_btn": "Ban",
+      "admin.players.banned_until": "Banned until {{date}}",
       "admin.players.best_kpm_title": "Personal kills/min record (lifetime)",
+      "admin.players.cannot_self_ban": "You cannot ban yourself.",
+      "admin.players.col_last_seen": "Last seen",
+      "admin.players.col_level": "Lvl",
+      "admin.players.col_player": "Player",
+      "admin.players.confirm_ban": "Ban {{name}}?",
+      "admin.players.confirm_reset": "Reset {{name}}'s account? This cannot be undone.",
+      "admin.players.confirm_unban": "Unban {{name}}?",
+      "admin.players.count_one": "{{count}} player",
+      "admin.players.count_other": "{{count}} players",
       "admin.players.dp_title": "DP (Defense Power)",
+      "admin.players.filter_all": "All",
+      "admin.players.filter_banned": "Banned",
+      "admin.players.filter_online": "Online",
+      "admin.players.filter_staff": "Staff",
+      "admin.players.fold_inventory": "Gear / Bag",
       "admin.players.inventory_btn": "Inventory",
       "admin.players.inventory_btn_title": "Opens this player's equipped gear and full bag (192 slots), read-only, in a new window",
       "admin.players.kpm_record_title": "Kills/min record",
+      "admin.players.last_seen": "Last seen",
+      "admin.players.level": "Level",
+      "admin.players.none": "No player matches.",
+      "admin.players.reset_btn": "Reset",
       "admin.players.reset_this_player_btn": "Reset this player",
+      "admin.players.sanctions_and_role": "Sanctions & role",
       "admin.players.screenshot_btn": "Screenshot",
+      "admin.players.search_placeholder": "🔍 Search: nickname or UUID",
       "admin.players.signup_platform_title": "Signup platform",
+      "admin.players.sort_gs": "Gearscore",
+      "admin.players.sort_last_seen": "Last seen",
+      "admin.players.sort_lvl": "Level",
+      "admin.players.sort_silver": "Silver",
       "admin.players.summary_online_registered": "{{online}} online · {{total}} registered",
       "admin.players.table_platform": "Platform",
       "admin.players.table_player": "Player",
       "admin.players.target_hint": "Find a player's UUID via the Leaderboard or their in-game messages (the \"Copy UUID\" button in their own menu). \"Screenshot\" shows their gear/inventory read-only (no changes made). The reset sends the same explanation message as the global reset, but shown ONLY to that player.",
       "admin.players.target_sub": "Wipes silver/gear/level/bag for THAT player only.",
       "admin.players.target_title": "A specific player — by UUID",
+      "admin.players.tester": "Tester",
+      "admin.players.unban_btn": "Unban",
       "admin.players.uuid_copied": "UUID copied ✓",
       "admin.players.uuid_placeholder": "Player UUID",
       "admin.pvp.col_day": "Day",
@@ -18275,11 +18335,8 @@ const ADMIN_SECTIONS = [
     { id:'dashboard', icon:'🏠', label:{fr:'Dashboard',en:'Dashboard'}, render:(el)=>renderAdminDashboardV2(el) },
   ]},
   { cat:'players', label:{fr:'Joueurs',en:'Players'}, items:[
-    { id:'list', icon:'👥', label:{fr:'Liste des joueurs',en:'Player list'}, render:(el)=>renderAdminPlayerList(el) },
-    { id:'target', icon:'🎯', label:{fr:'Joueur précis',en:'Specific player'}, render:(el)=>renderAdminTargetPlayer(el) },
-    { id:'sanctions', icon:'🚫', label:{fr:'Sanctions',en:'Sanctions'}, render:(el)=>renderAdminSanctions(el) },
-    { id:'roles', icon:'🧑‍🤝‍🧑', label:{fr:'Rôles',en:'Roles'}, render:(el)=>renderAdminRoles(el) },
-    { id:'reconnect', icon:'🔄', label:{fr:'Reconnexion',en:'Reconnect'}, render:(el)=>renderAdminReconnect(el) },
+    
+    { id:'all', icon:'👥', label:{fr:'Joueurs',en:'Players'}, render:(el)=>renderAdminPlayersUnified(el) },
     { id:'guilds', icon:'👑', label:{fr:'Guildes',en:'Guilds'}, planned:true },
     { id:'pvp', icon:'⚔️', label:{fr:'PvP',en:'PvP'}, planned:true },
   ]},
@@ -18447,7 +18504,8 @@ const DASHBOARD_WIDGETS = [
         note: i18next.t('admin:admin.dashboard.signups_note', { count: last7 }),
       };
     } },
-  { id:'dw-bans', cat:'players', sec:'sanctions', icon:'🚫', title:{fr:'Sanctions actives',en:'Active sanctions'},
+  { id:'dw-bans', cat:'players', sec:'all', 
+     icon:'🚫', title:{fr:'Sanctions actives',en:'Active sanctions'},
     fetch: () => sb.rpc('admin_list_bans'),
     build: ({ data }) => {
       const count = (data||[]).length;
@@ -20472,6 +20530,265 @@ function renderAdminDashboardV2(el) {
   admDashRoot = ReactDOM.createRoot(el.querySelector('#admDashReact'));
   admDashRoot.render(admH(AdmDashboard));
   if (typeof renderAdminDashboardWidgets === 'function') renderAdminDashboardWidgets(el.querySelector('#admDashCharts'));
+}
+
+// ==== src/admin/admin-players-react.js ====
+const admPH = React.createElement;
+
+function admPNum(n) { return Number(n || 0).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-US'); }
+
+function admPDate(iso) { return iso ? new Date(iso).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-US') : '—'; }
+
+const ADM_P_FILTERS = [
+  { id: 'all',    label: () => i18next.t('admin:admin.players.filter_all') },
+  { id: 'online', label: () => i18next.t('admin:admin.players.filter_online') },
+  { id: 'banned', label: () => i18next.t('admin:admin.players.filter_banned') },
+  { id: 'staff',  label: () => i18next.t('admin:admin.players.filter_staff') },
+];
+const ADM_P_SORTS = [
+  { id: 'last_seen', label: () => i18next.t('admin:admin.players.sort_last_seen'), cmp: (a,b) => new Date(b.last_seen||0) - new Date(a.last_seen||0) },
+  { id: 'silver',    label: () => i18next.t('admin:admin.players.sort_silver'),    cmp: (a,b) => Number(b.silver||0) - Number(a.silver||0) },
+  { id: 'gs',        label: () => i18next.t('admin:admin.players.sort_gs'),        cmp: (a,b) => Number(b.gearscore||0) - Number(a.gearscore||0) },
+  { id: 'lvl',       label: () => i18next.t('admin:admin.players.sort_lvl'),       cmp: (a,b) => Number(b.lvl||0) - Number(a.lvl||0) },
+];
+
+function AdmFold({ title, open, onToggle, children }) {
+  return admPH('div', { className: 'admFold' },
+    admPH('button', { className: 'admFoldHead', onClick: onToggle },
+      admPH('span', null, title),
+      admPH('span', { className: 'admFoldChevron' }, open ? '▾' : '▸')),
+    open && admPH('div', { className: 'admFoldBody' }, children)
+  );
+}
+
+function AdmPlayerCard({ player, ban, roles, onBack, onChanged }) {
+  const [save, setSave] = React.useState(null);
+  const [openInv, setOpenInv] = React.useState(false);
+  const [busy, setBusy] = React.useState('');
+  const [msg, setMsg] = React.useState(null);
+  const [reason, setReason] = React.useState(BAN_REASONS[0].id);
+  const [hours, setHours] = React.useState(24);
+  const uuid = player.user_id;
+
+  const loadSave = React.useCallback(async () => {
+    if (save || !sb) return;
+    const { data } = await sb.rpc('admin_get_player_save', { p_user_id: uuid });
+    setSave(data || {});
+  }, [uuid, save]);
+
+  const act = async (kind) => {
+    if (!sb) return;
+    
+    if (kind === 'ban' && !canBanUuid(uuid, currentUser && currentUser.id)) {
+      setMsg(i18next.t('admin:admin.players.cannot_self_ban')); return;
+    }
+    const confirms = {
+      ban: () => i18next.t('admin:admin.players.confirm_ban', { name: player.display_name }),
+      unban: () => i18next.t('admin:admin.players.confirm_unban', { name: player.display_name }),
+      reset: () => i18next.t('admin:admin.players.confirm_reset', { name: player.display_name }),
+    };
+    if (confirms[kind] && !confirm(confirms[kind]())) return;
+    setBusy(kind); setMsg(null);
+    let error = null;
+    if (kind === 'ban') {
+      const reasonLabel = (BAN_REASONS.find(r => r.id === reason) || BAN_REASONS[0]).label[LANG];
+      ({ error } = await sb.rpc('admin_ban_player', { p_user_id: uuid, p_duration_hours: hours, p_reason: reasonLabel }));
+      if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a banni \`${uuid}\` (${reasonLabel}, ${hours}h)`, 0xc05545);
+    } else if (kind === 'unban') {
+      ({ error } = await sb.rpc('admin_unban_player', { p_user_id: uuid }));
+      if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a levé le ban de \`${uuid}\``, 0x9cc9e8);
+    } else if (kind === 'reset') {
+      ({ error } = await sb.rpc('admin_reset_account_by_uuid', {
+        p_user_id: uuid,
+        p_title_fr: '🔄 Ton compte a été réinitialisé', p_title_en: '🔄 Your account has been reset',
+        p_body_fr: 'Un membre du staff a réinitialisé ton compte (silver, équipement, niveau, sac).<br><br>Si tu penses qu\'il s\'agit d\'une erreur, contacte-nous sur Discord.',
+        p_body_en: 'A staff member has reset your account (silver, gear, level, bag).<br><br>If you believe this is a mistake, please reach out to us on Discord.',
+      }));
+      if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé le compte \`${uuid}\``, 0xc05545);
+    } else {
+      
+      const rpc = kind;
+      ({ error } = await sb.rpc(rpc, { p_user_id: uuid }));
+      if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** — ${rpc} sur \`${uuid}\``, 0x9cc9e8);
+    }
+    setBusy('');
+    if (error) { setMsg(error.message); return; }
+    setMsg(i18next.t('admin:admin.players.action_done'));
+    onChanged();
+  };
+
+  const prov = providerInfo(player.provider);
+  const isMod = !!(roles && roles.mod), isTester = !!(roles && roles.tester);
+  return admPH('div', { className: 'admPCard' },
+    admPH('button', { className: 'admPBack', onClick: onBack }, '← ' + i18next.t('admin:admin.players.back_to_list')),
+    admPH('div', { className: 'admPHead' },
+      admPH('span', { className: 'admPName' }, player.display_name || '—'),
+      admPH('span', { className: 'admPDot ' + (player.online ? 'on' : 'off') }, player.online ? '🟢' : '⚪'),
+      admPH('span', { className: 'admPMeta' }, prov.icon + ' ' + prov.label[LANG]),
+      ban && admPH('span', { className: 'admPBanTag' }, '🚫 ' + i18next.t('admin:admin.players.banned_until', { date: admPDate(ban.banned_until) })),
+      isMod && admPH('span', { className: 'admPRoleTag' }, '🛡️ MOD'),
+      isTester && admPH('span', { className: 'admPRoleTag' }, '🧪 ' + i18next.t('admin:admin.players.tester')),
+      admPH('code', { className: 'admPUuid', title: uuid }, (uuid || '').slice(0, 8) + '…')
+    ),
+    admPH('div', { className: 'admPStats' },
+      [['💰 Silver', admPNum(player.silver)], ['⚔️ GS', admPNum(player.gearscore)],
+       ['🎖️ ' + i18next.t('admin:admin.players.level'), admPNum(player.lvl)],
+       ['🗡️ PA', admPNum(Math.round(player.ap||0))], ['🛡️ PD', admPNum(Math.round(player.dp||0))],
+       ['⚡ kpm', admPNum(Math.round(player.best_kpm||0))],
+       ['🕒 ' + i18next.t('admin:admin.players.last_seen'), admPDate(player.last_seen)],
+      ].map(([l, v], i) => admPH('div', { key: i, className: 'admPStat' },
+        admPH('div', { className: 'admPStatLbl' }, l), admPH('div', { className: 'admPStatVal' }, v)))
+    ),
+    admPH(AdmFold, {
+      title: '🎒 ' + i18next.t('admin:admin.players.fold_inventory'),
+      open: openInv,
+      onToggle: () => { setOpenInv(o => !o); if (!openInv) loadSave(); },
+    }, save
+      ? admPH('div', { dangerouslySetInnerHTML: { __html: renderAdminScreenshotHtml(save) } })
+      : admPH('div', { className: 'admEmpty' }, i18next.t('admin:admin.common.loading'))),
+    
+    admPH('div', { className: 'admPActions' },
+      admPH('div', { className: 'admPActionsTitle' }, '⚖️ ' + i18next.t('admin:admin.players.sanctions_and_role')),
+      admPH('div', { className: 'admPActionRow' },
+        admPH('select', { value: reason, onChange: e => setReason(e.target.value), className: 'admPSel' },
+          BAN_REASONS.map(r => admPH('option', { key: r.id, value: r.id }, r.label[LANG]))),
+        admPH('select', { value: hours, onChange: e => setHours(Number(e.target.value)), className: 'admPSel' },
+          BAN_DURATIONS.map(d => admPH('option', { key: d.hours, value: d.hours }, d.label[LANG]))),
+        admPH('button', { className: 'admPBtn danger', disabled: busy === 'ban', onClick: () => act('ban') },
+          busy === 'ban' ? '…' : '🚫 ' + i18next.t('admin:admin.players.ban_btn')),
+        ban && admPH('button', { className: 'admPBtn', disabled: busy === 'unban', onClick: () => act('unban') },
+          '✅ ' + i18next.t('admin:admin.players.unban_btn'))
+      ),
+      admPH('div', { className: 'admPActionRow' },
+        admPH('button', { className: 'admPBtn', onClick: () => act(isMod ? 'admin_remove_mod' : 'admin_add_mod') },
+          (isMod ? '➖' : '➕') + ' 🛡️ MOD'),
+        admPH('button', { className: 'admPBtn', onClick: () => act(isTester ? 'admin_remove_tester' : 'admin_add_tester') },
+          (isTester ? '➖' : '➕') + ' 🧪 ' + i18next.t('admin:admin.players.tester')),
+        admPH('button', { className: 'admPBtn danger', disabled: busy === 'reset', onClick: () => act('reset') },
+          '🔄 ' + i18next.t('admin:admin.players.reset_btn'))
+      ),
+      msg && admPH('div', { className: 'admHint' }, msg)
+    )
+  );
+}
+
+function AdmReconnectFold() {
+  const [open, setOpen] = React.useState(false);
+  const [html, setHtml] = React.useState(null);
+  React.useEffect(() => {
+    if (!open || html !== null || !sb) return;
+    sb.rpc('admin_afk_sessions_summary').then(({ data, error }) => {
+      if (error || !data || !data[0]) { setHtml(`<div class="admHint">${escapeHtml(error ? error.message : 'no data')}</div>`); return; }
+      const s = data[0], nf = n => admPNum(Math.round(n || 0));
+      setHtml(`<div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">${escapeHtml(i18next.t('admin:admin.reconnect.logged_sessions'))}</div><div class="astVal">${nf(s.total_sessions)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${escapeHtml(i18next.t('admin:admin.reconnect.players_involved'))}</div><div class="astVal">${nf(s.total_players)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${escapeHtml(i18next.t('admin:admin.reconnect.total_silver_recovered'))}</div><div class="astVal">${nf(s.total_silver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${escapeHtml(i18next.t('admin:admin.reconnect.avg_per_session'))}</div><div class="astVal">${nf(s.avg_silver)}</div></div>
+      </div>`);
+    });
+  }, [open, html]);
+  return admPH(AdmFold, { title: '🔄 ' + i18next.t('admin:admin.reconnect.title'), open, onToggle: () => setOpen(o => !o) },
+    html === null ? admPH('div', { className: 'admEmpty' }, i18next.t('admin:admin.common.loading'))
+                  : admPH('div', { dangerouslySetInnerHTML: { __html: html } }));
+}
+
+function AdmPlayersPage() {
+  const [rows, setRows] = React.useState(null);
+  const [bans, setBans] = React.useState({});
+  const [roles, setRoles] = React.useState({});
+  const [q, setQ] = React.useState('');
+  const [filter, setFilter] = React.useState('all');
+  const [sort, setSort] = React.useState('last_seen');
+  const [sel, setSel] = React.useState(null);
+
+  const load = React.useCallback(async () => {
+    if (!sb) return;
+    const [players, banList, mods, testers] = await Promise.all([
+      sb.rpc('admin_list_players'), sb.rpc('admin_list_bans'),
+      sb.rpc('admin_list_mods'), sb.rpc('admin_list_testers'),
+    ]);
+    const b = {}; (banList.data || []).forEach(r => { b[r.user_id] = r; });
+    const rl = {};
+    (mods.data || []).forEach(r => { rl[r.user_id] = Object.assign({}, rl[r.user_id], { mod: true }); });
+    (testers.data || []).forEach(r => { rl[r.user_id] = Object.assign({}, rl[r.user_id], { tester: true }); });
+    setBans(b); setRoles(rl); setRows(players.data || []);
+  }, []);
+  React.useEffect(() => { load(); }, [load]);
+
+  if (rows === null) return admPH('div', { className: 'admEmpty' }, i18next.t('admin:admin.common.loading'));
+
+  if (sel) {
+    const p = rows.find(r => r.user_id === sel);
+    if (p) return admPH(AdmPlayerCard, {
+      player: p, ban: bans[sel], roles: roles[sel],
+      onBack: () => setSel(null), onChanged: load,
+    });
+  }
+
+  const needle = q.trim().toLowerCase();
+  const list = rows
+    .filter(r => {
+      if (filter === 'online' && !r.online) return false;
+      if (filter === 'banned' && !bans[r.user_id]) return false;
+      if (filter === 'staff' && !roles[r.user_id]) return false;
+      if (!needle) return true;
+      
+      return (r.display_name || '').toLowerCase().includes(needle) || (r.user_id || '').toLowerCase().includes(needle);
+    })
+    .sort((ADM_P_SORTS.find(s => s.id === sort) || ADM_P_SORTS[0]).cmp);
+
+  return admPH('div', { className: 'admPPage' },
+    admPH('input', {
+      className: 'admPSearch', value: q, autoFocus: true,
+      placeholder: i18next.t('admin:admin.players.search_placeholder'),
+      onChange: e => setQ(e.target.value),
+    }),
+    admPH('div', { className: 'admPBar' },
+      admPH('div', { className: 'admPChips' }, ADM_P_FILTERS.map(f =>
+        admPH('button', { key: f.id, className: 'admPChip' + (filter === f.id ? ' on' : ''), onClick: () => setFilter(f.id) },
+          f.label() + (f.id === 'banned' && Object.keys(bans).length ? ' (' + Object.keys(bans).length + ')' : '')))),
+      admPH('select', { className: 'admPSel', value: sort, onChange: e => setSort(e.target.value) },
+        ADM_P_SORTS.map(s => admPH('option', { key: s.id, value: s.id }, s.label())))
+    ),
+    admPH('div', { className: 'admPCount' }, i18next.t('admin:admin.players.count', { count: list.length })),
+    list.length === 0
+      ? admPH('div', { className: 'admEmpty' }, i18next.t('admin:admin.players.none'))
+      : admPH('table', { className: 'admTable admPTable' },
+          admPH('thead', null, admPH('tr', null,
+            [i18next.t('admin:admin.players.col_player'), 'Silver', 'GS',
+             i18next.t('admin:admin.players.col_level'), i18next.t('admin:admin.players.col_last_seen')]
+              .map((h, i) => admPH('th', { key: i }, h)))),
+          admPH('tbody', null, list.map(r => admPH('tr', {
+            key: r.user_id, className: 'admPlayerRow', onClick: () => setSel(r.user_id),
+          },
+            admPH('td', null,
+              (r.online ? '🟢 ' : '') + (r.display_name || '—'),
+              bans[r.user_id] && admPH('span', { className: 'admPBanTag mini' }, '🚫'),
+              roles[r.user_id] && roles[r.user_id].mod && admPH('span', { className: 'admPRoleTag mini' }, '🛡️'),
+              roles[r.user_id] && roles[r.user_id].tester && admPH('span', { className: 'admPRoleTag mini' }, '🧪')),
+            admPH('td', null, admPNum(r.silver)),
+            admPH('td', null, admPNum(r.gearscore)),
+            admPH('td', null, admPNum(r.lvl)),
+            admPH('td', { style: { fontSize: '10px' } }, admPDate(r.last_seen))
+          )))
+        ),
+    admPH(AdmReconnectFold)
+  );
+}
+
+let admPlayersRoot = null;
+
+function renderAdminPlayersUnified(el) {
+  if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
+    
+    if (typeof renderAdminPlayerList === 'function') return renderAdminPlayerList(el);
+    el.innerHTML = `<div class="admHint">React indisponible</div>`;
+    return;
+  }
+  el.innerHTML = '<div id="admPlayersReact"></div>';
+  admPlayersRoot = ReactDOM.createRoot(el.querySelector('#admPlayersReact'));
+  admPlayersRoot.render(admPH(AdmPlayersPage));
 }
 
 // ==== src/social/chat.js ====

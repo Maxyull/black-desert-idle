@@ -56,11 +56,12 @@ const ADMIN_SECTIONS = [
     { id:'dashboard', icon:'🏠', label:{fr:'Dashboard',en:'Dashboard'}, render:(el)=>renderAdminDashboardV2(el) },
   ]},
   { cat:'players', label:{fr:'Joueurs',en:'Players'}, items:[
-    { id:'list', icon:'👥', label:{fr:'Liste des joueurs',en:'Player list'}, render:(el)=>renderAdminPlayerList(el) },
-    { id:'target', icon:'🎯', label:{fr:'Joueur précis',en:'Specific player'}, render:(el)=>renderAdminTargetPlayer(el) },
-    { id:'sanctions', icon:'🚫', label:{fr:'Sanctions',en:'Sanctions'}, render:(el)=>renderAdminSanctions(el) },
-    { id:'roles', icon:'🧑‍🤝‍🧑', label:{fr:'Rôles',en:'Roles'}, render:(el)=>renderAdminRoles(el) },
-    { id:'reconnect', icon:'🔄', label:{fr:'Reconnexion',en:'Reconnect'}, render:(el)=>renderAdminReconnect(el) },
+    // Les 5 anciennes entrées (Liste / Joueur précis / Sanctions / Rôles / Reconnexion) sont
+    // fusionnées en UNE page depuis le 2026-07-19 (bdi-admin-ux.md §2) : c'était cinq endroits
+    // pour un seul objet mental, et les actions y étaient séparées des données. Sanctions et
+    // Rôles sont devenus des FILTRES de la liste ; Reconnexion (un agrégat, pas du par-joueur)
+    // est un bloc dépliable sous la liste. Voir admin-players-react.js.
+    { id:'all', icon:'👥', label:{fr:'Joueurs',en:'Players'}, render:(el)=>renderAdminPlayersUnified(el) },
     { id:'guilds', icon:'👑', label:{fr:'Guildes',en:'Guilds'}, planned:true },
     { id:'pvp', icon:'⚔️', label:{fr:'PvP',en:'PvP'}, planned:true },
   ]},
@@ -263,7 +264,8 @@ const DASHBOARD_WIDGETS = [
         note: i18next.t('admin:admin.dashboard.signups_note', { count: last7 }),
       };
     } },
-  { id:'dw-bans', cat:'players', sec:'sanctions', icon:'🚫', title:{fr:'Sanctions actives',en:'Active sanctions'},
+  { id:'dw-bans', cat:'players', sec:'all', // 'sanctions' fusionné dans la page Joueurs (filtre) le 2026-07-19
+     icon:'🚫', title:{fr:'Sanctions actives',en:'Active sanctions'},
     fetch: () => sb.rpc('admin_list_bans'),
     build: ({ data }) => {
       const count = (data||[]).length;
