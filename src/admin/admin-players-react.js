@@ -16,7 +16,12 @@
 //     reste donc consultable en bloc dépliable sous la liste plutôt que d'être perdu.
 //
 // Réutilise TEL QUEL l'existant d'admin-players.js : BAN_REASONS/BAN_DURATIONS, canBanUuid (garde
-// anti-auto-ban), renderAdminScreenshotHtml, fmtAdmPlaytime, providerInfo. Aucune RPC réécrite.
+// anti-auto-ban), renderAdminScreenshotHtml, providerInfo. Aucune RPC réécrite.
+// NB (2026-07-20) : cette liste citait aussi fmtAdmPlaytime, à tort -- cette page ne l'appelle
+// pas. Ses VRAIS appelants sont dans admin-economy.js (colonnes "temps de jeu" des tableaux
+// Silver/heure et Richesse). Corrigé parce que la fausse mention a déjà failli la faire supprimer
+// comme code mort : on lit "réutilisé par la page React", on vérifie que c'est faux, et on conclut
+// qu'elle ne sert plus à personne. Elle sert.
 // Charge APRÈS admin-panel.js et admin-players.js — voir index.dev.html.
 // ============================================================
 

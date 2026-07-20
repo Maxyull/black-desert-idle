@@ -63,6 +63,9 @@ const BAN_DURATIONS = [
   { hours:24*7, label:{fr:'7 jours',en:'7 days'} },
   { hours:24*30, label:{fr:'30 jours',en:'30 days'} },
 ];
+// vit ici pour raisons historiques, mais N'EST PLUS appelée par la page Joueurs depuis sa fusion
+// en React : ses deux appelants sont dans admin-economy.js (colonnes "temps de jeu" des tableaux
+// Silver/heure et Richesse). Ne pas la retirer en nettoyant CE fichier sans grep préalable.
 /** @param {number} sec - temps de jeu en secondes. @returns {string} format compact "XhYY". */
 function fmtAdmPlaytime(sec) {
   const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
