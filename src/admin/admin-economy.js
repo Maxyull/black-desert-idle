@@ -116,6 +116,42 @@ function buildPieWithLegendHtml(items, opts) {
   }).join('');
   return `<div class="admPieBlock">${svg}<div class="admPieLegend">${legend}</div></div>`;
 }
+// ---------- barres horizontales (2026-07-20, bdi-admin-ux.md §6) ----------
+// Le camembert devient illisible dès 4 tranches : on ne compare pas des angles, et il faut faire
+// l'aller-retour avec la légende pour savoir quelle couleur est quoi. mergeSmallSlices() qui
+// regroupe tout sous "Autres" était un pansement sur ce problème -- au prix de la donnée réelle
+// (16 zones devenaient 5 tranches + un "Autres" opaque).
+// Ici : une barre par entrée, TRIÉE par valeur décroissante, libellé et valeur lisibles sur la
+// même ligne. Plus de légende à recouper, et 16 entrées restent lisibles.
+// Le camembert reste le bon choix pour 2-3 tranches d'un tout (cf. Cron farmé/utilisé,
+// Onboarding terminé/passé/en cours) : il montre alors une PROPORTION d'un coup d'œil.
+// Fonction PURE (aucune dépendance DOM/réseau), testable sans navigateur. Tableau vide -> ''.
+/** @param {{label:string, value:number}[]} items @param {string} color @param {{formatValue?:function, max?:number}} [opts]. @returns {string} SVG de barres horizontales triées par valeur décroissante. Fonction pure. */
+function buildHBarsSvg(items, color, opts) {
+  opts = opts || {};
+  const rows = (items || [])
+    .map(i => ({ label: String(i.label == null ? '' : i.label), value: Math.max(0, Number(i.value) || 0) }))
+    .filter(r => r.value > 0)
+    .sort((a, b) => b.value - a.value);
+  if (!rows.length) return '';
+  const w = 400, rowH = 18, gap = 4, labelW = 132, valueW = 62;
+  const h = rows.length * (rowH + gap);
+  const barMaxW = w - labelW - valueW - 6;
+  const max = opts.max != null ? opts.max : Math.max(...rows.map(r => r.value));
+  const fmtV = opts.formatValue || (v => (typeof fmt === 'function' ? fmt(Math.round(v)) : String(Math.round(v))));
+  const body = rows.map((r, i) => {
+    const y = i * (rowH + gap);
+    const bw = max > 0 ? Math.max(1, r.value / max * barMaxW) : 1;
+    // le libellé est tronqué en CSS via <title> natif : survol = libellé complet, pas de débordement
+    const short = r.label.length > 20 ? r.label.slice(0, 19) + '…' : r.label;
+    return `<g><title>${escapeHtml(r.label)}</title>` +
+      `<text x="0" y="${y + rowH * 0.72}" font-size="10.5" fill="currentColor" opacity=".72">${escapeHtml(short)}</text>` +
+      `<rect x="${labelW}" y="${y + 2}" width="${bw.toFixed(1)}" height="${rowH - 4}" rx="2.5" fill="${color}"></rect>` +
+      `<text x="${w}" y="${y + rowH * 0.72}" font-size="10.5" text-anchor="end" fill="currentColor" opacity=".9">${escapeHtml(fmtV(r.value))}</text>` +
+      `</g>`;
+  }).join('');
+  return `<svg class="admHBarsSvg" viewBox="0 0 ${w} ${h}" style="width:100%;max-width:440px;height:auto;display:block">${body}</svg>`;
+}
 // série temporelle en barres compactes (remplace les piles de .admBarRow pour 24h/30j) -- fonction
 // PURE, points déjà triés chronologiquement par l'appelant. tableau vide -> juste l'axe.
 /** @param {{label:string, value:number}[]} points - déjà triés chronologiquement. @param {string} color. @returns {string} SVG en barres compactes (remplace les piles .admBarRow). Fonction pure. */
@@ -179,8 +215,8 @@ function renderAdminEconHealth(el) {
     el.innerHTML = `${buildEconAlertsHtml(computeEconAlerts(rows))}
       <div class="admSummary">${i18next.t('admin:admin.economy.health_summary')}</div>
       <div class="admChartsRow">
-        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sources_title')}</h3>${buildPieWithLegendHtml(sources)}</div>
-        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sinks_title')}</h3>${buildPieWithLegendHtml(sinks)}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sources_title')}</h3>${buildHBarsSvg(sources, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'))}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sinks_title')}</h3>${buildHBarsSvg(sinks, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'))}</div>
       </div>`;
   });
 }
@@ -299,9 +335,10 @@ function renderAdminWealth(el) {
     // camembert (2026-07-19) au lieu de l'histogramme vertical -- les tranches restent ORDONNÉES
     // dans la légende (pas de fusion "Autres" ici, contrairement aux autres camemberts : seulement
     // 5 tranches fixes, jamais assez nombreuses pour devenir illisibles)
-    const bracketPie = buildPieWithLegendHtml(
+    const bracketPie = buildHBarsSvg(
       WEALTH_BRACKETS.map((b,i) => ({ label:b.label, value:bracketCounts[i] })),
-      { thresholdPct: 0, formatValue: v => String(Math.round(v)) }
+      currentAdminAccentColors().accent,
+      { formatValue: v => String(Math.round(v)) }
     );
     const wealthHtml = (wealth||[]).slice(0,20).map((r,i) => `
       <tr><td>#${i+1}</td><td>${escapeHtml(nameByUser.get(r.user_id) || (r.user_id||'').slice(0,8)+'…')}</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtAdmPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
@@ -402,7 +439,7 @@ function renderAdminMarketVolume(el) {
       <tr class="${i===0?'admTop':''}"><td>${tr(r.item_name) || escapeHtml(r.item_name)}</td>
         <td>${fmt(r.trade_count)}</td><td>${fmt(r.total_qty)}</td><td>${fmt(r.total_silver_value)}</td></tr>
     `).join('') || `<tr><td colspan="4" class="admEmpty">${i18next.t('admin:admin.economy.marketvolume_no_trades')}</td></tr>`;
-    const pie = buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name) || r.item_name, value: Number(r.total_silver_value||0) })));
+    const pie = buildHBarsSvg(rows.map(r => ({ label: tr(r.item_name) || r.item_name, value: Number(r.total_silver_value||0) })), (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'));
     el.innerHTML = `<div class="admStatTiles">
         <div class="admStatTile"><div class="astLbl">💱 ${i18next.t('admin:admin.economy.marketvolume_stat_volume')}</div><div class="astVal">${fmt(totalVolume)}</div></div>
         <div class="admStatTile"><div class="astLbl">🔄 ${i18next.t('admin:admin.economy.marketvolume_stat_trades')}</div><div class="astVal">${fmt(totalTrades)}</div></div>
@@ -438,7 +475,7 @@ function renderAdminSignups(el) {
     // sont inscrit comme plateforme ... et tu peux créer un graph aussi") -- providerInfo() vient
     // de admin-panel.js, chargé AVANT ce fichier (voir index.dev.html), donc jamais de risque de TDZ.
     const providerPie = !provError && (byProvider||[]).length
-      ? buildPieWithLegendHtml((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon + ' ' + providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), { thresholdPct:0 })
+      ? buildHBarsSvg((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon + ' ' + providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue: v => String(Math.round(v)) })
       : `<div class="admEmpty">${i18next.t('admin:admin.economy.no_data')}</div>`;
     el.innerHTML = `<div class="admStatTiles">
         <div class="admStatTile"><div class="astLbl">🆕 ${i18next.t('admin:admin.economy.signups_stat_title')}</div><div class="astVal">${total}</div></div>

@@ -693,6 +693,27 @@
       });
     });
   }
+  // barres horizontales (2026-07-20, bdi-admin-ux.md §6 : le camembert devient illisible dès 4
+  // tranches). Fonction PURE -> testable sans DOM. On vérifie le CONTRAT, pas le pixel : tri
+  // décroissant (c'est ce qui rend la lecture immédiate), filtrage des valeurs nulles/négatives,
+  // et surtout aucune exception sur un tableau vide -- le jeu est jeune, beaucoup de sections
+  // n'ont pas encore de données et un graphe qui jette casserait toute la section.
+  function testBuildHBarsSvgSortsAndSurvivesEmpty() {
+    if (typeof buildHBarsSvg !== 'function') return;
+    assert('buildHBarsSvg([]) ne jette pas et rend une chaîne vide', buildHBarsSvg([], '#fff') === '');
+    assert('buildHBarsSvg(null) ne jette pas', buildHBarsSvg(null, '#fff') === '');
+    const svg = buildHBarsSvg([
+      { label:'petit', value:1 }, { label:'grand', value:100 },
+      { label:'moyen', value:10 }, { label:'zéro', value:0 }, { label:'négatif', value:-5 },
+    ], '#abcdef');
+    const order = ['grand','moyen','petit'].map(l => svg.indexOf('>' + l + '<'));
+    assert('buildHBarsSvg trie par valeur décroissante', order[0] < order[1] && order[1] < order[2], JSON.stringify(order));
+    assert('buildHBarsSvg écarte les valeurs nulles ou négatives', svg.indexOf('zéro') === -1 && svg.indexOf('négatif') === -1);
+    assert('buildHBarsSvg utilise la couleur fournie', svg.indexOf('#abcdef') !== -1);
+    // un libellé hostile ne doit pas pouvoir injecter de balise dans le SVG
+    const hostile = buildHBarsSvg([{ label:'<script>x</script>', value:5 }], '#fff');
+    assert('buildHBarsSvg échappe les libellés', hostile.indexOf('<script>') === -1 && hostile.indexOf('&lt;script&gt;') !== -1);
+  }
   // dashboard consolidé (2026-07-20, demande explicite : "ajoute toutes les graphique de tout les
   // panel dans dashboard avec des voyant vert rouge pour plus dinfos") -- chaque widget doit
   // pointer vers une VRAIE section du registre ADMIN_SECTIONS (sinon un clic sur la carte ne ferait
@@ -7163,6 +7184,7 @@
     testBanReasonsAndDurationsWellFormed();
     testAdminThemesWellFormedAndPersist();
     testAdminSectionsWellFormed();
+    testBuildHBarsSvgSortsAndSurvivesEmpty();
     testDashboardWidgetsPointToRealSections();
     testDashboardLightDistinguishesHealthy();
     testBuildSilverChartSvgGeometry();

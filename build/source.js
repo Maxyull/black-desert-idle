@@ -18400,7 +18400,7 @@ const DASHBOARD_WIDGETS = [
       const sources = rows.filter(r=>r.gained>0).map(r=>({label:label(r.category), value:r.gained}));
       return {
         light: dashboardLight(alerts.length===0),
-        chart: buildPieWithLegendHtml(sources, { thresholdPct:6 }),
+        chart: buildHBarsSvg(sources, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')),
         note: alerts.length ? alerts[0].text : i18next.t('admin:admin.dashboard.econ_healthy_note'),
       };
     } },
@@ -18433,7 +18433,7 @@ const DASHBOARD_WIDGETS = [
       const skewed = med > 0 && avg > med * 4;
       return {
         light: dashboardLight(!skewed),
-        chart: buildPieWithLegendHtml(brackets.map((b,i)=>({label:b.label, value:counts[i]})), { thresholdPct:0, formatValue:v=>String(Math.round(v)) }),
+        chart: buildHBarsSvg(brackets.map((b,i)=>({label:b.label, value:counts[i]})), (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue:v=>String(Math.round(v)) }),
         note: skewed ? i18next.t('admin:admin.dashboard.wealth_skewed_note') : i18next.t('admin:admin.dashboard.wealth_reasonable_note'),
       };
     } },
@@ -18444,7 +18444,7 @@ const DASHBOARD_WIDGETS = [
       const rows = topItems || [];
       return {
         light: dashboardLight(open && rows.length > 0),
-        chart: buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name)||r.item_name, value: Number(r.total_silver_value||0) }))),
+        chart: buildHBarsSvg(rows.map(r => ({ label: tr(r.item_name)||r.item_name, value: Number(r.total_silver_value||0) })), (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')),
         note: !open ? i18next.t('admin:admin.dashboard.market_closed_note') : (rows.length ? i18next.t('admin:admin.dashboard.market_active_note') : i18next.t('admin:admin.dashboard.market_no_trades_note')),
       };
     } },
@@ -18456,7 +18456,7 @@ const DASHBOARD_WIDGETS = [
       const last7 = rows.slice(-7).reduce((a,r) => a + Number(r.signups||0), 0);
       const chart = rows.length
         ? buildBarSeriesSvg(rows.map(r => ({ label:r.day, value:Number(r.signups||0) })), accent)
-        : buildPieWithLegendHtml((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon+' '+providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), { thresholdPct:0 });
+        : buildHBarsSvg((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon+' '+providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue:v=>String(Math.round(v)) });
       return {
         light: dashboardLight(last7 > 0),
         chart,
@@ -18517,7 +18517,7 @@ const DASHBOARD_WIDGETS = [
       const rarityItems = COMPANION_RARITY_LABELS.filter(r => rarityTotals[r.id]).map(r => ({ label:r.name, value:rarityTotals[r.id] }));
       return {
         light: dashboardLight(playersSynced > 0),
-        chart: playersSynced ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.companions_none_synced')}</div>`,
+        chart: playersSynced ? buildHBarsSvg(rarityItems, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.companions_none_synced')}</div>`,
         note: i18next.t('admin:admin.dashboard.companions_synced_note', { count: playersSynced }),
       };
     } },
@@ -18529,7 +18529,7 @@ const DASHBOARD_WIDGETS = [
       const items = [...zoneCounts.entries()].sort((a,b)=>a[0]-b[0]).map(([zi,cnt]) => ({ label: ZONES[zi] ? tr(ZONES[zi].name) : `#${zi}`, value: cnt }));
       return {
         light: dashboardLight(items.length > 0),
-        chart: buildPieWithLegendHtml(items),
+        chart: buildHBarsSvg(items, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue: v => String(Math.round(v)) }),
         note: i18next.t('admin:admin.dashboard.players_count_note', { count: (data||[]).length }),
       };
     } },
@@ -19074,8 +19074,8 @@ function renderAdminZoneProgression(el) {
       gsCounts[idx >= 0 ? idx : GS_BRACKETS.length-1]++;
     });
     const gsItems = GS_BRACKETS.map((b,i) => ({ label:b.label, value:gsCounts[i] }));
-    const zonePie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(zoneItems) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
-    const gsPie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(gsItems, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : '';
+    const zonePie = typeof buildPieWithLegendHtml === 'function' ? buildHBarsSvg(zoneItems, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
+    const gsPie = typeof buildPieWithLegendHtml === 'function' ? buildHBarsSvg(gsItems, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue: v => String(Math.round(v)) }) : '';
     el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.zone_progression_summary')}</div>
       <div class="admChartsRow">
         <div><h3 style="margin-top:0">${i18next.t('admin:admin.content.by_zone_title')}</h3>${zonePie}</div>
@@ -19100,7 +19100,7 @@ function renderAdminCompendium(el) {
     });
     const items = PCT_BRACKETS.map((b,i) => ({ label:b.label, value:counts[i] }));
     const avg = rows.length ? Math.round(rows.reduce((s,r) => s + Number(r.compendium_pct||0), 0) / rows.length) : 0;
-    const pie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(items, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
+    const pie = typeof buildPieWithLegendHtml === 'function' ? buildHBarsSvg(items, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue: v => String(Math.round(v)) }) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
     el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.compendium_summary', { avg, count: rows.length })}</div>
       <div class="admChartsRow"><div><h3 style="margin-top:0">${i18next.t('admin:admin.content.compendium_distribution_title')}</h3>${pie}</div></div>`;
   });
@@ -19260,9 +19260,9 @@ function renderAdminCompanions(el) {
     const sectionItems = Object.entries(sectionTotals)
       .map(([id,v]) => ({ label: COMPANION_SECTION_LABELS[id] || id, value:v }));
     const rarityPie = typeof buildPieWithLegendHtml === 'function'
-      ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : '';
+      ? buildHBarsSvg(rarityItems, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : '';
     const sectionPie = typeof buildPieWithLegendHtml === 'function'
-      ? buildPieWithLegendHtml(sectionItems, { thresholdPct:0 }) : '';
+      ? buildHBarsSvg(sectionItems, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : '';
     const tierPoints = [1,2,3,4,5].map(t => ({ label:'T'+t, value:tierTotals[t]||0 }));
     const tierBar = typeof buildBarSeriesSvg === 'function'
       ? buildBarSeriesSvg(tierPoints, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : '';
@@ -19389,6 +19389,32 @@ function buildPieWithLegendHtml(items, opts) {
   return `<div class="admPieBlock">${svg}<div class="admPieLegend">${legend}</div></div>`;
 }
 
+function buildHBarsSvg(items, color, opts) {
+  opts = opts || {};
+  const rows = (items || [])
+    .map(i => ({ label: String(i.label == null ? '' : i.label), value: Math.max(0, Number(i.value) || 0) }))
+    .filter(r => r.value > 0)
+    .sort((a, b) => b.value - a.value);
+  if (!rows.length) return '';
+  const w = 400, rowH = 18, gap = 4, labelW = 132, valueW = 62;
+  const h = rows.length * (rowH + gap);
+  const barMaxW = w - labelW - valueW - 6;
+  const max = opts.max != null ? opts.max : Math.max(...rows.map(r => r.value));
+  const fmtV = opts.formatValue || (v => (typeof fmt === 'function' ? fmt(Math.round(v)) : String(Math.round(v))));
+  const body = rows.map((r, i) => {
+    const y = i * (rowH + gap);
+    const bw = max > 0 ? Math.max(1, r.value / max * barMaxW) : 1;
+    
+    const short = r.label.length > 20 ? r.label.slice(0, 19) + '…' : r.label;
+    return `<g><title>${escapeHtml(r.label)}</title>` +
+      `<text x="0" y="${y + rowH * 0.72}" font-size="10.5" fill="currentColor" opacity=".72">${escapeHtml(short)}</text>` +
+      `<rect x="${labelW}" y="${y + 2}" width="${bw.toFixed(1)}" height="${rowH - 4}" rx="2.5" fill="${color}"></rect>` +
+      `<text x="${w}" y="${y + rowH * 0.72}" font-size="10.5" text-anchor="end" fill="currentColor" opacity=".9">${escapeHtml(fmtV(r.value))}</text>` +
+      `</g>`;
+  }).join('');
+  return `<svg class="admHBarsSvg" viewBox="0 0 ${w} ${h}" style="width:100%;max-width:440px;height:auto;display:block">${body}</svg>`;
+}
+
 function buildBarSeriesSvg(points, color) {
   const w = 400, h = 90, padB = 16, padT = 4;
   const maxV = Math.max(1, ...points.map(p => p.value));
@@ -19440,8 +19466,8 @@ function renderAdminEconHealth(el) {
     el.innerHTML = `${buildEconAlertsHtml(computeEconAlerts(rows))}
       <div class="admSummary">${i18next.t('admin:admin.economy.health_summary')}</div>
       <div class="admChartsRow">
-        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sources_title')}</h3>${buildPieWithLegendHtml(sources)}</div>
-        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sinks_title')}</h3>${buildPieWithLegendHtml(sinks)}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sources_title')}</h3>${buildHBarsSvg(sources, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'))}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sinks_title')}</h3>${buildHBarsSvg(sinks, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'))}</div>
       </div>`;
   });
 }
@@ -19552,9 +19578,10 @@ function renderAdminWealth(el) {
       bracketCounts[idx >= 0 ? idx : WEALTH_BRACKETS.length-1]++;
     }
     
-    const bracketPie = buildPieWithLegendHtml(
+    const bracketPie = buildHBarsSvg(
       WEALTH_BRACKETS.map((b,i) => ({ label:b.label, value:bracketCounts[i] })),
-      { thresholdPct: 0, formatValue: v => String(Math.round(v)) }
+      currentAdminAccentColors().accent,
+      { formatValue: v => String(Math.round(v)) }
     );
     const wealthHtml = (wealth||[]).slice(0,20).map((r,i) => `
       <tr><td>#${i+1}</td><td>${escapeHtml(nameByUser.get(r.user_id) || (r.user_id||'').slice(0,8)+'…')}</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtAdmPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
@@ -19646,7 +19673,7 @@ function renderAdminMarketVolume(el) {
       <tr class="${i===0?'admTop':''}"><td>${tr(r.item_name) || escapeHtml(r.item_name)}</td>
         <td>${fmt(r.trade_count)}</td><td>${fmt(r.total_qty)}</td><td>${fmt(r.total_silver_value)}</td></tr>
     `).join('') || `<tr><td colspan="4" class="admEmpty">${i18next.t('admin:admin.economy.marketvolume_no_trades')}</td></tr>`;
-    const pie = buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name) || r.item_name, value: Number(r.total_silver_value||0) })));
+    const pie = buildHBarsSvg(rows.map(r => ({ label: tr(r.item_name) || r.item_name, value: Number(r.total_silver_value||0) })), (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'));
     el.innerHTML = `<div class="admStatTiles">
         <div class="admStatTile"><div class="astLbl">💱 ${i18next.t('admin:admin.economy.marketvolume_stat_volume')}</div><div class="astVal">${fmt(totalVolume)}</div></div>
         <div class="admStatTile"><div class="astLbl">🔄 ${i18next.t('admin:admin.economy.marketvolume_stat_trades')}</div><div class="astVal">${fmt(totalTrades)}</div></div>
@@ -19676,7 +19703,7 @@ function renderAdminSignups(el) {
       : `<div class="admEmpty">${i18next.t('admin:admin.economy.signups_no_signups')}</div>`;
     
     const providerPie = !provError && (byProvider||[]).length
-      ? buildPieWithLegendHtml((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon + ' ' + providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), { thresholdPct:0 })
+      ? buildHBarsSvg((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon + ' ' + providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a'), { formatValue: v => String(Math.round(v)) })
       : `<div class="admEmpty">${i18next.t('admin:admin.economy.no_data')}</div>`;
     el.innerHTML = `<div class="admStatTiles">
         <div class="admStatTile"><div class="astLbl">🆕 ${i18next.t('admin:admin.economy.signups_stat_title')}</div><div class="astVal">${total}</div></div>
