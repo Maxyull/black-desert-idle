@@ -164,10 +164,13 @@
 
   <h2>Barre de progression mensuelle</h2>
   <ul>
-    <li>Le montant affiché ("X$ collectés ce mois-ci") est mis à jour manuellement
-    au minimum une fois par semaine, ou automatiquement si branché sur les
-    webhooks PayPal + Supabase.</li>
-    <li>La barre se réinitialise à 0 au 1er de chaque mois.</li>
+    <li>Les montants affichés ("X$ collectés depuis le lancement" en haut de page, et
+    "X$ collectés ce mois-ci" sur la barre) sont lus <strong>directement dans la base</strong> à
+    chaque chargement de page — aucune saisie manuelle, aucune valeur figée dans le code.</li>
+    <li>Tant qu'aucun don n'est enregistré, ces blocs ne s'affichent pas du tout : jamais de
+    chiffre estimé ou arrondi « pour faire joli ».</li>
+    <li>La barre se réinitialise à 0 au 1er de chaque mois. Le total en haut de page, lui, est
+    cumulé depuis le lancement.</li>
   </ul>
 
   <a href="index.html" class="back">← Retour à la page de don</a>

@@ -255,7 +255,10 @@
     letter-spacing: 0.02em;
   }
 
-  .total-collected .amount span {
+  /* .cap et non `span` (2026-07-20) : le montant est désormais lui aussi dans un <span> (rempli en
+     JS depuis le total réel), un sélecteur sur `span` lui appliquerait le style de la légende et
+     ferait perdre au chiffre son traitement doré en 34px. */
+  .total-collected .amount .cap {
     font-size: 16px;
     color: var(--text-dim);
     font-family: 'Inter', sans-serif;
@@ -418,8 +421,15 @@
     Aucune fonctionnalité payante, aucun avantage compétitif à acheter — jamais*.
   </p>
 
-  <div class="total-collected">
-    <div class="amount">1 240 $<span>collectés depuis le lancement</span></div>
+  <!-- Total réel, masqué tant qu'il n'y a rien (2026-07-20). Ce bloc affichait « 1 240 $ collectés
+       depuis le lancement » EN DUR, alors que la table donations est vide : un chiffre entièrement
+       inventé, en gros, tout en haut d'une page qui sollicite de l'argent et revendique
+       « Transparence totale » plus bas. La barre de progression juste en dessous avait déjà été
+       branchée sur les vrais dons le 2026-07-22 pour cette raison exacte -- ce bloc-ci avait été
+       oublié, et restait donc le seul chiffre faux de la page. Même règle que la barre : jamais de
+       chiffre fabriqué, jamais de « 0 $ » décourageant non plus, on n'affiche rien. -->
+  <div class="total-collected hidden" id="totalBlock">
+    <div class="amount"><span id="donTotal"></span><span class="cap">collectés depuis le lancement</span></div>
     <div class="caption">Merci à chaque contributeur</div>
   </div>
 
@@ -559,6 +569,13 @@
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const { data, error } = await sb.rpc('donation_public_summary');
     if (error || !data) return;
+
+    // total à vie : alimente le bloc principal « collectés depuis le lancement », masqué à zéro
+    const allTime = Number(data.total_usd) || 0;
+    if (allTime > 0) {
+      document.getElementById('donTotal').textContent = Math.round(allTime).toLocaleString('fr-FR') + ' $';
+      document.getElementById('totalBlock').classList.remove('hidden');
+    }
 
     const total = Number(data.month_total_usd) || 0;
     if (total > 0) {
