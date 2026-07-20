@@ -96,6 +96,11 @@ function updateUserBar() {
   // #btnAdminTopbar sont désormais les SEULS éléments à afficher/masquer.
   $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
   const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
+  // deep link admin (2026-07-20, bdi-admin-ux.md §7) : c'est ICI qu'on sait enfin si l'utilisateur
+  // est admin. applyAdminHash() au chargement du script serait toujours arrivé trop tôt (isAdmin()
+  // encore faux) et n'aurait jamais ouvert la section demandée par l'URL. No-op si le hash n'est
+  // pas un lien admin ou si l'utilisateur ne l'est pas.
+  if (typeof applyAdminHash === 'function') applyAdminHash();
   // carte Admin (2026-07-13, regroupe btnAdminMaxEnh/btnAdminResetEnh/adminEnhStepRow/adminTierRow,
   // auparavant 4 toggles séparés dans la carte Inventaire) -- un seul toggle sur la carte entière,
   // via une CLASSE (pas l'inline style : card-layout.js réinitialise style="" de chaque carte à

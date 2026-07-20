@@ -693,6 +693,35 @@
       });
     });
   }
+  // deep-linking admin (2026-07-20, bdi-admin-ux.md §7). parseAdminHash est PURE -> testable sans
+  // DOM. Le point le PLUS important ici n'est pas de bien lire nos liens, c'est de RENDRE null sur
+  // le hash de quelqu'un d'autre : `#patch-<version>` (notes de version) et `#type=recovery`
+  // (lien de récupération Supabase) existent déjà dans le projet, et closeAdminPanel n'efface le
+  // hash que si parseAdminHash le reconnaît. Un faux positif ici casserait un lien de
+  // récupération de mot de passe -- d'où le cas "#administratif", volontairement piégeux.
+  function testParseAdminHashRoutesAndIgnoresForeignHashes() {
+    if (typeof parseAdminHash !== 'function') return;
+    assert('#admin -> dashboard par défaut', (() => { const r = parseAdminHash('#admin'); return !!r && r.cat === 'overview' && r.id === 'dashboard'; })());
+    assert('#admin/economy/silver -> section directe', (() => { const r = parseAdminHash('#admin/economy/silver'); return !!r && r.cat === 'economy' && r.id === 'silver'; })());
+    assert('?p=7d -> période lue', (parseAdminHash('#admin/economy/silver?p=7d') || {}).period === '7d');
+    // les deux formes de fiche joueur doivent mener au MÊME endroit (la courte est celle du doc)
+    const courte = parseAdminHash('#admin/players/u/abc-123');
+    const longue = parseAdminHash('#admin/players/all/u/abc-123');
+    assert('forme courte du doc #admin/players/u/<uuid> ouvre bien la fiche',
+      !!courte && courte.cat === 'players' && courte.id === 'all' && courte.uuid === 'abc-123');
+    assert('forme canonique équivaut à la forme courte',
+      !!longue && !!courte && longue.id === courte.id && longue.uuid === courte.uuid);
+    // hash des AUTRES fonctionnalités : jamais revendiqués
+    ['#patch-V496', '#type=recovery&access_token=x', '', '#', '#administratif', '#adminx/y']
+      .forEach(h => assert('parseAdminHash(' + JSON.stringify(h) + ') rend null (hash d\'autrui)', parseAdminHash(h) === null));
+    // aller-retour stable : ce qu'on écrit doit se relire à l'identique
+    if (typeof buildAdminHash === 'function') {
+      const h = buildAdminHash('players', 'all', 'u-42');
+      const back = parseAdminHash(h);
+      assert('buildAdminHash -> parseAdminHash conserve cat/id/uuid',
+        !!back && back.cat === 'players' && back.id === 'all' && back.uuid === 'u-42', h);
+    }
+  }
   // barres horizontales (2026-07-20, bdi-admin-ux.md §6 : le camembert devient illisible dès 4
   // tranches). Fonction PURE -> testable sans DOM. On vérifie le CONTRAT, pas le pixel : tri
   // décroissant (c'est ce qui rend la lecture immédiate), filtrage des valeurs nulles/négatives,
@@ -7185,6 +7214,7 @@
     testAdminThemesWellFormedAndPersist();
     testAdminSectionsWellFormed();
     testBuildHBarsSvgSortsAndSurvivesEmpty();
+    testParseAdminHashRoutesAndIgnoresForeignHashes();
     testDashboardWidgetsPointToRealSections();
     testDashboardLightDistinguishesHealthy();
     testBuildSilverChartSvgGeometry();
