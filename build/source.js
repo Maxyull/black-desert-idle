@@ -2946,28 +2946,25 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// ==================== I18N (déclaré tôt : utilisé dès les premiers rendus) ====================
 let LANG = 'fr';
 try { LANG = localStorage.getItem('velia-idle-lang') || 'fr'; } catch(e) {}
-// traduction des noms dynamiques (zones, mobs, objets) — clé = texte FR d'origine
+
 const NAME_EN = {
-  // zones
+  
   'Camp des Loups':'Wolf Camp', 'Ruines de Protty':'Protty Ruins', 'Repaire des Pirates':'Pirate Den',
   'Camp Rhutum':'Rhutum Camp', 'Ferme Shultz':'Shultz Farm', 'Colonie Sausan':'Sausan Colony',
   'Mine de Fer Abandonnée':'Abandoned Iron Mine', 'Poste Helm':'Helm Post',
   'Repaire Bandits Gahaz':'Gahaz Bandit Lair', 'Sanctuaire Elric':'Elric Shrine', 'Ruines de Kratuga':'Kratuga Ruins',
   'Planque des Mânes':'Manes\' Hideout',
-  // 4e zone de chaque palier (2026-07-05, demande explicite) : complète la rotation avec la
-  // boucle d'oreille manquante — reqAP/reqDP volontairement identiques à la dernière zone du
-  // palier (voir le commentaire sur Planque des Mânes), aucun changement du plafond de stat
+  
   'Ruines de Trent':'Trent Ruins', 'Île d\'Iliya':'Iliya Island', 'Base de Bashim':'Bashim Base', 'Forêt de Polly':'Polly Forest',
-  // mobs
+  
   'Loup':'Wolf', 'Esprit de Protty':'Protty Spirit', 'Pirate':'Pirate', 'Guerrier Rhutum':'Rhutum Warrior',
   'Garde Shultz':'Shultz Guard', 'Combattant Sausan':'Sausan Fighter', 'Mineur corrompu':'Corrupted Miner',
   'Soldat Helm':'Helm Soldier', 'Bandit Gahaz':'Gahaz Bandit', 'Sectateur d\'Elric':'Elric Cultist', 'Uluan':'Uluan',
   'Esprit des Mânes':'Manes Spirit',
   'Troll des Ruines':'Ruins Troll', 'Pirate d\'Iliya':'Iliya Pirate', 'Soldat de Bashim':'Bashim Soldier', 'Troll de Polly':'Polly Troll',
-  // trash loot
+  
   'Viande de loup':'Wolf Meat', "Lame rouillée d'Imp":"Rusty Imp Blade", 'Insigne de Sausan':'Sausan Badge',
   'Bourse de pirate':'Pirate Purse', 'Croc de Naga':'Naga Fang', 'Oreille de Fogan':'Fogan Ear',
   'Fer rouillé':'Rusted Iron', 'Fourrure de Biraghi':'Biraghi Fur', "Défense d'orc":'Orc Tusk',
@@ -17365,17 +17362,9 @@ function wkChangeCallout() {
 }
 
 function wkEscape(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-/** @param {string} t texte de titre @returns {string} slug ancre (minuscules, sans accents/diacritiques, tirets) */
+
 function wkSlug(t) { return String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
 
-// ---- rendu de l'article actif (contenu réel uniquement) ----
-/**
- * Rend le corps HTML de l'article correspondant à un item de nav, selon son `kind`
- * (home/tuto/codex/section/discord/link). Ne fait que dispatcher vers le contenu réel du jeu,
- * jamais de texte inventé ici.
- * @param {object} item item de nav (voir wkNavGroups)
- * @returns {string} HTML de l'article
- */
 function wkArticleHtml(item) {
   if (item.kind === 'home') return wkHomeHtml();
   if (item.kind === 'tuto') return wkTutoHtml();
@@ -17388,7 +17377,7 @@ function wkArticleHtml(item) {
   if (item.kind === 'discord') return wkDiscordHtml();
   return '';
 }
-/** @returns {string} HTML de l'article d'accueil (résumé des systèmes de jeu, version courante) */
+
 function wkHomeHtml() {
   const version = (typeof PATCH_NOTES !== 'undefined' && PATCH_NOTES[0]) ? PATCH_NOTES[0].v : '';
   return `<p class="wk-lead">${i18next.t('backend:backend.wiki.home_lead')}</p>
@@ -17400,15 +17389,10 @@ function wkHomeHtml() {
       <li><b>${i18next.t('backend:backend.wiki.home_system_companions_title')}</b> — ${i18next.t('backend:backend.wiki.home_system_companions_desc')}</li>
     </ul>`;
 }
-// réutilise le vrai renderTutoPageHtml() (game-supabase.js) — pas de duplication du texte, et le
-// bouton #btnStartTutoWiki qu'il génère reste câblé en bas de wkRenderArticleAndInfobox.
-/** @returns {string} HTML de la page tutoriel, délégué à renderTutoPageHtml() (game-supabase.js), ou '' si indisponible */
+
 function wkTutoHtml() {
   return typeof renderTutoPageHtml === 'function' ? renderTutoPageHtml() : '';
 }
-// lien réel (2026-07-21, corrigé : #btnDiscord dans le header du jeu a toujours eu un vrai lien
-// d'invitation, jamais lu depuis ici -- cette page affirmait à tort "pas encore de serveur").
-// URL sortie du template literal (pas de "
 
 const WK_DISCORD_URL = 'https:' + '//discord.gg/fEubtqMjtP';
 
@@ -17429,19 +17413,11 @@ function wkExtractHeadings(html) {
   return out;
 }
 
-/** @param {object} item item de nav actif @returns {Array<object>} jusqu'à 4 autres items du même groupe ("voir aussi") */
 function wkRelated(item) {
   const group = wkNavGroups().find(g => g.items.some(it => it.id === item.id));
   return (group ? group.items : []).filter(it => it.id !== item.id).slice(0, 4);
 }
 
-/**
- * Construit le HTML de la colonne infobox (fiche article + sommaire + articles liés) affichée à
- * droite de l'article actif.
- * @param {object} item item de nav actif
- * @param {Array<{id:string, txt:string}>} headings sommaire extrait de l'article (wkExtractHeadings)
- * @returns {string} HTML de l'infobox
- */
 function wkRenderInfobox(item, headings) {
   const isHome = item.kind === 'home';
   const rowsHtml = isHome ? `
@@ -17466,13 +17442,6 @@ function wkRenderInfobox(item, headings) {
     </div>${tocHtml}${relatedHtml}`;
 }
 
-/**
- * Rend intégralement l'article actif et son infobox dans le DOM (#wkArticle/#wkInfoboxCol),
- * câble le bouton "démarrer le tutoriel", les clics sommaire/articles liés, et le suivi de
- * la section visible au scroll (surlignage du sommaire).
- * @param {object} item item de nav actif
- * @returns {void}
- */
 function wkRenderArticleAndInfobox(item) {
   const article = document.getElementById('wkArticle');
   const infoboxCol = document.getElementById('wkInfoboxCol');
@@ -17485,8 +17454,7 @@ function wkRenderArticleAndInfobox(item) {
     <div class="wk-art-body">${bodyHtml}</div>`;
   infoboxCol.innerHTML = wkRenderInfobox(item, headings);
   const tutoBtn = document.getElementById('btnStartTutoWiki');
-  // SEUL point d'entrée du tutoriel d'arrivée (voir game-supabase.js) : trackId:'onboarding' doit
-  // être préservé, c'est ce qui alimente les stats admin de démarrage du tutoriel (onboarding_stats).
+  
   if (tutoBtn) tutoBtn.onclick = () => { closeWikiPanel(); if (typeof startTutorial === 'function' && typeof TUTORIAL_STEPS !== 'undefined') startTutorial(TUTORIAL_STEPS, { trackId:'onboarding' }); };
   infoboxCol.querySelectorAll('.wk-related-item').forEach(el => {
     el.onclick = () => wkNavigate(el.dataset.nav);
@@ -17507,7 +17475,6 @@ function wkRenderArticleAndInfobox(item) {
   wkScrollHandler();
 }
 
-/** @param {object} item item de nav actif — met à jour le fil d'ariane (#wkCrumb) @returns {void} */
 function wkRenderBreadcrumb(item) {
   const el = document.getElementById('wkCrumb');
   el.innerHTML = `<span class="wk-crumb-link" data-nav="accueil">Wiki</span><span class="wk-sep">/</span>` +
@@ -17516,7 +17483,6 @@ function wkRenderBreadcrumb(item) {
   el.querySelectorAll('.wk-crumb-link').forEach(a => { if (a.dataset.nav === 'accueil') a.onclick = () => wkNavigate('accueil'); });
 }
 
-/** Reconstruit intégralement la sidebar de navigation (#wkNav) et câble les clics de chaque item. @returns {void} */
 function wkRenderNav() {
   const el = document.getElementById('wkNav');
   el.innerHTML = wkNavGroups().map(g => `
@@ -17529,13 +17495,6 @@ function wkRenderNav() {
   el.querySelectorAll('.wk-nav-item').forEach(elm => { elm.onclick = () => wkNavigate(elm.dataset.nav); });
 }
 
-/**
- * Point d'entrée de navigation du Wiki : si l'item cible est un raccourci (`kind:'link'`), ferme
- * le panneau et ouvre le vrai panneau visé (Compagnons/Compendium/Patch notes) ; sinon met à jour
- * l'id courant et re-rend nav/breadcrumb/article/infobox.
- * @param {string} id identifiant d'item de nav
- * @returns {void}
- */
 function wkNavigate(id) {
   const item = wkFindItem(id);
   if (!item) return;
@@ -17547,15 +17506,8 @@ function wkNavigate(id) {
   wkCloseSearch();
 }
 
-// ---- recherche live (titres uniquement, comme le mockup) ----
-/** Ferme/retire le dropdown de résultats de recherche live s'il existe. @returns {void} */
 function wkCloseSearch() { document.getElementById('wkSearchResults')?.remove(); }
-/**
- * Recherche live sur les titres/groupes de la nav et affiche un dropdown de résultats cliquables
- * (ou un message "aucun résultat").
- * @param {string} q requête tapée par l'utilisateur
- * @returns {void}
- */
+
 function wkRunSearch(q) {
   wkCloseSearch();
   q = q.trim().toLowerCase();
@@ -17570,11 +17522,6 @@ function wkRunSearch(q) {
   document.getElementById('wkSearchWrap').appendChild(wrap);
 }
 
-/**
- * Construit la structure DOM de l'overlay Wiki (header/recherche/breadcrumb/nav/article/infobox)
- * et l'ajoute au `document.body`. Appelé une seule fois, à la première ouverture du panneau.
- * @returns {HTMLElement} l'élément overlay créé (#wikiOverlay)
- */
 function wkBuildOverlay() {
   const overlay = document.createElement('div');
   overlay.id = 'wikiOverlay';
@@ -17600,11 +17547,6 @@ function wkBuildOverlay() {
   return overlay;
 }
 
-/**
- * Ouvre le panneau Wiki : construit l'overlay/les styles au premier appel (lazy), le rend visible,
- * marque le contenu Wiki comme vu et navigue vers le dernier item consulté (`wkCurrentId`).
- * @returns {void}
- */
 function openWikiPanel() {
   let overlay = document.getElementById('wikiOverlay');
   if (!overlay) { wkInjectStyles(); overlay = wkBuildOverlay(); }
@@ -17612,13 +17554,12 @@ function openWikiPanel() {
   if (typeof markContentSeen === 'function') markContentSeen('wiki');
   wkNavigate(wkCurrentId);
 }
-/** Ferme le panneau Wiki et rafraîchit le badge de patch notes du header. @returns {void} */
+
 function closeWikiPanel() {
   document.getElementById('wikiOverlay')?.classList.remove('open');
   if (typeof updatePatchBadge === 'function') updatePatchBadge();
 }
 
-/** Injecte le `<style>` du panneau Wiki dans le `<head>` une seule fois (no-op si déjà présent). @returns {void} */
 function wkInjectStyles() {
   if (document.getElementById('wkStyles')) return;
   const s = document.createElement('style');
