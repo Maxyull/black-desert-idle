@@ -3277,13 +3277,9 @@ const OFFLINE_CATCHUP_CAP_HOURS = 24;
 const OFFLINE_CATCHUP_MIN_HOURS = 0.05; 
 
 function computeOfflineElapsedHours(data) {
-  if (!data || !data.savedAt) return 0;
-  const savedAtMs = Date.parse(data.savedAt);
-  const serverCreditMs = data.lastServerCreditAt ? Date.parse(data.lastServerCreditAt) : NaN;
-  const baselineMs = (!isNaN(serverCreditMs) && serverCreditMs > savedAtMs) ? serverCreditMs : savedAtMs;
-  const elapsedMs = Date.now() - baselineMs;
-  if (!(elapsedMs > 0)) return 0;
-  const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
+  
+  if (!data || !isFinite(data.offlineWindowHours)) return 0;
+  const hours = Math.min(Math.max(data.offlineWindowHours, 0), OFFLINE_CATCHUP_CAP_HOURS);
   if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
   return hours;
 }
@@ -15459,8 +15455,14 @@ async function loadCloudSave() {
     const { data: ps } = await sb.from('player_stats').select('silver_per_hour, best_kpm').eq('user_id', currentUser.id).single();
     if (ps) serverRates = { silverPerHour: Number(ps.silver_per_hour) || 0, kpm: Number(ps.best_kpm) || 0 };
   } catch (e) {  }
+  
+  let offlineWindowHours;
+  try {
+    const { data: win } = await sb.rpc('offline_catchup_window');
+    if (win && win.length && isFinite(Number(win[0].elapsed_hours))) offlineWindowHours = Number(win[0].elapsed_hours);
+  } catch (e) {  }
   if (data && data.save_data && Object.keys(data.save_data).length) {
-    applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at, serverRates });
+    applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at, serverRates, offlineWindowHours });
     $a('saveStatus').textContent = 'Sauvegarde chargée ✓';
     
     if (typeof backfillSilverByCategory === 'function') backfillSilverByCategory();

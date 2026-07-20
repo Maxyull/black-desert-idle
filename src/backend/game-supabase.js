@@ -263,8 +263,18 @@ async function loadCloudSave() {
     const { data: ps } = await sb.from('player_stats').select('silver_per_hour, best_kpm').eq('user_id', currentUser.id).single();
     if (ps) serverRates = { silverPerHour: Number(ps.silver_per_hour) || 0, kpm: Number(ps.best_kpm) || 0 };
   } catch (e) { /* lecture best-effort, repli sur le record local */ }
+  // Durée hors-ligne mesurée par le SERVEUR (2026-07-20, migration 20260724190000) : la RPC ne
+  // prend aucun paramètre et lit game_saves.updated_at / last_server_credit_at, deux horodatages
+  // que le client ne peut pas écrire. Contrairement à serverRates ci-dessus, l'absence n'est PAS
+  // un repli mais un zéro : computeOfflineElapsedHours() ne regarde plus jamais Date.now(), sinon
+  // il suffirait de couper le réseau pour reprendre la main sur sa propre durée de farm.
+  let offlineWindowHours;
+  try {
+    const { data: win } = await sb.rpc('offline_catchup_window');
+    if (win && win.length && isFinite(Number(win[0].elapsed_hours))) offlineWindowHours = Number(win[0].elapsed_hours);
+  } catch (e) { /* pas de fenêtre = pas de rattrapage immédiat ; le cron serveur crédite quand même */ }
   if (data && data.save_data && Object.keys(data.save_data).length) {
-    applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at, serverRates });
+    applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at, serverRates, offlineWindowHours });
     $a('saveStatus').textContent = 'Sauvegarde chargée ✓';
     // rétro-catégorise le silver par source depuis le ledger serveur (best-effort, async, une fois) --
     // remplace S.silverByCategory par l'historique complet (voir backfillSilverByCategory, silver-history-panel.js)
