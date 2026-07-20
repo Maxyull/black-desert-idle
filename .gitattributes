@@ -1,0 +1,33 @@
+# ============================================================
+# Fins de ligne (2026-07-20).
+#
+# POURQUOI. `core.autocrlf` vaut `true` au niveau système sur la machine de dev : git écrivait donc
+# les fichiers en CRLF dans l'arbre de travail, pendant que `scripts/build.py` réécrit ses sorties
+# en LF. Résultat : `build/source.js`, `index.html` et les `*i18n-resources.generated.js`
+# apparaissaient « modifiés » après chaque build **sans le moindre diff de contenu**, ce qui
+# suffisait à faire échouer `git checkout` et `git rebase` ("Please commit or stash them") et
+# poussait à des `git checkout -- .` à l'aveugle -- exactement le genre de geste qui a déjà détruit
+# du travail non commité ici (voir l'en-tête de scripts/worktree-setup.js).
+#
+# Vérifié avant d'ajouter ce fichier : AUCUN blob texte du dépôt ne contient de CRLF (seuls les
+# .png/.jpg en ont, en tant qu'octets binaires). `eol=lf` ne renormalise donc rien -- il aligne
+# seulement l'arbre de travail sur ce qui est déjà stocké, et rend le réglage indépendant de la
+# config git de chaque machine.
+# ============================================================
+
+# LF partout dans l'arbre de travail ; `auto` laisse git détecter et ne jamais toucher au binaire.
+* text=auto eol=lf
+
+# Binaires : explicites, pour ne rien laisser à la détection par contenu.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.glb  binary
+*.woff  binary
+*.woff2 binary
+*.mp3 binary
+*.ogg binary
+*.wav binary
