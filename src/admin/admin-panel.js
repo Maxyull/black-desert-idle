@@ -53,7 +53,7 @@ function setAdminTheme(id) {
 // ============================================================
 const ADMIN_SECTIONS = [
   { cat:'overview', label:{fr:'Vue d\'ensemble',en:'Overview'}, items:[
-    { id:'dashboard', icon:'🏠', label:{fr:'Dashboard',en:'Dashboard'}, render:(el)=>renderAdminDashboard(el) },
+    { id:'dashboard', icon:'🏠', label:{fr:'Dashboard',en:'Dashboard'}, render:(el)=>renderAdminDashboardV2(el) },
   ]},
   { cat:'players', label:{fr:'Joueurs',en:'Players'}, items:[
     { id:'list', icon:'👥', label:{fr:'Liste des joueurs',en:'Player list'}, render:(el)=>renderAdminPlayerList(el) },
@@ -368,26 +368,20 @@ function buildDashboardCardError(widget) {
     </div>`;
 }
 /** @param {HTMLElement} el. Dashboard "Vue d'ensemble" : tuiles globales + alertes économiques, puis une carte par widget de DASHBOARD_WIDGETS (chacun fetch ses propres données via Promise.allSettled — un widget en échec n'empêche jamais les autres). Clic sur une carte navigue vers sa section complète. */
-function renderAdminDashboard(el) {
+// Renommée en ...Widgets le 2026-07-19 (refonte bdi-admin-ux.md §1) : ce qui était le dashboard
+// entier ne rend plus QUE les graphiques, désormais placés SOUS les 3 questions (Q1 santé /
+// Q2 KPI+deltas / Q3 à traiter) rendues par renderAdminDashboardV2 (admin-dashboard-react.js).
+// Les tuiles du haut ont disparu d'ici : elles étaient des totaux absolus sans point de
+// comparaison ("1,2M silver : bien ou mal ?"), remplacées par les 5 KPI avec delta de Q2.
+// Les alertes économiques restent : elles disent autre chose que les checks de santé.
+function renderAdminDashboardWidgets(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   const topPromise = Promise.all([
-    sb.rpc('admin_list_players'),
-    sb.from('admin_wealth').select('silver'),
-    sb.rpc('admin_list_bans'),
-    sb.rpc('get_market_open'),
     sb.from('admin_silver_ledger_by_category').select('total_gained, total_spent'),
-  ]).then(([{data: players}, {data: wealth}, {data: bans}, {data: marketOpen}, {data: ledgerByCat}]) => {
-    const online = (players||[]).filter(p => p.online).length;
-    const totalSilver = (wealth||[]).reduce((a,r) => a + Number(r.silver||0), 0);
-    const activeBans = (bans||[]).length;
-    const open = marketOpen !== false;
+  ]).then(([{data: ledgerByCat}]) => {
     const alerts = typeof computeEconAlerts === 'function' ? computeEconAlerts(ledgerByCat) : [];
     const alertsHtml = typeof buildEconAlertsHtml === 'function' ? buildEconAlertsHtml(alerts) : '';
-    return `${alertsHtml}<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🟢 ${i18next.t('admin:admin.dashboard.players_online')}</div><div class="astVal">${online}</div></div>
-        <div class="admStatTile"><div class="astLbl">🏦 ${i18next.t('admin:admin.dashboard.total_silver_in_game')}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🚫 ${i18next.t('admin:admin.dashboard.active_bans_stat')}</div><div class="astVal">${activeBans}</div></div>
-        <div class="admStatTile"><div class="astLbl">🏛️ ${i18next.t('admin:admin.dashboard.market_label')}</div><div class="astVal" style="${open?'':'color:var(--danger)'}">${open?i18next.t('admin:admin.dashboard.market_state_open'):i18next.t('admin:admin.dashboard.market_state_closed')}</div></div>
+    return `${alertsHtml}<div class="admStatTilesLegacyRemoved" style="display:none"></div><div style="display:none">
       </div>`;
   });
   // Promise.allSettled : un widget qui échoue (RPC manquante, réseau...) ne doit jamais empêcher

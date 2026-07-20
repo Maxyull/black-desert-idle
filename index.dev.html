@@ -1186,6 +1186,10 @@
      (push de la catégorie "Supervision" + câblage des items planned PvP/Donations), et complète la
      catégorie "economy" créée par admin-economy.js -- voir src/admin/admin-monitoring.js -->
 <script src="src/admin/admin-monitoring.js?v=689"></script>
+<!-- Dashboard admin en React (5e exception React du projet, cf. CLAUDE.md) -- charge APRES
+     admin-panel.js (utilise openAdminSection + renderAdminDashboardWidgets) et apres React/ReactDOM
+     charges en tete de page. Refonte bdi-admin-ux.md §1 (Q1 sante / Q2 KPI+deltas / Q3 a traiter). -->
+<script src="src/admin/admin-dashboard-react.js?v=689"></script>
 <!-- chat (mondial/trade/annonce + mentions @joueur) -- extrait de game-supabase.js le 2026-07-14 --
      charge APRÈS lui : appelle immédiatement fetchChatMessages/pollChatUnread (setInterval au
      top-level), qui ont besoin de $a/sb/currentUser déjà définis -->
