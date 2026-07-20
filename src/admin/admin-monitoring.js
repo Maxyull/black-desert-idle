@@ -44,7 +44,7 @@ function admMonTiles(tiles) {
 /** @param {HTMLElement} el. Section Erreurs client : volume par jour, top messages, dernières erreurs. */
 function renderAdminClientErrors(el) {
   el.innerHTML =
-    admMonSkeleton('🐞 ' + i18next.t('admin:admin.errors.title'), i18next.t('admin:admin.errors.sub'), 'admErrTop') +
+    admMonSkeleton('🐞 ' + i18next.t('admin:admin.errors.title'), i18next.t('admin:admin.errors.sub', { period: adminPeriodLabel() }), 'admErrTop') +
     admMonSkeleton('📋 ' + i18next.t('admin:admin.errors.recent_title'), i18next.t('admin:admin.errors.recent_sub'), 'admErrRecent');
   refreshAdminClientErrors();
 }
@@ -53,8 +53,8 @@ async function refreshAdminClientErrors() {
   if (!isAdmin() || !sb) return;
   const topEl = $a('admErrTop'), recentEl = $a('admErrRecent');
   const [sum, top, recent] = await Promise.all([
-    sb.rpc('admin_client_errors_summary', { p_days: 14 }),
-    sb.rpc('admin_client_errors_top', { p_days: 14, p_limit: 15 }),
+    sb.rpc('admin_client_errors_summary', { p_days: adminPeriodDays() }),
+    sb.rpc('admin_client_errors_top', { p_days: adminPeriodDays(), p_limit: 15 }),
     sb.rpc('admin_client_errors_recent', { p_limit: 30 }),
   ]);
   if (topEl) {
@@ -66,7 +66,7 @@ async function refreshAdminClientErrors() {
       const chart = typeof buildBarSeriesSvg === 'function'
         ? buildBarSeriesSvg(days.map(d => ({ label:d.day, value:Number(d.errors||0) })), colors.danger || '#c96a5a') : '';
       topEl.innerHTML = admMonTiles([
-        { lbl:'🐞 ' + i18next.t('admin:admin.errors.tile_total_14d'), val: admMonNum(total) },
+        { lbl:'🐞 ' + i18next.t('admin:admin.errors.tile_total_period', { period: adminPeriodLabel() }), val: admMonNum(total) },
         { lbl:'📅 ' + i18next.t('admin:admin.errors.tile_days_with_errors'), val: admMonNum(days.length) },
         { lbl:'🔁 ' + i18next.t('admin:admin.errors.tile_distinct_messages'), val: admMonNum(rows.length) },
         { lbl:'🕒 ' + i18next.t('admin:admin.errors.tile_last'), val: admMonDate(rows.length ? rows[0].last_seen : null) },

@@ -25,6 +25,49 @@ const ADMIN_THEMES = [
   { id:'violet',  label:{fr:'Violet',en:'Violet'}, color:'#a578d8' },
 ];
 const ADMIN_THEME_STORAGE_KEY = 'bdiAdminTheme';
+
+// ---------- période globale du panneau (2026-07-20, bdi-admin-ux.md §4) ----------
+// Avant : chaque section avait SA fenêtre codée en dur (48 h pour le silver, 30 j pour les
+// inscriptions, 14 j pour les erreurs...). Impossible de zoomer sur un incident d'hier soir, et
+// deux graphes côte à côte ne parlaient pas de la même période sans qu'on le sache.
+// Un seul contrôle en haut du panneau pilote désormais TOUTES les sections temporelles.
+// Persisté comme le thème (préférence locale à l'admin, jamais dans la sauvegarde de jeu).
+const ADMIN_PERIODS = [
+  { id:'24h', hours:24,   days:1,  label:{fr:'24 h',en:'24h'} },
+  { id:'7d',  hours:168,  days:7,  label:{fr:'7 j', en:'7d'}  },
+  { id:'30d', hours:720,  days:30, label:{fr:'30 j',en:'30d'} },
+  { id:'90d', hours:2160, days:90, label:{fr:'90 j',en:'90d'} },
+];
+const ADMIN_PERIOD_STORAGE_KEY = 'bdiAdminPeriod';
+/** @returns {object} période active de ADMIN_PERIODS (repli sur 30 j : l'ancienne fenêtre la plus courante). */
+function getAdminPeriod() {
+  let saved = null;
+  try { saved = localStorage.getItem(ADMIN_PERIOD_STORAGE_KEY); } catch (e) {}
+  return ADMIN_PERIODS.find(p => p.id === saved) || ADMIN_PERIODS[2];
+}
+/** @returns {number} nombre de JOURS de la période active (pour les RPC en p_days). */
+function adminPeriodDays() { return getAdminPeriod().days; }
+/** @returns {number} nombre d'HEURES de la période active (pour les RPC en p_hours). */
+function adminPeriodHours() { return getAdminPeriod().hours; }
+/** @returns {string} libellé court de la période active, à injecter dans les titres de section. */
+function adminPeriodLabel() { return getAdminPeriod().label[LANG]; }
+/** @param {string} id - id de ADMIN_PERIODS. Persiste la période et RE-REND la section courante (les données affichées doivent suivre immédiatement). */
+function setAdminPeriod(id) {
+  if (!ADMIN_PERIODS.some(p => p.id === id)) return;
+  try { localStorage.setItem(ADMIN_PERIOD_STORAGE_KEY, id); } catch (e) {}
+  renderAdminPeriodPicker();
+  if (currentAdminSection) openAdminSection(currentAdminSection.cat, currentAdminSection.id);
+}
+// section actuellement affichée : nécessaire pour re-rendre au changement de période
+let currentAdminSection = null;
+/** Redessine le sélecteur de période dans l'en-tête du panneau et recâble ses boutons. */
+function renderAdminPeriodPicker() {
+  const host = $a('adminPeriodPicker'); if (!host) return;
+  const active = getAdminPeriod().id;
+  host.innerHTML = ADMIN_PERIODS.map(p =>
+    `<button class="admPeriodBtn${p.id === active ? ' on' : ''}" data-period="${p.id}">${p.label[LANG]}</button>`).join('');
+  host.querySelectorAll('.admPeriodBtn').forEach(b => { b.onclick = () => setAdminPeriod(b.dataset.period); });
+}
 // lit la préférence de palette persistée -- purement locale à ce navigateur/admin, ne touche
 // jamais S/le compte (pas une donnée de jeu, pas besoin de sync/migration)
 /** @returns {string} id de thème du panneau admin persisté (localStorage), 'gold' par défaut/invalide. */
@@ -239,7 +282,7 @@ const DASHBOARD_WIDGETS = [
       };
     } },
   { id:'dw-market', cat:'economy', sec:'market', icon:'🏛️', title:{fr:'Marché',en:'Market'},
-    fetch: () => Promise.all([sb.rpc('get_market_open'), sb.rpc('admin_market_top_items', { p_days:30 })]),
+    fetch: () => Promise.all([sb.rpc('get_market_open'), sb.rpc('admin_market_top_items', { p_days: adminPeriodDays() })]),
     build: ([{ data: openData }, { data: topItems }]) => {
       const open = openData !== false;
       const rows = topItems || [];
@@ -250,7 +293,7 @@ const DASHBOARD_WIDGETS = [
       };
     } },
   { id:'dw-signups', cat:'overview', sec:'signups', icon:'📈', title:{fr:'Inscriptions (30j)',en:'Signups (30d)'},
-    fetch: () => Promise.all([sb.rpc('admin_signups_by_day', { p_days:30 }), sb.rpc('admin_signups_by_provider')]),
+    fetch: () => Promise.all([sb.rpc('admin_signups_by_day', { p_days: adminPeriodDays() }), sb.rpc('admin_signups_by_provider')]),
     build: ([{ data: byDay }, { data: byProvider }]) => {
       const rows = byDay || [];
       const { accent } = currentAdminAccentColors();
@@ -635,6 +678,7 @@ function findAdminSection(cat, id) {
 function openAdminSection(cat, id) {
   const item = findAdminSection(cat, id);
   if (!item) return;
+  currentAdminSection = { cat, id }; // retenu pour re-rendre au changement de période (§4)
   $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
     el.classList.toggle('active', el.dataset.cat === cat && el.dataset.id === id);
   });
@@ -683,7 +727,11 @@ async function openAdminPanel() {
   const overlay = $a('adminOverlay');
   overlay.classList.add('admThemeRoot');
   overlay.dataset.admTheme = currentTheme;
-  $a('adminMainHead').innerHTML = `<span id="adminMainTitle" style="flex:1"></span>`;
+  // le sélecteur vit dans #adminMainHead à côté du titre : openAdminSection ne réécrit QUE
+  // #adminMainTitle (voir son commentaire), donc il survit aux changements de section.
+  $a('adminMainHead').innerHTML = `<span id="adminMainTitle" style="flex:1"></span>` +
+    `<span id="adminPeriodPicker" class="admPeriodPicker" title="${i18next.t('admin:admin.system.period_title')}"></span>`;
+  renderAdminPeriodPicker();
   $a('adminSidebar').innerHTML = `<div class="admNavHead">` +
       `<span class="admNavTitle">🛠️ Admin</span>` +
       renderAdminThemeSwatchesHtml(currentTheme) +

@@ -393,7 +393,7 @@ function renderAdminMarket(el) {
 /** @param {HTMLElement} el. Section admin "Volume du marché" : top objets échangés sur 30j (RPC admin_market_top_items), lecture seule. */
 function renderAdminMarketVolume(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
-  sb.rpc('admin_market_top_items', { p_days: 30 }).then(({data, error}) => {
+  sb.rpc('admin_market_top_items', { p_days: adminPeriodDays() }).then(({data, error}) => {
     if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
     const rows = data || [];
     const totalVolume = rows.reduce((a,r) => a + Number(r.total_silver_value||0), 0);
@@ -424,7 +424,7 @@ function renderAdminMarketVolume(el) {
 function renderAdminSignups(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
-    sb.rpc('admin_signups_by_day', { p_days: 30 }),
+    sb.rpc('admin_signups_by_day', { p_days: adminPeriodDays() }),
     sb.rpc('admin_signups_by_provider'),
   ]).then(([{data, error}, { data: byProvider, error: provError }]) => {
     if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
