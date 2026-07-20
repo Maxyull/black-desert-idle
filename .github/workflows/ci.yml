@@ -22,19 +22,24 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install npm dependencies
-        run: npm ci
-
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
-
       # 2026-07-20 : scripts/build.py n'avait aucun test alors qu'il reecrit tout le code
       # expedie en prod. Une regex mal analysee par strip_js_comments_safe peut produire un
       # bundle syntaxiquement valide mais FAUX -- que check-build ne verrait pas, puisqu'il
       # compare le bundle a un rebuild frais (donc corrompu a l'identique). Ce test passe
       # AVANT check-build : il localise la panne dans le scanner plutot que dans le diff.
+      #
+      # Place JUSTE APRES setup-python : il ne depend que de la stdlib Python, alors qu'il
+      # tournait derriere `npm ci` + l'installation de Chromium, soit environ 1 min 30 avant
+      # de pouvoir echouer. Ici une regression du scanner arrete le job en quelques secondes.
+      # Aucun effet quand tout passe : l'economie porte uniquement sur les echecs.
       - name: Test the build script (JS comment scanner)
         run: npm run test:build
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
 
       # audit repo-audit-todo.md point 2 : echoue si build/source.js, build/source.min.js,
       # build/styles.min.css, index.html ou src/core/i18n-resources.generated.js divergent du
