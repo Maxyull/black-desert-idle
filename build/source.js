@@ -18279,6 +18279,62 @@ function renderAdminPeriodPicker() {
   host.querySelectorAll('.admPeriodBtn').forEach(b => { b.onclick = () => setAdminPeriod(b.dataset.period); });
 }
 
+const ADMIN_HASH_PREFIX = '#admin';
+
+let admHashGuard = false;
+
+let admPendingPlayerUuid = null;
+
+function parseAdminHash(hash) {
+  hash = String(hash || '');
+  if (hash !== ADMIN_HASH_PREFIX && hash.indexOf(ADMIN_HASH_PREFIX + '/') !== 0
+      && hash.indexOf(ADMIN_HASH_PREFIX + '?') !== 0) return null;
+  const rest = hash.slice(ADMIN_HASH_PREFIX.length);
+  const qi = rest.indexOf('?');
+  
+  const path = (qi === -1 ? rest : rest.slice(0, qi)).replace(/^[/]/, '');
+  const query = qi === -1 ? '' : rest.slice(qi + 1);
+  const parts = path ? path.split('/').filter(Boolean) : [];
+  const out = { cat: parts[0] || 'overview', id: parts[1] || 'dashboard', uuid: null, period: null };
+  
+  if (parts[1] === 'u' && parts[2]) { out.id = 'all'; out.uuid = decodeURIComponent(parts[2]); }
+  else if (parts[2] === 'u' && parts[3]) out.uuid = decodeURIComponent(parts[3]);
+  const m = query.match(/(?:^|&)p=([^&]*)/);
+  if (m && m[1]) out.period = decodeURIComponent(m[1]);
+  return out;
+}
+
+function buildAdminHash(cat, id, uuid) {
+  let h = ADMIN_HASH_PREFIX + '/' + cat + '/' + id;
+  if (uuid) h += '/u/' + encodeURIComponent(uuid);
+  return h + '?p=' + getAdminPeriod().id;
+}
+
+function writeAdminHash(cat, id, uuid) {
+  const next = buildAdminHash(cat, id, uuid);
+  if (location.hash === next) return;
+  admHashGuard = true;
+  try { location.hash = next; } catch (e) {} 
+  setTimeout(() => { admHashGuard = false; }, 0);
+}
+
+function setAdminPeriodSilently(id) {
+  if (!ADMIN_PERIODS.some(p => p.id === id)) return;
+  try { localStorage.setItem(ADMIN_PERIOD_STORAGE_KEY, id); } catch (e) {}
+}
+
+async function applyAdminHash() {
+  if (admHashGuard) return;
+  const route = parseAdminHash(location.hash);
+  if (!route || !isAdmin()) return;
+  if (route.period) setAdminPeriodSilently(route.period);
+  admPendingPlayerUuid = route.uuid;      
+  const overlay = $a('adminOverlay');
+  if (!overlay || !overlay.classList.contains('open')) await openAdminPanel();
+  openAdminSection(route.cat, route.id);
+}
+window.addEventListener('hashchange', () => { applyAdminHash(); });
+
 function getAdminTheme() {
   let saved = null;
   try { saved = localStorage.getItem(ADMIN_THEME_STORAGE_KEY); } catch (e) {}
@@ -18764,6 +18820,12 @@ function renderAdminServerDanger(el) {
 
 function closeAdminPanel() {
   const overlay = $a('adminOverlay'); if (overlay) overlay.classList.remove('open');
+  
+  if (parseAdminHash(location.hash)) {
+    admHashGuard = true;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    setTimeout(() => { admHashGuard = false; }, 0);
+  }
 }
 
 function renderAdminSidebar(activeCat, activeId) {
@@ -18786,6 +18848,7 @@ function openAdminSection(cat, id) {
   const item = findAdminSection(cat, id);
   if (!item) return;
   currentAdminSection = { cat, id }; 
+  writeAdminHash(cat, id, null);     
   $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
     el.classList.toggle('active', el.dataset.cat === cat && el.dataset.id === id);
   });
@@ -18843,7 +18906,9 @@ async function openAdminPanel() {
   wireAdminThemeSwatches();
   wireAdminSidebarSearch();
   overlay.classList.add('open');
-  openAdminSection('overview', 'dashboard');
+  
+  const routeAtOpen = parseAdminHash(location.hash);
+  openAdminSection(routeAtOpen ? routeAtOpen.cat : 'overview', routeAtOpen ? routeAtOpen.id : 'dashboard');
 }
 
 $a('btnAdminTopbar').onclick = openAdminPanel;
@@ -20457,7 +20522,16 @@ function AdmPlayersPage() {
   const [q, setQ] = React.useState('');
   const [filter, setFilter] = React.useState('all');
   const [sort, setSort] = React.useState('last_seen');
-  const [sel, setSel] = React.useState(null);
+  
+  const [sel, setSel] = React.useState(() => {
+    const u = typeof admPendingPlayerUuid !== 'undefined' ? admPendingPlayerUuid : null;
+    if (typeof admPendingPlayerUuid !== 'undefined') admPendingPlayerUuid = null;
+    return u;
+  });
+  
+  React.useEffect(() => {
+    if (typeof writeAdminHash === 'function') writeAdminHash('players', 'all', sel);
+  }, [sel]);
 
   const load = React.useCallback(async () => {
     if (!sb) return;
@@ -21696,6 +21770,8 @@ function updateUserBar() {
   
   $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
   const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
+  
+  if (typeof applyAdminHash === 'function') applyAdminHash();
   
   const adminCard = $a('adminCard'); if (adminCard) adminCard.classList.toggle('isAdminVisible', isAdmin());
   

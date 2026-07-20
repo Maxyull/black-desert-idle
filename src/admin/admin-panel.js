@@ -68,6 +68,80 @@ function renderAdminPeriodPicker() {
     `<button class="admPeriodBtn${p.id === active ? ' on' : ''}" data-period="${p.id}">${p.label[LANG]}</button>`).join('');
   host.querySelectorAll('.admPeriodBtn').forEach(b => { b.onclick = () => setAdminPeriod(b.dataset.period); });
 }
+// ---------- deep-linking par hash (2026-07-20, bdi-admin-ux.md §7) ----------
+// Le panneau était une overlay SANS état dans l'URL : impossible de mettre une section en favori,
+// de coller un lien dans ses notes, ou de revenir en arrière avec le navigateur.
+//   #admin                        -> dashboard
+//   #admin/economy/silver         -> section directe
+//   #admin/players/u/<uuid>       -> fiche joueur
+//   #admin/economy/silver?p=7d    -> avec période
+// L'espace de noms `#admin/` est DISTINCT de ceux déjà utilisés dans le projet (`#patch-<version>`
+// des notes de version, `#type=recovery` de Supabase) -- et on n'efface JAMAIS un hash qui n'est
+// pas le nôtre (voir closeAdminPanel), sinon fermer le panneau casserait un lien de récupération.
+const ADMIN_HASH_PREFIX = '#admin';
+// évite la boucle : écrire le hash déclenche 'hashchange', qui re-rendrait la section qu'on vient
+// d'ouvrir (double rendu, et perte de la sélection en cours dans la page Joueurs).
+let admHashGuard = false;
+// UUID demandé par l'URL, consommé au montage par la page Joueurs (admin-players-react.js)
+let admPendingPlayerUuid = null;
+
+/** @param {string} hash. @returns {?{cat:string,id:string,uuid:?string,period:?string}} route admin, ou null si le hash n'est pas un lien admin. Fonction PURE, testable sans DOM. */
+function parseAdminHash(hash) {
+  hash = String(hash || '');
+  if (hash !== ADMIN_HASH_PREFIX && hash.indexOf(ADMIN_HASH_PREFIX + '/') !== 0
+      && hash.indexOf(ADMIN_HASH_PREFIX + '?') !== 0) return null;
+  const rest = hash.slice(ADMIN_HASH_PREFIX.length);
+  const qi = rest.indexOf('?');
+  // classe de caracteres [/] et non \/ : scripts/build.py retire les commentaires sans connaitre
+  // les litteraux regex, donc la sequence \/ y est lue comme un debut de commentaire // et TRONQUE
+  // la ligne dans le bundle (bug reel rencontre ici). [/] evite toute paire // dans la source.
+  const path = (qi === -1 ? rest : rest.slice(0, qi)).replace(/^[/]/, '');
+  const query = qi === -1 ? '' : rest.slice(qi + 1);
+  const parts = path ? path.split('/').filter(Boolean) : [];
+  const out = { cat: parts[0] || 'overview', id: parts[1] || 'dashboard', uuid: null, period: null };
+  // Sous-route de fiche joueur, DEUX formes acceptees :
+  //   #admin/players/all/u/<uuid>  forme canonique produite par buildAdminHash
+  //   #admin/players/u/<uuid>      forme courte du doc (bdi-admin-ux.md §7), celle qu'un humain
+  //                                tape ou colle -- elle doit marcher, sinon le lien documente
+  //                                ouvrirait silencieusement une section inexistante ("u").
+  if (parts[1] === 'u' && parts[2]) { out.id = 'all'; out.uuid = decodeURIComponent(parts[2]); }
+  else if (parts[2] === 'u' && parts[3]) out.uuid = decodeURIComponent(parts[3]);
+  const m = query.match(/(?:^|&)p=([^&]*)/);
+  if (m && m[1]) out.period = decodeURIComponent(m[1]);
+  return out;
+}
+/** @param {string} cat @param {string} id @param {?string} uuid. @returns {string} hash canonique pour cette vue (période incluse). Fonction PURE. */
+function buildAdminHash(cat, id, uuid) {
+  let h = ADMIN_HASH_PREFIX + '/' + cat + '/' + id;
+  if (uuid) h += '/u/' + encodeURIComponent(uuid);
+  return h + '?p=' + getAdminPeriod().id;
+}
+/** @param {string} cat @param {string} id @param {?string} uuid. Écrit le hash sans redéclencher l'ouverture (garde anti-boucle). */
+function writeAdminHash(cat, id, uuid) {
+  const next = buildAdminHash(cat, id, uuid);
+  if (location.hash === next) return;
+  admHashGuard = true;
+  try { location.hash = next; } catch (e) {} // location.hash pousse une entrée -> retour arrière OK
+  setTimeout(() => { admHashGuard = false; }, 0);
+}
+/** @param {string} id. Applique une période SANS re-render ni réécriture du hash (l'appelant rend juste après). */
+function setAdminPeriodSilently(id) {
+  if (!ADMIN_PERIODS.some(p => p.id === id)) return;
+  try { localStorage.setItem(ADMIN_PERIOD_STORAGE_KEY, id); } catch (e) {}
+}
+/** Ouvre le panneau et la section décrits par le hash courant. No-op si le hash n'est pas admin ou si l'utilisateur n'est pas admin. */
+async function applyAdminHash() {
+  if (admHashGuard) return;
+  const route = parseAdminHash(location.hash);
+  if (!route || !isAdmin()) return;
+  if (route.period) setAdminPeriodSilently(route.period);
+  admPendingPlayerUuid = route.uuid;      // consommé par la page Joueurs à son montage
+  const overlay = $a('adminOverlay');
+  if (!overlay || !overlay.classList.contains('open')) await openAdminPanel();
+  openAdminSection(route.cat, route.id);
+}
+window.addEventListener('hashchange', () => { applyAdminHash(); });
+
 // lit la préférence de palette persistée -- purement locale à ce navigateur/admin, ne touche
 // jamais S/le compte (pas une donnée de jeu, pas besoin de sync/migration)
 /** @returns {string} id de thème du panneau admin persisté (localStorage), 'gold' par défaut/invalide. */
@@ -657,6 +731,14 @@ function renderAdminServerDanger(el) {
 /** Ferme le panneau admin plein écran. */
 function closeAdminPanel() {
   const overlay = $a('adminOverlay'); if (overlay) overlay.classList.remove('open');
+  // n'efface le hash QUE s'il est le nôtre : `#patch-<version>` (notes de version) et
+  // `#type=recovery` (lien de récupération Supabase) doivent survivre à la fermeture du panneau.
+  // replaceState et non location.hash='' : on ne veut PAS d'entrée d'historique pour une fermeture.
+  if (parseAdminHash(location.hash)) {
+    admHashGuard = true;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    setTimeout(() => { admHashGuard = false; }, 0);
+  }
 }
 /** @param {string} activeCat @param {string} activeId - section actuellement affichée. @returns {string} HTML de la sidebar admin (groupes/items de ADMIN_SECTIONS, badge "Prévu" pour les items planned). */
 function renderAdminSidebar(activeCat, activeId) {
@@ -679,6 +761,7 @@ function openAdminSection(cat, id) {
   const item = findAdminSection(cat, id);
   if (!item) return;
   currentAdminSection = { cat, id }; // retenu pour re-rendre au changement de période (§4)
+  writeAdminHash(cat, id, null);     // l'URL suit la navigation (§7 : favoris, partage, retour arrière)
   $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
     el.classList.toggle('active', el.dataset.cat === cat && el.dataset.id === id);
   });
@@ -745,7 +828,9 @@ async function openAdminPanel() {
   wireAdminThemeSwatches();
   wireAdminSidebarSearch();
   overlay.classList.add('open');
-  openAdminSection('overview', 'dashboard');
+  // si l'URL désigne déjà une section (deep link, §7), on l'ouvre elle -- sinon le dashboard
+  const routeAtOpen = parseAdminHash(location.hash);
+  openAdminSection(routeAtOpen ? routeAtOpen.cat : 'overview', routeAtOpen ? routeAtOpen.id : 'dashboard');
 }
 // 2026-07-13 : #btnAdmin (sidebar, dans #adminBox) retiré, doublon du header -- #btnAdminTopbar
 // est désormais le SEUL déclencheur.

@@ -219,7 +219,18 @@ function AdmPlayersPage() {
   const [q, setQ] = React.useState('');
   const [filter, setFilter] = React.useState('all');
   const [sort, setSort] = React.useState('last_seen');
-  const [sel, setSel] = React.useState(null);
+  // sélection initiale depuis l'URL (#admin/players/u/<uuid>, §7) : admPendingPlayerUuid est posé
+  // par applyAdminHash juste avant le rendu de cette section, et consommé UNE fois -- sinon revenir
+  // à la liste rouvrirait aussitôt la même fiche.
+  const [sel, setSel] = React.useState(() => {
+    const u = typeof admPendingPlayerUuid !== 'undefined' ? admPendingPlayerUuid : null;
+    if (typeof admPendingPlayerUuid !== 'undefined') admPendingPlayerUuid = null;
+    return u;
+  });
+  // l'URL suit la sélection : une fiche ouverte est partageable / remise en favori telle quelle
+  React.useEffect(() => {
+    if (typeof writeAdminHash === 'function') writeAdminHash('players', 'all', sel);
+  }, [sel]);
 
   const load = React.useCallback(async () => {
     if (!sb) return;
