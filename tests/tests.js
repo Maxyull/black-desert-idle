@@ -4417,15 +4417,13 @@
   function testComputeOfflineCatchupSilverCapsAndThresholds() {
     if (typeof computeOfflineCatchupSilver !== 'function') return;
     const rate = 3600; // valeur ronde : 3600 silver/h = 1 silver/s
-    assert('Sans savedAt -> 0, pas de throw', computeOfflineCatchupSilver({ S:{ bestSilverPerHour: rate } }) === 0);
-    assert('Sans taux connu (bestSilverPerHour=0) -> 0', computeOfflineCatchupSilver({ savedAt: new Date(Date.now()-3600000).toISOString(), S:{ bestSilverPerHour:0 } }) === 0);
-    const oneMinuteAgo = new Date(Date.now() - 60*1000).toISOString();
-    assert('Absence sous OFFLINE_CATCHUP_MIN_HOURS (~3 min) -> 0', computeOfflineCatchupSilver({ savedAt: oneMinuteAgo, S:{ bestSilverPerHour: rate } }) === 0);
-    const oneHourAgo = new Date(Date.now() - 3600*1000).toISOString();
-    const gain1h = computeOfflineCatchupSilver({ savedAt: oneHourAgo, S:{ bestSilverPerHour: rate } });
+    // depuis le 2026-07-20 la DUREE vient du serveur (offlineWindowHours), plus de savedAt/Date.now()
+    assert('Sans fenetre serveur -> 0, pas de throw', computeOfflineCatchupSilver({ S:{ bestSilverPerHour: rate } }) === 0);
+    assert('Sans taux connu (bestSilverPerHour=0) -> 0', computeOfflineCatchupSilver({ offlineWindowHours: 1, S:{ bestSilverPerHour:0 } }) === 0);
+    assert('Absence sous OFFLINE_CATCHUP_MIN_HOURS (~3 min) -> 0', computeOfflineCatchupSilver({ offlineWindowHours: 1/60, S:{ bestSilverPerHour: rate } }) === 0);
+    const gain1h = computeOfflineCatchupSilver({ offlineWindowHours: 1, S:{ bestSilverPerHour: rate } });
     assert('1h d\'absence à 3600 silver/h -> ~3600 silver', Math.abs(gain1h - rate) <= 2, `gain=${gain1h}`);
-    const fortyEightHoursAgo = new Date(Date.now() - 48*3600*1000).toISOString();
-    const gainCapped = computeOfflineCatchupSilver({ savedAt: fortyEightHoursAgo, S:{ bestSilverPerHour: rate } });
+    const gainCapped = computeOfflineCatchupSilver({ offlineWindowHours: 48, S:{ bestSilverPerHour: rate } });
     assert('Plafonné à OFFLINE_CATCHUP_CAP_HOURS (24h) même après 48h d\'absence', Math.abs(gainCapped - rate*OFFLINE_CATCHUP_CAP_HOURS) <= 2, `gain=${gainCapped}`);
   }
   // même garde-fou que testComputeOfflineCatchupSilverCapsAndThresholds, version XP (2026-07-12,
@@ -4437,16 +4435,13 @@
   function testComputeOfflineCatchupXpCapsAndThresholds() {
     if (typeof computeOfflineCatchupXp !== 'function') return;
     const rate = 3600; // valeur ronde : 3600 xp/h = 1 xp/s
-    assert('Sans savedAt -> 0, pas de throw', computeOfflineCatchupXp({ S:{ bestXpPerHour: rate } }) === 0);
-    assert('Sans taux connu (bestXpPerHour=0) -> 0', computeOfflineCatchupXp({ savedAt: new Date(Date.now()-3600000).toISOString(), S:{ bestXpPerHour:0 } }) === 0);
-    const oneHourAgo = new Date(Date.now() - 3600*1000).toISOString();
-    assert('Sauvegarde antérieure à cette feature (S.bestXpPerHour absent) -> 0, pas de throw', computeOfflineCatchupXp({ savedAt: oneHourAgo, S:{} }) === 0);
-    const oneMinuteAgo = new Date(Date.now() - 60*1000).toISOString();
-    assert('Absence sous OFFLINE_CATCHUP_MIN_HOURS (~3 min) -> 0', computeOfflineCatchupXp({ savedAt: oneMinuteAgo, S:{ bestXpPerHour: rate } }) === 0);
-    const gain1h = computeOfflineCatchupXp({ savedAt: oneHourAgo, S:{ bestXpPerHour: rate } });
+    assert('Sans fenetre serveur -> 0, pas de throw', computeOfflineCatchupXp({ S:{ bestXpPerHour: rate } }) === 0);
+    assert('Sans taux connu (bestXpPerHour=0) -> 0', computeOfflineCatchupXp({ offlineWindowHours: 1, S:{ bestXpPerHour:0 } }) === 0);
+    assert('Sauvegarde antérieure à cette feature (S.bestXpPerHour absent) -> 0, pas de throw', computeOfflineCatchupXp({ offlineWindowHours: 1, S:{} }) === 0);
+    assert('Absence sous OFFLINE_CATCHUP_MIN_HOURS (~3 min) -> 0', computeOfflineCatchupXp({ offlineWindowHours: 1/60, S:{ bestXpPerHour: rate } }) === 0);
+    const gain1h = computeOfflineCatchupXp({ offlineWindowHours: 1, S:{ bestXpPerHour: rate } });
     assert('1h d\'absence à 3600 xp/h -> ~3600 xp', Math.abs(gain1h - rate) <= 2, `gain=${gain1h}`);
-    const fortyEightHoursAgo = new Date(Date.now() - 48*3600*1000).toISOString();
-    const gainCapped = computeOfflineCatchupXp({ savedAt: fortyEightHoursAgo, S:{ bestXpPerHour: rate } });
+    const gainCapped = computeOfflineCatchupXp({ offlineWindowHours: 48, S:{ bestXpPerHour: rate } });
     assert('Plafonné à OFFLINE_CATCHUP_CAP_HOURS (24h) même après 48h d\'absence', Math.abs(gainCapped - rate*OFFLINE_CATCHUP_CAP_HOURS) <= 2, `gain=${gainCapped}`);
   }
   // computeOfflineCatchupLoot() (2026-07-13, demande explicite : "la 0 en 5min c'est pas possible" --
@@ -4456,8 +4451,7 @@
   // le trash est exclu (déjà couvert par computeOfflineCatchupSilver, éviterait un double-comptage).
   function testComputeOfflineCatchupLootUsesZoneLootTableAndKpm() {
     if (typeof computeOfflineCatchupLoot !== 'function') return;
-    const oneHourAgo = new Date(Date.now() - 3600*1000).toISOString();
-    const items = computeOfflineCatchupLoot({ savedAt: oneHourAgo, zoneIdx: 0, S: { bestKpm: 10 } });
+    const items = computeOfflineCatchupLoot({ offlineWindowHours: 1, zoneIdx: 0, S: { bestKpm: 10 } });
     assert('computeOfflineCatchupLoot() retourne au moins un objet estimé pour 1h à 10 kills/min',
       items.length > 0, JSON.stringify(items));
     const matName = gearTierForZone(0).material.name;
@@ -4472,48 +4466,40 @@
   }
   function testComputeOfflineCatchupLootReturnsEmptyWithoutKpmOrSavedAt() {
     if (typeof computeOfflineCatchupLoot !== 'function') return;
-    const oneHourAgo = new Date(Date.now() - 3600*1000).toISOString();
-    assert('Sans bestKpm connu -> []', computeOfflineCatchupLoot({ savedAt: oneHourAgo, zoneIdx:0, S:{ bestKpm:0 } }).length === 0);
-    assert('Sans savedAt -> []', computeOfflineCatchupLoot({ zoneIdx:0, S:{ bestKpm:10 } }).length === 0);
-    const oneMinuteAgo = new Date(Date.now() - 60*1000).toISOString();
-    assert('Absence sous OFFLINE_CATCHUP_MIN_HOURS (~3 min) -> []', computeOfflineCatchupLoot({ savedAt: oneMinuteAgo, zoneIdx:0, S:{ bestKpm:10 } }).length === 0);
+    assert('Sans bestKpm connu -> []', computeOfflineCatchupLoot({ offlineWindowHours: 1, zoneIdx:0, S:{ bestKpm:0 } }).length === 0);
+    assert('Sans fenetre serveur -> []', computeOfflineCatchupLoot({ zoneIdx:0, S:{ bestKpm:10 } }).length === 0);
+    assert('Absence sous OFFLINE_CATCHUP_MIN_HOURS (~3 min) -> []', computeOfflineCatchupLoot({ offlineWindowHours: 1/60, zoneIdx:0, S:{ bestKpm:10 } }).length === 0);
   }
-  // "Phase 2" du rattrapage hors-ligne (2026-07-14) : un cron SERVEUR horaire
-  // (credit_offline_progress_hourly(), supabase/migrations/20260722120000_offline_progress_hourly_cron.sql)
-  // crédite désormais aussi silver/XP/loot pendant que le navigateur est fermé, sans plafond de
-  // durée. Pour ne jamais recompter côté client un intervalle déjà crédité côté serveur,
-  // computeOfflineElapsedHours() doit utiliser le PLUS RÉCENT de data.savedAt et
-  // data.lastServerCreditAt comme point de départ -- ce test vérifie les 3 cas : sans
-  // lastServerCreditAt (comportement Phase 1 inchangé), avec un lastServerCreditAt PLUS RÉCENT que
-  // savedAt (le serveur a crédité après le dernier vrai enregistrement -- doit gagner), et avec un
-  // lastServerCreditAt PLUS ANCIEN que savedAt (le client a rejoué/sauvegardé depuis -- savedAt doit
-  // gagner, ne jamais reculer la baseline).
-  function testComputeOfflineElapsedHoursUsesMoreRecentOfSavedAtAndServerCredit() {
+  // Le SERVEUR est seul juge de la durée hors-ligne (2026-07-20, bdi-admin-monitoring-plan.md §8.2 ;
+  // migration 20260724190000_offline_window_server_clock.sql). Avant, computeOfflineElapsedHours()
+  // faisait `Date.now() - baseline` : le TAUX était serveur depuis V455, mais la DURÉE se lisait sur
+  // l'horloge de la machine du joueur -- avancer l'horloge de l'OS créditait jusqu'à 24 h de farm
+  // par reconnexion, autant de fois qu'on voulait.
+  //
+  // Ce test décrit le NOUVEAU contrat, et son assertion centrale est la 1re : une sauvegarde qui
+  // prétend dater d'il y a 10 h ne vaut RIEN sans fenêtre serveur. C'est le coeur du correctif --
+  // si un repli sur l'horloge locale revenait un jour "par précaution", il rouvrirait le trou en
+  // entier (il suffirait de couper le réseau), et c'est cette ligne qui le rattraperait.
+  function testComputeOfflineElapsedHoursTrustsOnlyTheServerWindow() {
     if (typeof computeOfflineElapsedHours !== 'function') return;
-    const threeHoursAgo = new Date(Date.now() - 3*3600*1000).toISOString();
-    const oneHourAgo = new Date(Date.now() - 1*3600*1000).toISOString();
-    const fiveHoursAgo = new Date(Date.now() - 5*3600*1000).toISOString();
-    // sans lastServerCreditAt (sauvegardes antérieures à Phase 2, ou champ absent) -> comportement
-    // Phase 1 inchangé, basé uniquement sur savedAt.
-    const hoursNoServerCredit = computeOfflineElapsedHours({ savedAt: threeHoursAgo });
-    assert('Sans lastServerCreditAt -> basé uniquement sur savedAt (~3h)',
-      Math.abs(hoursNoServerCredit - 3) <= 0.01, `hours=${hoursNoServerCredit}`);
-    // lastServerCreditAt PLUS RÉCENT que savedAt (cron passé après le dernier vrai enregistrement)
-    // -> la baseline doit être lastServerCreditAt (~1h), pas savedAt (~3h) : sinon Phase 1
-    // recompterait les 2h déjà créditées par le cron serveur.
-    const hoursServerCreditMoreRecent = computeOfflineElapsedHours({ savedAt: threeHoursAgo, lastServerCreditAt: oneHourAgo });
-    assert('lastServerCreditAt plus récent que savedAt -> baseline = lastServerCreditAt (~1h, pas ~3h)',
-      Math.abs(hoursServerCreditMoreRecent - 1) <= 0.01, `hours=${hoursServerCreditMoreRecent}`);
-    // lastServerCreditAt PLUS ANCIEN que savedAt (le client a rejoué/sauvegardé depuis le dernier
-    // crédit serveur) -> la baseline reste savedAt (~1h), ne doit JAMAIS reculer vers un horodatage
-    // plus ancien que le dernier enregistrement client réel.
-    const hoursServerCreditOlder = computeOfflineElapsedHours({ savedAt: oneHourAgo, lastServerCreditAt: fiveHoursAgo });
-    assert('lastServerCreditAt plus ancien que savedAt -> baseline reste savedAt (~1h, jamais recule)',
-      Math.abs(hoursServerCreditOlder - 1) <= 0.01, `hours=${hoursServerCreditOlder}`);
-    // lastServerCreditAt invalide/vide -> ignoré proprement, pas de throw, repli sur savedAt.
-    const hoursServerCreditEmpty = computeOfflineElapsedHours({ savedAt: threeHoursAgo, lastServerCreditAt: null });
-    assert('lastServerCreditAt null -> ignoré, repli sur savedAt (~3h), pas de throw',
-      Math.abs(hoursServerCreditEmpty - 3) <= 0.01, `hours=${hoursServerCreditEmpty}`);
+    const tenHoursAgo = new Date(Date.now() - 10*3600*1000).toISOString();
+    assert('Horodatages CLIENT seuls (savedAt/lastServerCreditAt) -> 0 : l\'horloge locale ne fait plus foi',
+      computeOfflineElapsedHours({ savedAt: tenHoursAgo, lastServerCreditAt: tenHoursAgo }) === 0);
+    assert('Aucune donnée -> 0, pas de throw', computeOfflineElapsedHours({}) === 0);
+    assert('null -> 0, pas de throw', computeOfflineElapsedHours(null) === 0);
+    // fenêtre serveur présente : c'est elle, et elle seule, qui décide
+    assert('Fenêtre serveur de 3 h -> 3 h', Math.abs(computeOfflineElapsedHours({ offlineWindowHours: 3 }) - 3) <= 0.001);
+    assert('La fenêtre serveur gagne même si savedAt raconte autre chose',
+      Math.abs(computeOfflineElapsedHours({ savedAt: tenHoursAgo, offlineWindowHours: 2 }) - 2) <= 0.001);
+    // re-bornage défensif côté client : la valeur transite par le client, on ne la croit pas sur parole
+    assert('Fenêtre serveur > plafond -> ramenée à OFFLINE_CATCHUP_CAP_HOURS',
+      computeOfflineElapsedHours({ offlineWindowHours: 999 }) === OFFLINE_CATCHUP_CAP_HOURS);
+    assert('Fenêtre serveur sous le plancher (~3 min) -> 0',
+      computeOfflineElapsedHours({ offlineWindowHours: 1/60 }) === 0);
+    assert('Fenêtre serveur négative -> 0, jamais un gain à l\'envers',
+      computeOfflineElapsedHours({ offlineWindowHours: -5 }) === 0);
+    assert('Fenêtre serveur non numérique -> 0, pas de NaN qui se propage',
+      computeOfflineElapsedHours({ offlineWindowHours: 'beaucoup' }) === 0);
   }
   // Garde-fou anti-désynchronisation pour la table SQL dupliquée `offline_credit_zone_loot`
   // (supabase/migrations/20260722120000_offline_progress_hourly_cron.sql) : cette table transcrit
@@ -4584,7 +4570,8 @@
       atVelia = false;
       const save = getSaveState();
       save.S.bestSilverPerHour = 7200; // 2 silver/s pile, pour un calcul exact
-      save.savedAt = new Date(Date.now() - 2*3600*1000).toISOString(); // 2h d'absence réelle
+      // fenêtre fournie par le SERVEUR (offline_catchup_window) : applySaveState ne lit plus l'horloge locale
+      save.offlineWindowHours = 2; // 2h d'absence, mesurées serveur
       const silverBefore = save.S.silver;
       const tokenBefore = save.S.tokenSilverEarned || 0;
       // PAS de root.innerHTML='' ici (piège documenté CLAUDE.md §32 -- une fois le root React
@@ -4627,7 +4614,7 @@
       const save = getSaveState();
       save.S.bestXpPerHour = 3600; // 1 xp/s pile
       save.S.bestSilverPerHour = 0; // isole le test : pas de rattrapage silver ici
-      save.savedAt = new Date(Date.now() - 3600*1000).toISOString(); // 1h d'absence réelle
+      save.offlineWindowHours = 1; // 1h d'absence, mesurée serveur
       const xpEarnedBefore = save.S.xpEarned || 0;
       const offlineXpGain = computeOfflineCatchupXp(save); // valeur exacte réellement utilisée (évite tout flake de timing sur ~3600)
       assert('computeOfflineCatchupXp calcule bien un gain proche de 3600 (1h à 3600 xp/h)', Math.abs(offlineXpGain - 3600) <= 5, `offlineXpGain=${offlineXpGain}`);
@@ -4690,7 +4677,7 @@
       save.S.bestKpm = 10;
       save.S.bestSilverPerHour = 0; // isole le loot : pas de rattrapage silver à côté
       save.S.bestXpPerHour = 0;
-      save.savedAt = new Date(Date.now() - 3600*1000).toISOString(); // 1h d'absence réelle
+      save.offlineWindowHours = 1; // 1h d'absence, mesurée serveur
       // pas de root.innerHTML='' ici (même piège CLAUDE.md §32 que les autres tests de ce fichier
       // sur #reconnectModalRoot) : openReconnectModal() gère lui-même le remplacement.
       applySaveState(save);
@@ -4729,7 +4716,7 @@
       save.S.bestKpm = 10;
       save.S.bestSilverPerHour = 0;
       save.S.bestXpPerHour = 3600; // garde le modal déclenché (silver=0/loot bloqué, mais xp>0)
-      save.savedAt = new Date(Date.now() - 3600*1000).toISOString();
+      save.offlineWindowHours = 1; // 1h d'absence, mesurée serveur
       // sac totalement plein, objets NON stackable distincts (jamais de slot libre pour merger)
       for (let i=0;i<INV_SIZE;i++) save.INV[i] = { name:'Test Bag Full Item '+i, key:'testfull_'+i, kind:'gear', qty:1, stackable:false, val:1, weight:0.1 };
       let threw = false;
@@ -6961,22 +6948,22 @@
   // testComputeOfflineCatchupSilverCapsAndThresholds qui ne passe jamais de serverRates).
   function testOfflineCatchupPrefersServerRatesOverLocalRecord() {
     if (typeof computeOfflineCatchupSilver !== 'function') return;
-    const twoHoursAgo = new Date(Date.now() - 2*3600*1000).toISOString();
+    // 2 h de fenêtre, mesurées par le serveur (offlineWindowHours) -- l'horloge locale ne compte plus
     // taux serveur présent : il fait foi, le record local gonflé est ignoré
-    const gainServer = computeOfflineCatchupSilver({ savedAt: twoHoursAgo, S:{ bestSilverPerHour: 2052326 }, serverRates:{ silverPerHour: 1000, kpm: 0 } });
+    const gainServer = computeOfflineCatchupSilver({ offlineWindowHours: 2, S:{ bestSilverPerHour: 2052326 }, serverRates:{ silverPerHour: 1000, kpm: 0 } });
     assert('serverRates présent : payé au taux serveur, jamais au record local gonflé', Math.abs(gainServer - 2000) <= 2, `gain=${gainServer}`);
     // taux serveur présent mais à 0 (aucune heure honnête enregistrée) : rien, même avec un record local
-    const gainZero = computeOfflineCatchupSilver({ savedAt: twoHoursAgo, S:{ bestSilverPerHour: 2052326 }, serverRates:{ silverPerHour: 0, kpm: 0 } });
+    const gainZero = computeOfflineCatchupSilver({ offlineWindowHours: 2, S:{ bestSilverPerHour: 2052326 }, serverRates:{ silverPerHour: 0, kpm: 0 } });
     assert('serverRates à 0 : aucun crédit, le record local ne compte plus', gainZero === 0, `gain=${gainZero}`);
     // loot : même bascule sur serverRates.kpm
     if (typeof computeOfflineCatchupLoot === 'function') {
-      const lootZero = computeOfflineCatchupLoot({ savedAt: twoHoursAgo, zoneIdx: 9, S:{ bestKpm: 300 }, serverRates:{ silverPerHour: 0, kpm: 0 } });
+      const lootZero = computeOfflineCatchupLoot({ offlineWindowHours: 2, zoneIdx: 9, S:{ bestKpm: 300 }, serverRates:{ silverPerHour: 0, kpm: 0 } });
       assert('loot : serverRates.kpm à 0 -> aucun loot malgré un bestKpm local', Array.isArray(lootZero) && lootZero.length === 0, JSON.stringify(lootZero));
-      const lootServer = computeOfflineCatchupLoot({ savedAt: twoHoursAgo, zoneIdx: 9, S:{ bestKpm: 0 }, serverRates:{ silverPerHour: 0, kpm: 60 } });
+      const lootServer = computeOfflineCatchupLoot({ offlineWindowHours: 2, zoneIdx: 9, S:{ bestKpm: 0 }, serverRates:{ silverPerHour: 0, kpm: 60 } });
       assert('loot : serverRates.kpm présent -> loot estimé même sans record local', Array.isArray(lootServer) && lootServer.length > 0, JSON.stringify(lootServer));
     }
     // repli : serverRates absent -> record local (comportement historique)
-    const gainFallback = computeOfflineCatchupSilver({ savedAt: twoHoursAgo, S:{ bestSilverPerHour: 3600 } });
+    const gainFallback = computeOfflineCatchupSilver({ offlineWindowHours: 2, S:{ bestSilverPerHour: 3600 } });
     assert('serverRates absent : repli sur le record local', Math.abs(gainFallback - 7200) <= 2, `gain=${gainFallback}`);
   }
 
@@ -7213,7 +7200,7 @@
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();
     testComputeOfflineCatchupXpCapsAndThresholds();
-    testComputeOfflineElapsedHoursUsesMoreRecentOfSavedAtAndServerCredit();
+    testComputeOfflineElapsedHoursTrustsOnlyTheServerWindow();
     testOfflineCreditZoneLootTableMatchesClientZonesData();
     testLootTableJackpotRowHasColor();
     testAddSilverUpdatesStateCorrectly();

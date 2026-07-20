@@ -594,13 +594,24 @@ const OFFLINE_CATCHUP_MIN_HOURS = 0.05; // ~3 min
  * @returns {number} heures écoulées (0 à OFFLINE_CATCHUP_CAP_HOURS), 0 si absent/négatif/sous OFFLINE_CATCHUP_MIN_HOURS.
  */
 function computeOfflineElapsedHours(data) {
-  if (!data || !data.savedAt) return 0;
-  const savedAtMs = Date.parse(data.savedAt);
-  const serverCreditMs = data.lastServerCreditAt ? Date.parse(data.lastServerCreditAt) : NaN;
-  const baselineMs = (!isNaN(serverCreditMs) && serverCreditMs > savedAtMs) ? serverCreditMs : savedAtMs;
-  const elapsedMs = Date.now() - baselineMs;
-  if (!(elapsedMs > 0)) return 0;
-  const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
+  // Le SERVEUR est seul juge de la durée (2026-07-20, bdi-admin-monitoring-plan.md §8.2 :
+  // « ne jamais faire confiance au temps client »). data.offlineWindowHours vient de la RPC
+  // offline_catchup_window() (migration 20260724190000), calculée à partir de game_saves.updated_at
+  // (posé par le trigger touch_updated_at, qui écrase toute valeur envoyée par le client) et de
+  // last_server_credit_at, avec le `now()` du serveur.
+  //
+  // Ce que ça ferme : le taux était déjà serveur depuis V455, mais la DURÉE se lisait sur
+  // `Date.now()`. Avancer l'horloge de l'OS créditait donc jusqu'à 24 h de farm par reconnexion,
+  // autant de fois qu'on voulait -- silver, XP et loot compris.
+  //
+  // ABSENTE = ZÉRO, jamais un repli sur l'horloge locale : un repli « au cas où » rouvrirait le
+  // trou en entier (il suffirait de se mettre hors ligne). Le joueur ne perd rien pour autant --
+  // credit_offline_progress_hourly() (cron serveur horaire, sans plafond de durée) crédite ces
+  // heures de toute façon ; seul le retour visuel immédiat au moment de la reconnexion est
+  // reporté. Le plafond/plancher sont déjà appliqués côté serveur, on les re-borne ici parce que
+  // la valeur transite par le client (défense en profondeur, coût nul).
+  if (!data || !isFinite(data.offlineWindowHours)) return 0;
+  const hours = Math.min(Math.max(data.offlineWindowHours, 0), OFFLINE_CATCHUP_CAP_HOURS);
   if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
   return hours;
 }
