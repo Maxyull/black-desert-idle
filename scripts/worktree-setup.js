@@ -25,6 +25,14 @@
 //      Les navigateurs Playwright, eux, sont déjà dans un cache global
 //      (~/AppData/Local/ms-playwright). `BDI_MAIN_CHECKOUT=<chemin>` force la source.
 //
+//   3. contrôle des outils qui FABRIQUENT le bundle (terser, csso-cli) : leur version installée
+//      doit correspondre à package-lock.json. Emprunter le node_modules d'un autre arbre, c'est
+//      aussi emprunter ses versions — qui peuvent dater. Or la CI fait `npm ci` (donc le lock) et
+//      `npm run check-build` compare build/source.min.js À L'OCTET PRÈS à un rebuild frais : deux
+//      terser différents = CI rouge sur un diff que le dev ne peut pas reproduire chez lui. Simple
+//      avertissement, pas une erreur — on n'empêche pas de travailler, on nomme le piège avant
+//      qu'il ne se referme.
+//
 // Usage : `npm run worktree-setup` (ou `node scripts/worktree-setup.js`) depuis la worktree.
 // Idempotent : relançable sans risque, ne touche à rien de déjà correct.
 // ============================================================
@@ -73,6 +81,39 @@ function portForPath(p) {
   return 49300 + (h % 600);
 }
 
+// Paquets dont la version change la SORTIE du build (scripts/build.py les appelle via npx), donc
+// les seuls dont un décalage avec le lock fait diverger le bundle local de celui de la CI.
+// Playwright n'est pas ici : il ne fabrique rien, il teste.
+const BUILD_TOOLS = ['terser', 'csso-cli'];
+
+/** @param {string} file @returns {?object} JSON parsé, ou null si absent/illisible. */
+function readJson(file) {
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return null; }
+}
+
+/**
+ * Compare la version INSTALLÉE de chaque outil de build à celle épinglée par package-lock.json
+ * et avertit sur les écarts. Silencieux quand tout concorde.
+ * @param {string} root racine de la worktree.
+ */
+function checkBuildToolVersions(root) {
+  const lock = readJson(path.join(root, 'package-lock.json'));
+  if (!lock || !lock.packages) return;
+  const stale = [];
+  for (const name of BUILD_TOOLS) {
+    const pinned = (lock.packages[`node_modules/${name}`] || {}).version;
+    const installed = (readJson(path.join(root, 'node_modules', name, 'package.json')) || {}).version;
+    if (pinned && installed && pinned !== installed) stale.push({ name, pinned, installed });
+  }
+  if (!stale.length) return;
+  console.log('\nATTENTION — outils de build en décalage avec package-lock.json :');
+  for (const s of stale) console.log(`  ${s.name} : installé ${s.installed}, lock ${s.pinned}`);
+  console.log('La CI fait `npm ci` (donc le lock) puis compare build/source.min.js à l\'octet près.');
+  console.log('Si les sorties de ces versions diffèrent, `npm run check-build` passera ici et');
+  console.log('échouera en CI sur un diff irreproductible en local. Pour aligner :\n');
+  console.log('  npm ci   (dans le checkout qui porte le node_modules partagé)');
+}
+
 function main() {
   const here = process.cwd();
   const root = git(['rev-parse', '--show-toplevel']).replace(/\//g, path.sep);
@@ -100,6 +141,7 @@ function main() {
   // trouvée par nodeModulesSource() et le message parlerait de "source" au lieu de "déjà présent".
   if (fs.existsSync(link)) {
     console.log('node_modules : déjà présent, laissé tel quel.');
+    checkBuildToolVersions(root);
     return;
   }
   const src = nodeModulesSource();
@@ -114,6 +156,7 @@ function main() {
     // symbolique de répertoire. Ailleurs, Node ignore le type et fait un lien de répertoire.
     fs.symlinkSync(target, link, 'junction');
     console.log(`node_modules : jonction créée -> ${target}`);
+    checkBuildToolVersions(root);
   }
 }
 
