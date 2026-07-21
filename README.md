@@ -1,5 +1,7 @@
 # ⚔️ Black Desert Idle
 
+[![Play now](https://img.shields.io/badge/%E2%96%B6%20Play%20now-2ea44f?style=for-the-badge)](https://maxyull.github.io/black-desert-idle/)
+
 [![CI](https://github.com/Maxyull/black-desert-idle/actions/workflows/ci.yml/badge.svg)](https://github.com/Maxyull/black-desert-idle/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Maxyull/black-desert-idle/actions/workflows/codeql.yml/badge.svg)](https://github.com/Maxyull/black-desert-idle/actions/workflows/codeql.yml)
 [![gitleaks](https://github.com/Maxyull/black-desert-idle/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/Maxyull/black-desert-idle/actions/workflows/gitleaks.yml)
