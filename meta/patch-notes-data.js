@@ -23,8 +23,8 @@ const PATCH_NOTES = [
       {t:'fix', sub:'tutoriel', tx:'Quand une étape parle d\'un menu qui se trouve hors du champ visible (ex. le panneau d\'optimisation dans la colonne de droite), la page défile désormais automatiquement pour l\'amener au centre de l\'écran — fini le « scrolle toi-même pour comprendre de quoi parle la bulle ».'},
       {t:'fix', sub:'tutoriel', tx:'Le bouton « Précédent » n\'apparaît plus grisé et inerte sur la première étape (ni sur les tutoriels d\'une seule étape) : il est simplement masqué tant qu\'il n\'y a rien avant, au lieu de paraître cassé.'},
     ], en:[
-      {t:'fix', sub:'tutorial', tx:'When a step talks about a menu that is off-screen (e.g. the enhancement panel in the right column), the page now scrolls automatically to bring it to the center — no more "scroll yourself to figure out what the bubble means".'},
-      {t:'fix', sub:'tutorial', tx:'The "Previous" button no longer shows up greyed-out and inert on the first step (nor on single-step tutorials): it is simply hidden while there is nothing before it, instead of looking broken.'},
+      {t:'fix', sub:'tutoriel', tx:'When a step talks about a menu that is off-screen (e.g. the enhancement panel in the right column), the page now scrolls automatically to bring it to the center — no more "scroll yourself to figure out what the bubble means".'},
+      {t:'fix', sub:'tutoriel', tx:'The "Previous" button no longer shows up greyed-out and inert on the first step (nor on single-step tutorials): it is simply hidden while there is nothing before it, instead of looking broken.'},
     ] },
   { v:'V496', d:'19/07/2026 22:00', name:{fr:'Compagnon : badge « Gratuit » corrigé sur les œufs payants', en:'Companion: fixed "Free" badge on paid eggs'}, fr:[
       {t:'fix', sub:'compagnon', tx:'Le badge « Gratuit » d\'un slot d\'incubation reflète désormais l\'ŒUF (seul l\'œuf Basique est gratuit) et non le slot : un œuf payant (Argenté/Doré/Platine) démarré dans un des deux premiers slots (gratuits) n\'affiche plus « Gratuit » par erreur.'},

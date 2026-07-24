@@ -156,7 +156,7 @@ const PATCH_SUBCATS = {
   eventTemp:'Événements temporaires', bonusXp:'Bonus XP', bonusDrop:'Bonus Drop',
   cadeaux:'Cadeaux', calendrier:'Calendrier',
   annonces:'Annonces', roadmap:'Feuille de route', prochaines:'Prochaines mises à jour',
-  connus:'Problèmes connus', tresors:'Trésors', compagnon:'Compagnon',
+  connus:'Problèmes connus', tresors:'Trésors', compagnon:'Compagnon', tutoriel:'Tutoriel',
 };
 const PATCH_SUBCATS_EN = {
   boss:'Boss', monstres:'Monsters', zones:'Zones', quetes:'Quests', pnj:'NPC', objets:'Items',
@@ -174,7 +174,7 @@ const PATCH_SUBCATS_EN = {
   eventTemp:'Time-limited events', bonusXp:'XP bonus', bonusDrop:'Drop bonus',
   cadeaux:'Gifts', calendrier:'Calendar',
   annonces:'Announcements', roadmap:'Roadmap', prochaines:'Upcoming updates',
-  connus:'Known issues', tresors:'Treasures', compagnon:'Companion',
+  connus:'Known issues', tresors:'Treasures', compagnon:'Companion', tutoriel:'Tutorial',
 };
 
 // construit le HTML d'UNE entrée de patch note -- absIdx = index ABSOLU dans PATCH_NOTES (pas
