@@ -1124,6 +1124,47 @@
     const allNames = ids.flatMap(id => [...ITEM_TUTORIALS[id].itemNames]);
     assert('Aucun nom d\'objet déclencheur partagé entre 2 tutoriels (l\'index écraserait silencieusement)', new Set(allNames).size === allNames.length);
   }
+  // Moteur de tutoriel : bouton "Précédent" masqué au 1er step, cible défilée dans le champ visible
+  // (2026-07-24, retour joueur : "le bouton Précédent ne fonctionne pas" + "la pop-up parle d'un
+  // menu qui est sur ma fenêtre, j'ai dû scroller"). Les deux se manifestent surtout sur les
+  // tutoriels d'UNE étape (ITEM_TUTORIALS) : Précédent y est toujours au step 0, donc doit être
+  // caché ; et leur cible (#optCard, dans le panneau latéral) est souvent sous la ligne de flottaison.
+  function testTutorialHidesPrevOnFirstStepAndScrollsTargetIntoView() {
+    if (typeof startTutorial !== 'function' || typeof endTutorial !== 'function'
+        || typeof ITEM_TUTORIALS === 'undefined' || typeof currentUser === 'undefined') return;
+    const prev = document.getElementById('tutPrevBtn');
+    if (!prev) return;
+    const savedUser = currentUser, savedIdx = (typeof tutorialStepIdx !== 'undefined') ? tutorialStepIdx : -1;
+    try {
+      currentUser = { id:'test-tutorial-ui' };
+      // tuto d'arrivée : Précédent CACHÉ au step 1 (rien avant), VISIBLE dès le step 2
+      startTutorial();
+      assert('Tutoriel : "Précédent" masqué au 1er step (jamais un bouton grisé inerte)',
+        getComputedStyle(prev).display === 'none');
+      if (typeof tutNextBtn !== 'undefined') {} // no-op
+      document.getElementById('tutNextBtn').click();
+      assert('Tutoriel : "Précédent" réapparaît au 2e step', getComputedStyle(prev).display !== 'none');
+      endTutorial(true);
+      // tuto d'objet à UNE seule étape : Précédent reste masqué, et sa cible est amenée à l'écran
+      const single = ITEM_TUTORIALS.mats && ITEM_TUTORIALS.mats.steps;
+      if (single) {
+        startTutorial(single);
+        assert('Tutoriel 1-étape : "Précédent" masqué (sinon un bouton cassé aux yeux du joueur)',
+          getComputedStyle(prev).display === 'none');
+        const tgt = document.querySelector(single[0].target);
+        if (tgt) {
+          const r = tgt.getBoundingClientRect();
+          assert('Tutoriel : la cible du step est défilée DANS le champ visible, pas laissée hors écran',
+            r.top >= 0 && r.bottom <= window.innerHeight && r.left >= 0 && r.right <= window.innerWidth,
+            `rect top=${Math.round(r.top)} bottom=${Math.round(r.bottom)} vp=${window.innerHeight}`);
+        }
+        endTutorial(true);
+      }
+    } finally {
+      if (savedIdx < 0 && typeof tutorialStepIdx !== 'undefined' && tutorialStepIdx >= 0) endTutorial(true);
+      currentUser = savedUser;
+    }
+  }
   function testMaybeQueueItemTutorialRespectsSeenAndCap() {
     if (typeof maybeQueueItemTutorial !== 'function' || typeof ITEM_TUTORIAL_BY_NAME === 'undefined') return;
     const anyName = Object.keys(ITEM_TUTORIAL_BY_NAME)[0];
@@ -7282,6 +7323,7 @@
     testWheelSegmentPathIsWellFormedSvgPath();
     testBossWheelReactSegmentCountMatchesRoster();
     testItemTutorialsWellFormedAndIndexed();
+    testTutorialHidesPrevOnFirstStepAndScrollsTargetIntoView();
     testMaybeQueueItemTutorialRespectsSeenAndCap();
     testTutorialNeverQueuesOrMarksSeenWithoutAuthenticatedUser();
     testMarketTutorialTargetsMarketHeadNotFullPanel();

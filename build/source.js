@@ -17095,11 +17095,23 @@ function showTutorialStep() {
   $a('tutText').textContent = step.text[LANG];
   $a('tutSkipBtn').textContent = i18next.t('backend:backend.tutorial.skip');
   $a('tutPrevBtn').textContent = i18next.t('backend:backend.tutorial.prev');
-  $a('tutPrevBtn').disabled = tutorialStepIdx <= 0;
+  
+  $a('tutPrevBtn').style.display = tutorialStepIdx <= 0 ? 'none' : '';
   $a('tutNextBtn').textContent = step.final ? i18next.t('backend:backend.tutorial.finish') : i18next.t('backend:backend.tutorial.next');
   
   if (step.before) step.before();
+  scrollTutorialTargetIntoView(step);
   positionTutorialStep();
+}
+
+function scrollTutorialTargetIntoView(step) {
+  const tgt = step && step.target ? document.querySelector(step.target) : null;
+  if (!tgt) return;
+  const r = tgt.getBoundingClientRect();
+  
+  if (r.top < 0 || r.bottom > window.innerHeight || r.left < 0 || r.right > window.innerWidth) {
+    tgt.scrollIntoView({ block: 'center', inline: 'center' });
+  }
 }
 
 function leaveTutorialStep() {

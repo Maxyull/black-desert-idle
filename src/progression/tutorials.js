@@ -222,12 +222,36 @@ function showTutorialStep() {
   $a('tutText').textContent = step.text[LANG];
   $a('tutSkipBtn').textContent = i18next.t('backend:backend.tutorial.skip');
   $a('tutPrevBtn').textContent = i18next.t('backend:backend.tutorial.prev');
-  $a('tutPrevBtn').disabled = tutorialStepIdx <= 0;
+  // MASQUÉ (pas juste désactivé) au 1er step (2026-07-24, retour joueur : "le bouton Précédent ne
+  // fonctionne pas"). Sur les tutoriels à UNE seule étape (ex: les ITEM_TUTORIALS d'objets, un seul
+  // step final:true) le bouton était toujours affiché mais grisé/inerte — un joueur qui clique
+  // dessus voit "un bouton cassé". Le cacher quand il n'y a rien avant supprime la fausse promesse ;
+  // .tutBtns (justify-content:space-between) répartit alors proprement Passer / Terminer.
+  $a('tutPrevBtn').style.display = tutorialStepIdx <= 0 ? 'none' : '';
   $a('tutNextBtn').textContent = step.final ? i18next.t('backend:backend.tutorial.finish') : i18next.t('backend:backend.tutorial.next');
   // certains steps ont besoin de forcer temporairement un état pour être visibles (ex: le suivi de
   // quêtes) — voir tutTrackerForced. Le nettoyage correspondant (after) est appelé en quittant le step.
   if (step.before) step.before();
+  scrollTutorialTargetIntoView(step);
   positionTutorialStep();
+}
+// amène la cible du step dans le champ visible (2026-07-24, retour joueur : "la pop-up parle d'un
+// menu qui est sur ma fenêtre, j'ai dû scroller pour comprendre" + "ne montre pas toujours le
+// contexte réel"). Avant, un step dont la cible était hors du viewport n'affichait qu'un indice
+// "scrolle" (updateTutorialScrollHint) et laissait le joueur se débrouiller. On défile UNE fois à
+// l'entrée du step (pas dans positionTutorialStep, appelée à chaque frame, sinon on lutterait
+// contre le scroll manuel du joueur). L'indice "scrolle" reste comme repli s'il s'éloigne ensuite.
+/** @param {object} step - step courant. Fait défiler sa cible au centre du champ visible si elle en est (partiellement) sortie. No-op si le step n'a pas de cible ou si elle est déjà entièrement visible. */
+function scrollTutorialTargetIntoView(step) {
+  const tgt = step && step.target ? document.querySelector(step.target) : null;
+  if (!tgt) return;
+  const r = tgt.getBoundingClientRect();
+  // défilement INSTANTANÉ, pas 'smooth' : le highlight suit à chaque frame (tutorialTrackLoop), un
+  // scroll lissé se voit donc déjà glisser tout seul, et 'smooth' n'aboutit pas quand les
+  // animations sont throttlées (même piège que la modale d'éclosion, cf. src/companions/README.md).
+  if (r.top < 0 || r.bottom > window.innerHeight || r.left < 0 || r.right > window.innerWidth) {
+    tgt.scrollIntoView({ block: 'center', inline: 'center' });
+  }
 }
 // referme proprement le step courant avant d'en changer (ou de terminer) : appelle son "after" s'il
 // en a un (idempotent par design, voir tutTrackerForced — donc sans risque si appelé deux fois)
