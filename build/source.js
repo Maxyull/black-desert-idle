@@ -17095,11 +17095,23 @@ function showTutorialStep() {
   $a('tutText').textContent = step.text[LANG];
   $a('tutSkipBtn').textContent = i18next.t('backend:backend.tutorial.skip');
   $a('tutPrevBtn').textContent = i18next.t('backend:backend.tutorial.prev');
-  $a('tutPrevBtn').disabled = tutorialStepIdx <= 0;
+  
+  $a('tutPrevBtn').style.display = tutorialStepIdx <= 0 ? 'none' : '';
   $a('tutNextBtn').textContent = step.final ? i18next.t('backend:backend.tutorial.finish') : i18next.t('backend:backend.tutorial.next');
   
   if (step.before) step.before();
+  scrollTutorialTargetIntoView(step);
   positionTutorialStep();
+}
+
+function scrollTutorialTargetIntoView(step) {
+  const tgt = step && step.target ? document.querySelector(step.target) : null;
+  if (!tgt) return;
+  const r = tgt.getBoundingClientRect();
+  
+  if (r.top < 0 || r.bottom > window.innerHeight || r.left < 0 || r.right > window.innerWidth) {
+    tgt.scrollIntoView({ block: 'center', inline: 'center' });
+  }
 }
 
 function leaveTutorialStep() {
@@ -17276,7 +17288,7 @@ const PATCH_SUBCATS = {
   eventTemp:'Événements temporaires', bonusXp:'Bonus XP', bonusDrop:'Bonus Drop',
   cadeaux:'Cadeaux', calendrier:'Calendrier',
   annonces:'Annonces', roadmap:'Feuille de route', prochaines:'Prochaines mises à jour',
-  connus:'Problèmes connus', tresors:'Trésors', compagnon:'Compagnon',
+  connus:'Problèmes connus', tresors:'Trésors', compagnon:'Compagnon', tutoriel:'Tutoriel',
 };
 const PATCH_SUBCATS_EN = {
   boss:'Boss', monstres:'Monsters', zones:'Zones', quetes:'Quests', pnj:'NPC', objets:'Items',
@@ -17294,7 +17306,7 @@ const PATCH_SUBCATS_EN = {
   eventTemp:'Time-limited events', bonusXp:'XP bonus', bonusDrop:'Drop bonus',
   cadeaux:'Gifts', calendrier:'Calendar',
   annonces:'Announcements', roadmap:'Roadmap', prochaines:'Upcoming updates',
-  connus:'Known issues', tresors:'Treasures', compagnon:'Companion',
+  connus:'Known issues', tresors:'Treasures', compagnon:'Companion', tutoriel:'Tutorial',
 };
 
 function renderPatchEntryHtml(p, absIdx) {
