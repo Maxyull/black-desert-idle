@@ -7113,7 +7113,7 @@
   // ============================================================
   // L'auth reste sur Supabase cloud, la base descend sur le VPS. `sb` est devenu un
   // aiguillage entre deux clients. Ces quatre tests protègent les points où ça peut
-  // casser en silence — c'est-à-dire sans erreur visible, avec juste des données
+  // casser en silence, c'est-à-dire sans erreur visible, avec juste des données
   // vides ou périmées à l'écran.
 
   /** Décode la charge utile d'un JWT sans vérifier la signature (on ne teste pas la crypto ici). */
@@ -7137,7 +7137,7 @@
 
     // LE piège de la bascule. SUPABASE_ANON_KEY est au format `sb_publishable_…`, que
     // seul Supabase cloud sait interpréter. Un PostgREST auto-hébergé tenterait de le
-    // décoder comme un JWT et répondrait 401 à TOUTES les requêtes anonymes — invités
+    // décoder comme un JWT et répondrait 401 à TOUTES les requêtes anonymes, invités
     // et classement public affiché avant connexion. D'où DATA_ANON_KEY, l'ancienne clé
     // anon du même projet, qui est un vrai JWT HS256.
     const charge = _chargeJwt(DATA_ANON_KEY);
@@ -7155,7 +7155,7 @@
   }
 
   // Régression : le cœur de la bascule. Si l'aiguillage se trompe de client, rien ne
-  // lève d'erreur — les requêtes partent juste au mauvais endroit, et on lit une base
+  // lève d'erreur, les requêtes partent juste au mauvais endroit, et on lit une base
   // figée à la date de la migration sans s'en apercevoir.
   function testSbRouteLesDonneesEtLAuthSeparement() {
     if (!sb) return; // Supabase non initialisé (contexte de test isolé)
@@ -7191,7 +7191,7 @@
 
     // `functions`, en revanche, est un GETTER : supabase-js construit un FunctionsClient
     // neuf à chaque accès (sbAuth.functions !== sbAuth.functions). Comparer les identités
-    // échouerait toujours, y compris sans Proxy — on compare donc l'URL, qui est le vrai
+    // échouerait toujours, y compris sans Proxy, on compare donc l'URL, qui est le vrai
     // contrat. Ce test tomberait si quelqu'un ajoutait 'functions' à VERS_DONNEES : les
     // 3 appels à auth-by-identifier partiraient vers le VPS, où aucune edge function
     // n'est déployée, et plus personne ne pourrait se connecter par son pseudo.
@@ -7201,7 +7201,7 @@
   }
 
   // Politique §11 : tout code réseau est testé en ligne ET hors ligne. Ici le hors
-  // ligne est le cas dangereux — si le résolveur de jeton jette, supabase-js propage
+  // ligne est le cas dangereux, si le résolveur de jeton jette, supabase-js propage
   // l'exception sur CHAQUE requête et le jeu se fige au lieu de dégrader.
   function testJetonPourDonneesNeJetteJamaisHorsLigne() {
     assert('jetonPourDonnees existe', typeof jetonPourDonnees === 'function');
@@ -7219,7 +7219,7 @@
       sbAuth.auth.getSession = vraiGetSession;
     }
     // La promesse se règle au microtask suivant ; on vérifie surtout, de façon
-    // synchrone, que le code source prévoit bien le repli — un garde-fou statique,
+    // synchrone, que le code source prévoit bien le repli, un garde-fou statique,
     // même famille que testSaveToCloudGuardsSessionLockAndOffline.
     const src = jetonPourDonnees.toString();
     assert('jetonPourDonnees enveloppe getSession dans un try/catch',
@@ -7230,7 +7230,7 @@
   }
 
   // Garde-fou statique : la CSP doit autoriser le domaine des données. Sans ça, le
-  // navigateur bloque toutes les requêtes — et le message n'apparaît qu'en console,
+  // navigateur bloque toutes les requêtes, et le message n'apparaît qu'en console,
   // le jeu se contente d'afficher des panneaux vides.
   function testCspAutoriseLeDomaineDeDonnees() {
     if (typeof document === 'undefined') return;

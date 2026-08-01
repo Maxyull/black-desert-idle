@@ -37,33 +37,33 @@ multi navigateur and multidevice" + "Mode hors ligne")** :
   `testCheckPlayerSessionNeverLocksOnNetworkFailure` (`tests/tests.js`).
 
 **Bascule des données vers le VPS (2026-08-01, demande explicite : "on va tout transvaser sur
-le vps")** — outillage complet dans `D:\DEV\bdi-infra`, ici seulement le côté client.
+le vps")**, outillage complet dans `D:\DEV\bdi-infra`, ici seulement le côté client.
 
 L'**authentification reste sur Supabase cloud** (153 comptes, 4 providers OAuth qu'on ne veut
 pas reconfigurer), seule la **base** descend sur un VPS OVH. Ça marche parce que le projet
 signe ses JWT en **HS256 symétrique** : le PostgREST du VPS partage le même `JWT_SECRET`, valide
-donc les tokens émis par le GoTrue cloud, et `auth.uid()` renvoie le même UUID côté SQL — les
+donc les tokens émis par le GoTrue cloud, et `auth.uid()` renvoie le même UUID côté SQL, les
 161 fonctions et les policies RLS n'ont pas été touchées d'une ligne.
 
 Deux clients dans ce fichier :
-- `sbAuth` — toujours le projet cloud. Porte l'auth, les edge functions, et le realtime
+- `sbAuth`, toujours le projet cloud. Porte l'auth, les edge functions, et le realtime
   (presence/broadcast des lobbies boss et miniboss, qui ne lisent jamais la base ; le chat, lui,
-  fait du polling — voir `social/chat.js`). Rien de tout ça n'a bougé.
-- `sbData` — le VPS quand `DATA_API_URL` est renseignée, sinon `sbAuth`. Créé avec l'option
+  fait du polling, voir `social/chat.js`). Rien de tout ça n'a bougé.
+- `sbData`, le VPS quand `DATA_API_URL` est renseignée, sinon `sbAuth`. Créé avec l'option
   `accessToken` de supabase-js (mode « auth chez un fournisseur tiers ») : il ne gère aucune
   session et redemande le jeton à `jetonPourDonnees()` à chaque requête. Une seule session
-  existe, celle de `sbAuth` — deux clients rafraîchissant le même `refresh_token` en concurrence
+  existe, celle de `sbAuth`, deux clients rafraîchissant le même `refresh_token` en concurrence
   l'invalideraient à tous les coups.
 
 `sb` n'est plus un `SupabaseClient` mais un **`Proxy`** qui aiguille : `from`/`rpc`/`schema` vers
-`sbData`, tout le reste vers `sbAuth`. Choisi après comptage — **215 appels de données contre 29
+`sbData`, tout le reste vers `sbAuth`. Choisi après comptage, **215 appels de données contre 29
 d'auth/realtime**, dans une douzaine de fichiers : réécrire 244 sites d'appel aurait garanti d'en
 oublier. Conséquence à connaître : toute propriété non listée dans `VERS_DONNEES` tombe sur le
 client d'auth. Si une manque un jour, elle **s'ajoute là**, pas en contournant `sb`.
 
 Deux pièges qui ont coûté cher à trouver :
 - `DATA_ANON_KEY` ≠ `SUPABASE_ANON_KEY`. Cette dernière est au format `sb_publishable_…`, qui
-  n'est **pas un JWT** : Supabase cloud sait le lire, un PostgREST auto-hébergé non — il
+  n'est **pas un JWT** : Supabase cloud sait le lire, un PostgREST auto-hébergé non, il
   renverrait 401 sur **toutes** les requêtes anonymes (invités, classement public affiché avant
   connexion). D'où l'ancienne clé anon du même projet, un vrai JWT HS256.
 - L'edge function `auth-by-identifier` fait de l'auth **et** trois RPC de données
@@ -73,8 +73,9 @@ Deux pièges qui ont coûté cher à trouver :
 
 **État : `DATA_API_URL = ''`, la bascule est DÉSARMÉE.** Le jeu parle au cloud exactement comme
 avant, le comportement est inchangé. Armer = remplir cette constante (+ `COMPANION_MODELS_BASE`
-dans `companions/viewer3d.js`, et la variable d'env de l'edge function), une fois le VPS vérifié
-— voir `bdi-infra/migration/RUNBOOK.md` § « Armer la bascule ». Livré désarmé exprès : ça évite
+dans `companions/viewer3d.js`, et la variable d'env de l'edge function), une fois le VPS
+vérifié. Voir `bdi-infra/migration/RUNBOOK.md` § « Armer la bascule ». Livré désarmé exprès :
+ça évite
 de faire atterrir le même jour le refactor du client et le déménagement de la base.
 
 Tests : `testDataApiConfigCoherente`, `testSbRouteLesDonneesEtLAuthSeparement`,

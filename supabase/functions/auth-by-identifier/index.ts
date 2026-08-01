@@ -19,7 +19,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-// 2026-08-01 — bascule des données vers le VPS (voir D:\DEV\bdi-infra).
+// 2026-08-01, bascule des données vers le VPS (voir D:\DEV\bdi-infra).
 // Cette fonction fait DEUX choses qui ne vivent plus au même endroit :
 //   * de l'AUTH (/auth/v1/token, /otp, /recover) -> reste sur SUPABASE_URL ;
 //   * de la DONNÉE (rpc/email_for_login, rpc/rate_limit_hit, rpc/rate_limit_gc)

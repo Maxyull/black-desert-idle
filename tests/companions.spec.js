@@ -2760,7 +2760,7 @@ test('companion module renders in English when velia-idle-lang=en (own i18next i
 //
 // Ce que ça protège : `COMPANION_MODELS_BASE` duplique le domaine de `DATA_API_URL`
 // parce que les deux fichiers ne partagent aucun scope. Si l'un bascule sans l'autre,
-// les 55 modèles 3D renvoient 404 — et loadModel() gère l'erreur proprement, donc
+// les 55 modèles 3D renvoient 404, et loadModel() gère l'erreur proprement, donc
 // rien ne casse visiblement : les compagnons s'affichent juste sans leur modèle, en
 // silence, potentiellement pendant des semaines.
 test('COMPANION_MODELS_BASE pointe vers le même hôte que DATA_API_URL', async () => {
@@ -2784,7 +2784,7 @@ test('COMPANION_MODELS_BASE pointe vers le même hôte que DATA_API_URL', async 
   const reel = new URL(mModeles[1]).host;
 
   expect(reel, `viewer3d.js sert les .glb depuis ${reel} alors que les données vont vers ` +
-    `${attendu} — les 55 modèles renverraient 404 en silence`).toBe(attendu);
+    `${attendu}, les 55 modèles renverraient 404 en silence`).toBe(attendu);
 
   // Le chemin, lui, doit rester celui de Supabase Storage : le Caddy du VPS le reproduit
   // à l'identique justement pour que seul l'hôte change (bdi-infra/migration/05-postgrest.sh).

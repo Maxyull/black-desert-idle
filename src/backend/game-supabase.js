@@ -28,11 +28,11 @@ const DATA_API_URL = '';
 
 // ⚠️ PIÈGE : le VPS a besoin de la clé anon HISTORIQUE, pas de SUPABASE_ANON_KEY.
 // SUPABASE_ANON_KEY est au nouveau format `sb_publishable_…`, qui n'est PAS un JWT :
-// Supabase cloud sait le traiter, un PostgREST auto-hébergé non — il tenterait de le
+// Supabase cloud sait le traiter, un PostgREST auto-hébergé non, il tenterait de le
 // décoder et renverrait 401 sur TOUTES les requêtes anonymes (invités, classement
 // public affiché avant connexion). La clé ci-dessous est l'ancienne clé anon du même
 // projet, un vrai JWT HS256 signé avec le secret que le VPS partage.
-// Publique par conception, comme l'était SUPABASE_ANON_KEY — elle n'ouvre que le rôle
+// Publique par conception, comme l'était SUPABASE_ANON_KEY, elle n'ouvre que le rôle
 // `anon`, borné par les policies RLS.
 const DATA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rd3d2emJqdHlhd3BjeXJueWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDM1NzcsImV4cCI6MjA5ODU3OTU3N30.bOLK7wf61ivPdVbTZ9cq-eNYHgI8jWRc7PZnRc3-SKw';
 
@@ -51,7 +51,7 @@ let sessionLocked = false;
 let isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
 let pendingOfflineSync = false;
 // Client d'authentification : toujours le projet cloud. Porte aussi le realtime
-// (presence/broadcast des lobbies boss et miniboss), qui ne lit jamais la base — le chat,
+// (presence/broadcast des lobbies boss et miniboss), qui ne lit jamais la base, le chat,
 // lui, fait du polling (chat.js) et n'a rien à voir là-dedans.
 let sbAuth = null;
 // Client de données : le VPS si DATA_API_URL est renseignée, sinon le cloud.
@@ -66,7 +66,7 @@ let sbData = null;
  * Ne jette JAMAIS. Si la session est illisible (hors ligne, stockage corrompu,
  * jeton expiré non rafraîchissable), on retombe sur la clé anon : les lectures
  * publiques passent encore, les écritures sont refusées par la RLS. Autrement dit,
- * le jeu se comporte exactement comme pour un joueur déconnecté — au lieu de faire
+ * le jeu se comporte exactement comme pour un joueur déconnecté, au lieu de faire
  * remonter une exception depuis les entrailles de supabase-js à chaque requête.
  * @returns {Promise<string>} un JWT, jamais null ni undefined
  */
@@ -86,7 +86,7 @@ try {
     if (DATA_API_URL && DATA_API_URL.startsWith('https://')) {
       // `accessToken` est le mode « auth chez un fournisseur tiers » de supabase-js
       // (>= 2.40) : ce client ne gère AUCUNE session, il redemande le jeton à chaque
-      // requête. C'est exactement ce qu'il nous faut — une seule session, détenue par
+      // requête. C'est exactement ce qu'il nous faut, une seule session, détenue par
       // sbAuth, et jamais deux clients qui rafraîchissent le même refresh_token en
       // concurrence (ce qui invaliderait la session à tous les coups).
       sbData = window.supabase.createClient(DATA_API_URL, DATA_ANON_KEY, {
@@ -100,7 +100,7 @@ try {
     // ---------- Le routeur ----------
     // Le jeu compte 215 appels de données (`sb.from`/`sb.rpc`) contre 29 appels
     // d'auth/realtime, répartis dans une douzaine de fichiers. Plutôt que de réécrire
-    // 244 sites d'appel — et d'en oublier — `sb` reste LE client unique du projet et
+    // 244 sites d'appel, et d'en oublier, `sb` reste LE client unique du projet et
     // devient un aiguillage : les données vont au VPS, l'auth et le realtime au cloud.
     //
     // Conséquence à connaître : `sb` n'est plus une instance SupabaseClient. Tout code
