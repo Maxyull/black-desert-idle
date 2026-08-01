@@ -19,6 +19,22 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 
+// 2026-08-01 — bascule des données vers le VPS (voir D:\DEV\bdi-infra).
+// Cette fonction fait DEUX choses qui ne vivent plus au même endroit :
+//   * de l'AUTH (/auth/v1/token, /otp, /recover) -> reste sur SUPABASE_URL ;
+//   * de la DONNÉE (rpc/email_for_login, rpc/rate_limit_hit, rpc/rate_limit_gc)
+//     -> doit désormais viser le VPS, où vivent les tables `profiles` et
+//        `auth_rate_limit`. Les interroger encore sur le cloud lirait une copie
+//        figée à la date de la migration : un joueur inscrit après la bascule ne
+//        pourrait plus se connecter par son pseudo.
+//
+// SERVICE_ROLE reste valable sur le VPS : c'est un JWT HS256 signé avec le secret
+// du projet, que le PostgREST du VPS partage. Il y ouvre le même rôle service_role.
+//
+// Repli sur SUPABASE_URL si la variable n'est pas définie : la fonction continue
+// donc de marcher telle quelle tant que DATA_API_URL n'est pas configurée.
+const DATA_API_URL = Deno.env.get("DATA_API_URL") || SUPABASE_URL;
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -39,7 +55,7 @@ function clientIp(req: Request): string {
 // du limiteur, qui n'est qu'une protection anti-bruteforce best-effort.
 async function rateOk(key: string, max: number, windowSeconds: number): Promise<boolean> {
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rate_limit_hit`, {
+    const r = await fetch(`${DATA_API_URL}/rest/v1/rpc/rate_limit_hit`, {
       method: "POST",
       headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": "application/json" },
       body: JSON.stringify({ p_key: key, p_max: max, p_window_seconds: windowSeconds }),
@@ -55,7 +71,7 @@ async function resolveEmail(identifier: string): Promise<string | null> {
   const id = (identifier || "").trim();
   if (!id) return null;
   if (id.includes("@")) return id;
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/email_for_login`, {
+  const r = await fetch(`${DATA_API_URL}/rest/v1/rpc/email_for_login`, {
     method: "POST",
     headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": "application/json" },
     body: JSON.stringify({ p_identifier: id }),
@@ -130,7 +146,7 @@ Deno.serve(async (req: Request) => {
     // purge best-effort ~1x/h : le seau horaire "gc:<h>" n'autorise qu'un seul passage par heure.
     rateOk("gc:" + Math.floor(Date.now() / 3.6e6), 1, 3600).then((first) => {
       if (!first) return;
-      fetch(`${SUPABASE_URL}/rest/v1/rpc/rate_limit_gc`, {
+      fetch(`${DATA_API_URL}/rest/v1/rpc/rate_limit_gc`, {
         method: "POST",
         headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": "application/json" },
         body: "{}",

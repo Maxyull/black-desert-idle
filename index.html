@@ -7,8 +7,16 @@
 <!-- CSP (2026-07-21, repo-audit-todo.md point 16) : meta tag (GitHub Pages ne permet pas de header
      custom, seule option possible). Domaines audites un par un dans le code reel avant d'ecrire
      cette liste (pas de generalisation) :
-     - connect-src : SUPABASE_URL (auth/DB/realtime, game-supabase.js) + BOT_API_URL (webhook
-       Discord bot, meme fichier) -- les 2 SEULS fetch() vers un domaine externe du jeu principal.
+     - connect-src : SUPABASE_URL (auth + realtime + edge functions + base et storage
+       tant que la bascule n'est pas armee, game-supabase.js), bdi.occulta.fr et
+       BOT_API_URL (webhook Discord bot, meme fichier).
+       bdi.occulta.fr est PRE-AUTORISE mais pas encore utilise : DATA_API_URL est
+       desarmee (chaine vide) en attendant que le VPS existe. L'autoriser des
+       maintenant fait que la bascule ne demande QUE de remplir cette constante --
+       oublier la CSP le jour J bloquerait toutes les requetes du jeu, avec pour seul
+       indice un message en console.
+       Le wss:// reste sur le seul domaine Supabase : le realtime n'a pas bouge, et
+       rien n'ouvrira jamais de WebSocket vers le VPS.
      - script-src : cdn.jsdelivr.net (Supabase JS/React/ReactDOM/i18next, seuls CDN charges).
        'unsafe-inline' necessaire : 3 attributs onclick="..." dans
        src/progression/notifications-quests.js (toggleQuestTracker/toggleResetFold/
@@ -29,7 +37,7 @@
      meta ne s'applique qu'au document qui la porte, jamais a un iframe cross-document). Teste
      avant commit : connexion Supabase, panneaux React (boss wheel/reconnect/compendium/patch
      notes), i18next, aucune violation CSP en console. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://mkwwvzbjtyawpcyrnybk.supabase.co wss://mkwwvzbjtyawpcyrnybk.supabase.co https://black-desert-idle-discord-bot.onrender.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://mkwwvzbjtyawpcyrnybk.supabase.co wss://mkwwvzbjtyawpcyrnybk.supabase.co https://bdi.occulta.fr https://black-desert-idle-discord-bot.onrender.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
 <!-- favicon (2026-07-21, repo-audit-todo.md point 9) : SVG, palette officielle (CLAUDE.md §29,
      fond #0b0f1a / accent or #d4a955) -- pas de fallback PNG/ICO, pas d'outil de rasterisation
      disponible sur cette machine ; le SVG seul couvre tous les navigateurs modernes (Chrome/
@@ -104,7 +112,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=709">
+<link rel="stylesheet" href="build/styles.min.css?v=710">
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
@@ -1014,11 +1022,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=709"></script>
+<script src="meta/patch-notes-data.js?v=710"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=709"></script>
+<script src="build/source.min.js?v=710"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le

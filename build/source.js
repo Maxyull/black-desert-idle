@@ -15305,6 +15305,10 @@ initCardLayout();
 const SUPABASE_URL = 'https://mkwwvzbjtyawpcyrnybk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
 
+const DATA_API_URL = '';
+
+const DATA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rd3d2emJqdHlhd3BjeXJueWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDM1NzcsImV4cCI6MjA5ODU3OTU3N30.bOLK7wf61ivPdVbTZ9cq-eNYHgI8jWRc7PZnRc3-SKw';
+
 let sb = null, currentUser = null;
 
 let mySessionId = null;
@@ -15313,9 +15317,42 @@ let sessionLocked = false;
 
 let isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
 let pendingOfflineSync = false;
+
+let sbAuth = null;
+
+let sbData = null;
+
+async function jetonPourDonnees() {
+  try {
+    const { data } = await sbAuth.auth.getSession();
+    return (data && data.session && data.session.access_token) || DATA_ANON_KEY;
+  } catch (e) {
+    return DATA_ANON_KEY;
+  }
+}
+
 try {
   if (window.supabase && SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('TON-PROJET')) {
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    sbAuth = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    if (DATA_API_URL && DATA_API_URL.startsWith('https://')) {
+      
+      sbData = window.supabase.createClient(DATA_API_URL, DATA_ANON_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        accessToken: jetonPourDonnees,
+      });
+    } else {
+      sbData = sbAuth;
+    }
+
+    const VERS_DONNEES = ['from', 'rpc', 'schema'];
+    sb = new Proxy(sbAuth, {
+      get(cible, propriete) {
+        const source = VERS_DONNEES.includes(propriete) ? sbData : cible;
+        const valeur = source[propriete];
+        return typeof valeur === 'function' ? valeur.bind(source) : valeur;
+      },
+    });
   }
 } catch (e) { console.warn('Supabase non initialisé :', e); }
 

@@ -6,6 +6,36 @@
 const SUPABASE_URL = 'https://mkwwvzbjtyawpcyrnybk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
 
+// ---------- Bascule des données vers le VPS (2026-08-01, voir D:\DEV\bdi-infra) ----------
+// L'AUTHENTIFICATION reste sur Supabase cloud (153 comptes, 4 providers OAuth qu'on ne
+// veut pas reconfigurer). Seule la BASE descend sur le VPS, derrière un PostgREST qui
+// partage le JWT_SECRET du projet cloud : il valide donc les mêmes tokens, et auth.uid()
+// renvoie le même UUID côté SQL. Les 161 fonctions et les policies RLS sont inchangées.
+//
+// ⚠️ DÉSARMÉ POUR L'INSTANT. Chaîne vide = tout reste sur le cloud, exactement comme
+// avant : sbData retombe sur sbAuth et l'aiguillage ci-dessous ne change rien au
+// comportement du jeu. Toute la mécanique est en place et testée, elle attend juste
+// que le VPS existe.
+//
+// LA BASCULE = mettre 'https://bdi.occulta.fr' ici, puis rebuild + push. Rien d'autre.
+// À ne faire QU'APRÈS bdi-infra/migration/07-verifier.sh au vert, sinon le jeu tape une
+// base qui n'existe pas. LE RETOUR ARRIÈRE = remettre '' (voir RUNBOOK.md).
+//
+// Volontairement livré désarmé plutôt qu'armé : ça évite de faire atterrir le même jour
+// le refactor du client ET le déménagement de la base. Si quelque chose casse après la
+// bascule, on sait immédiatement lequel des deux est en cause.
+const DATA_API_URL = '';
+
+// ⚠️ PIÈGE : le VPS a besoin de la clé anon HISTORIQUE, pas de SUPABASE_ANON_KEY.
+// SUPABASE_ANON_KEY est au nouveau format `sb_publishable_…`, qui n'est PAS un JWT :
+// Supabase cloud sait le traiter, un PostgREST auto-hébergé non — il tenterait de le
+// décoder et renverrait 401 sur TOUTES les requêtes anonymes (invités, classement
+// public affiché avant connexion). La clé ci-dessous est l'ancienne clé anon du même
+// projet, un vrai JWT HS256 signé avec le secret que le VPS partage.
+// Publique par conception, comme l'était SUPABASE_ANON_KEY — elle n'ouvre que le rôle
+// `anon`, borné par les policies RLS.
+const DATA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rd3d2emJqdHlhd3BjeXJueWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDM1NzcsImV4cCI6MjA5ODU3OTU3N30.bOLK7wf61ivPdVbTZ9cq-eNYHgI8jWRc7PZnRc3-SKw';
+
 let sb = null, currentUser = null;
 // verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
 // and multidevice") -- identifiant unique généré UNE FOIS par chargement de page (jamais persisté
@@ -20,9 +50,71 @@ let sessionLocked = false;
 // (saveToLocalOfflineCache) plutôt que de laisser échouer silencieusement l'upsert Supabase.
 let isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
 let pendingOfflineSync = false;
+// Client d'authentification : toujours le projet cloud. Porte aussi le realtime
+// (presence/broadcast des lobbies boss et miniboss), qui ne lit jamais la base — le chat,
+// lui, fait du polling (chat.js) et n'a rien à voir là-dedans.
+let sbAuth = null;
+// Client de données : le VPS si DATA_API_URL est renseignée, sinon le cloud.
+let sbData = null;
+
+/**
+ * Jeton à présenter au PostgREST du VPS pour la requête en cours.
+ *
+ * Fonction nommée (et non une lambda dans createClient) pour rester testable :
+ * c'est du code réseau, il doit être couvert en ligne ET hors ligne (CLAUDE.md §11).
+ *
+ * Ne jette JAMAIS. Si la session est illisible (hors ligne, stockage corrompu,
+ * jeton expiré non rafraîchissable), on retombe sur la clé anon : les lectures
+ * publiques passent encore, les écritures sont refusées par la RLS. Autrement dit,
+ * le jeu se comporte exactement comme pour un joueur déconnecté — au lieu de faire
+ * remonter une exception depuis les entrailles de supabase-js à chaque requête.
+ * @returns {Promise<string>} un JWT, jamais null ni undefined
+ */
+async function jetonPourDonnees() {
+  try {
+    const { data } = await sbAuth.auth.getSession();
+    return (data && data.session && data.session.access_token) || DATA_ANON_KEY;
+  } catch (e) {
+    return DATA_ANON_KEY;
+  }
+}
+
 try {
   if (window.supabase && SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('TON-PROJET')) {
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    sbAuth = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    if (DATA_API_URL && DATA_API_URL.startsWith('https://')) {
+      // `accessToken` est le mode « auth chez un fournisseur tiers » de supabase-js
+      // (>= 2.40) : ce client ne gère AUCUNE session, il redemande le jeton à chaque
+      // requête. C'est exactement ce qu'il nous faut — une seule session, détenue par
+      // sbAuth, et jamais deux clients qui rafraîchissent le même refresh_token en
+      // concurrence (ce qui invaliderait la session à tous les coups).
+      sbData = window.supabase.createClient(DATA_API_URL, DATA_ANON_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        accessToken: jetonPourDonnees,
+      });
+    } else {
+      sbData = sbAuth;
+    }
+
+    // ---------- Le routeur ----------
+    // Le jeu compte 215 appels de données (`sb.from`/`sb.rpc`) contre 29 appels
+    // d'auth/realtime, répartis dans une douzaine de fichiers. Plutôt que de réécrire
+    // 244 sites d'appel — et d'en oublier — `sb` reste LE client unique du projet et
+    // devient un aiguillage : les données vont au VPS, l'auth et le realtime au cloud.
+    //
+    // Conséquence à connaître : `sb` n'est plus une instance SupabaseClient. Tout code
+    // qui ferait `sb instanceof ...` ou lirait une propriété non listée ci-dessous
+    // tomberait sur le client d'auth par défaut. Si un jour une propriété manque, elle
+    // s'ajoute ici, pas en contournant `sb`.
+    const VERS_DONNEES = ['from', 'rpc', 'schema'];
+    sb = new Proxy(sbAuth, {
+      get(cible, propriete) {
+        const source = VERS_DONNEES.includes(propriete) ? sbData : cible;
+        const valeur = source[propriete];
+        return typeof valeur === 'function' ? valeur.bind(source) : valeur;
+      },
+    });
   }
 } catch (e) { console.warn('Supabase non initialisé :', e); }
 

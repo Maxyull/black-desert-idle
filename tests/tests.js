@@ -7108,8 +7108,154 @@
     Pet.checkT = 0; Pet.active = false;
   }
 
+  // ============================================================
+  // Bascule des données vers le VPS (2026-08-01, voir D:\DEV\bdi-infra)
+  // ============================================================
+  // L'auth reste sur Supabase cloud, la base descend sur le VPS. `sb` est devenu un
+  // aiguillage entre deux clients. Ces quatre tests protègent les points où ça peut
+  // casser en silence — c'est-à-dire sans erreur visible, avec juste des données
+  // vides ou périmées à l'écran.
+
+  /** Décode la charge utile d'un JWT sans vérifier la signature (on ne teste pas la crypto ici). */
+  function _chargeJwt(jeton) {
+    try { return JSON.parse(atob(String(jeton).split('.')[1])); } catch (e) { return null; }
+  }
+
+  // Unitaire : la configuration de la bascule doit être cohérente avant même de
+  // regarder comment elle est utilisée.
+  function testDataApiConfigCoherente() {
+    assert('DATA_API_URL est défini (chaîne, vide = tout reste sur le cloud)',
+      typeof DATA_API_URL === 'string', `recu=${typeof DATA_API_URL}`);
+    if (DATA_API_URL) {
+      assert('DATA_API_URL est en https (le jeu est servi en https par GitHub Pages, ' +
+        'un appel en http serait bloqué en mixed content)',
+        DATA_API_URL.startsWith('https://'), DATA_API_URL);
+      assert('DATA_API_URL n\'a pas de barre oblique finale (supabase-js concatène sans normaliser, ' +
+        'on obtiendrait //rest/v1/)',
+        !DATA_API_URL.endsWith('/'), DATA_API_URL);
+    }
+
+    // LE piège de la bascule. SUPABASE_ANON_KEY est au format `sb_publishable_…`, que
+    // seul Supabase cloud sait interpréter. Un PostgREST auto-hébergé tenterait de le
+    // décoder comme un JWT et répondrait 401 à TOUTES les requêtes anonymes — invités
+    // et classement public affiché avant connexion. D'où DATA_ANON_KEY, l'ancienne clé
+    // anon du même projet, qui est un vrai JWT HS256.
+    const charge = _chargeJwt(DATA_ANON_KEY);
+    assert('DATA_ANON_KEY est un JWT décodable (et NON une clé sb_publishable_…, ' +
+      'que le PostgREST du VPS ne sait pas lire)', charge !== null,
+      String(DATA_ANON_KEY).slice(0, 24));
+    if (charge) {
+      assert('DATA_ANON_KEY porte le rôle anon', charge.role === 'anon', `role=${charge.role}`);
+      assert('DATA_ANON_KEY vise bien le projet du jeu', charge.ref === 'mkwwvzbjtyawpcyrnybk',
+        `ref=${charge.ref}`);
+      assert('DATA_ANON_KEY n\'est pas expirée',
+        !charge.exp || charge.exp * 1000 > Date.now(),
+        `exp=${charge.exp}`);
+    }
+  }
+
+  // Régression : le cœur de la bascule. Si l'aiguillage se trompe de client, rien ne
+  // lève d'erreur — les requêtes partent juste au mauvais endroit, et on lit une base
+  // figée à la date de la migration sans s'en apercevoir.
+  function testSbRouteLesDonneesEtLAuthSeparement() {
+    if (!sb) return; // Supabase non initialisé (contexte de test isolé)
+    assert('sbAuth et sbData existent tous les deux', !!sbAuth && !!sbData);
+    if (!sbAuth || !sbData) return;
+
+    if (DATA_API_URL) {
+      assert('sbData et sbAuth sont deux clients DISTINCTS quand DATA_API_URL est renseignée',
+        sbData !== sbAuth);
+    } else {
+      assert('sans DATA_API_URL, sbData retombe sur sbAuth (tout sur le cloud)',
+        sbData === sbAuth);
+    }
+
+    // On compare les fonctions récupérées via `sb` à celles des deux clients réels.
+    // Le Proxy les renvoie liées (`bind`), donc jamais identiques par référence : on
+    // passe par le nom de la méthode d'origine, qui survit au bind ('bound from').
+    const vient = (methodeProxy, client, nom) =>
+      typeof methodeProxy === 'function' &&
+      typeof client[nom] === 'function' &&
+      methodeProxy.name === 'bound ' + (client[nom].name || nom);
+
+    assert('sb.from part vers le client de DONNÉES', vient(sb.from, sbData, 'from'));
+    assert('sb.rpc part vers le client de DONNÉES', vient(sb.rpc, sbData, 'rpc'));
+    assert('sb.channel part vers le client d\'AUTH (realtime resté sur le cloud)',
+      vient(sb.channel, sbAuth, 'channel'));
+    assert('sb.removeChannel part vers le client d\'AUTH',
+      vient(sb.removeChannel, sbAuth, 'removeChannel'));
+
+    // `auth` est une vraie propriété : l'identité est comparable.
+    assert('sb.auth est celui du client cloud (les 153 comptes et les 4 providers OAuth ' +
+      'n\'ont pas bougé)', sb.auth === sbAuth.auth);
+
+    // `functions`, en revanche, est un GETTER : supabase-js construit un FunctionsClient
+    // neuf à chaque accès (sbAuth.functions !== sbAuth.functions). Comparer les identités
+    // échouerait toujours, y compris sans Proxy — on compare donc l'URL, qui est le vrai
+    // contrat. Ce test tomberait si quelqu'un ajoutait 'functions' à VERS_DONNEES : les
+    // 3 appels à auth-by-identifier partiraient vers le VPS, où aucune edge function
+    // n'est déployée, et plus personne ne pourrait se connecter par son pseudo.
+    assert('sb.functions vise le cloud (auth-by-identifier y est déployée, pas sur le VPS)',
+      sb.functions && sb.functions.url === sbAuth.functions.url,
+      `url=${sb.functions && sb.functions.url}`);
+  }
+
+  // Politique §11 : tout code réseau est testé en ligne ET hors ligne. Ici le hors
+  // ligne est le cas dangereux — si le résolveur de jeton jette, supabase-js propage
+  // l'exception sur CHAQUE requête et le jeu se fige au lieu de dégrader.
+  function testJetonPourDonneesNeJetteJamaisHorsLigne() {
+    assert('jetonPourDonnees existe', typeof jetonPourDonnees === 'function');
+    if (typeof jetonPourDonnees !== 'function' || !sbAuth) return;
+
+    const vraiGetSession = sbAuth.auth.getSession;
+    let resolu = null, aJete = false;
+    try {
+      // Simule une coupure réseau au milieu du rafraîchissement de session.
+      sbAuth.auth.getSession = () => Promise.reject(new Error('Failed to fetch'));
+      const p = jetonPourDonnees();
+      assert('jetonPourDonnees renvoie une promesse', p && typeof p.then === 'function');
+      p.then(v => { resolu = v; }, () => { aJete = true; });
+    } finally {
+      sbAuth.auth.getSession = vraiGetSession;
+    }
+    // La promesse se règle au microtask suivant ; on vérifie surtout, de façon
+    // synchrone, que le code source prévoit bien le repli — un garde-fou statique,
+    // même famille que testSaveToCloudGuardsSessionLockAndOffline.
+    const src = jetonPourDonnees.toString();
+    assert('jetonPourDonnees enveloppe getSession dans un try/catch',
+      /try\s*{[\s\S]*getSession[\s\S]*}\s*catch/.test(src));
+    assert('jetonPourDonnees retombe sur DATA_ANON_KEY plutôt que de propager l\'erreur',
+      src.includes('DATA_ANON_KEY'));
+    assert('jetonPourDonnees ne relance jamais (aucun `throw`)', !/\bthrow\b/.test(src));
+  }
+
+  // Garde-fou statique : la CSP doit autoriser le domaine des données. Sans ça, le
+  // navigateur bloque toutes les requêtes — et le message n'apparaît qu'en console,
+  // le jeu se contente d'afficher des panneaux vides.
+  function testCspAutoriseLeDomaineDeDonnees() {
+    if (typeof document === 'undefined') return;
+    const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    assert('la balise CSP existe', !!meta);
+    if (!meta) return;
+    const csp = meta.getAttribute('content') || '';
+    const connect = (csp.split(';').find(d => d.trim().startsWith('connect-src')) || '');
+    assert('la CSP déclare une directive connect-src', !!connect, csp.slice(0, 80));
+
+    assert('connect-src autorise toujours le domaine Supabase (auth, realtime, edge functions)',
+      connect.includes(SUPABASE_URL), connect);
+    if (DATA_API_URL) {
+      assert('connect-src autorise le domaine des données ' + DATA_API_URL +
+        ' (sinon toutes les requêtes du jeu sont bloquées par le navigateur)',
+        connect.includes(DATA_API_URL), connect);
+    }
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
+    testDataApiConfigCoherente();
+    testSbRouteLesDonneesEtLAuthSeparement();
+    testJetonPourDonneesNeJetteJamaisHorsLigne();
+    testCspAutoriseLeDomaineDeDonnees();
     testSessionLockBoxUsesZoneRedesignTokens();
     testToastsUseZoneRedesignTokens();
     testEquipmentPaperdollUsesZoneRedesignTokens();
