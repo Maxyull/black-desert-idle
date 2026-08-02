@@ -2392,27 +2392,6 @@
     assert('Le seuil "top" de la barre "Ta position" du Classement est bien 20 (podium 1-3 + tableau 4-20)',
       LB2_TOP_N === 20, `LB2_TOP_N=${LB2_TOP_N}`);
   }
-  // ---------- Classement : panneau invité stylé (remplace l'alert() brut, 2026-07-11) ----------
-  function testLb2GuestGateReusesMarketCopyAndRealLinkButton() {
-    if (typeof lb2GuestGateHtml !== 'function') return;
-    const html = lb2GuestGateHtml();
-    // le HTML rendu passe par escapeHtml() (échappe les guillemets du texte source) -- comparer à
-    // la même version échappée, pas au texte brut de i18next.t(), sinon faux négatif systématique.
-    assert('Le panneau invité du Classement réutilise le texte EXACT de market:market.auth_verified_required (pas un texte dupliqué)',
-      html.includes(escapeHtml(i18next.t('market:market.auth_verified_required'))));
-    assert('Le panneau invité du Classement contient bien le bouton de liaison de compte (id lb2LinkAccountBtn)',
-      html.includes('id="lb2LinkAccountBtn"'));
-  }
-  // garde-fou statique (voir CLAUDE.md §11, "inspection du code source via .toString()") : vérifie
-  // que openLeaderboard2() affiche le panneau invité stylé pour un compte invité plutôt qu'un
-  // alert() brut -- seul le cas "aucune session du tout" (!sb || !currentUser) garde l'alerte
-  // historique de marketRequireAuth(), jamais appelée dans la branche isGuest().
-  function testOpenLeaderboard2ShowsStyledGuestGateNotRawAlert() {
-    if (typeof openLeaderboard2 !== 'function') return;
-    const src = openLeaderboard2.toString();
-    assert('openLeaderboard2 affiche lb2GuestGateHtml() pour un compte invité, plutôt qu\'un alert() natif',
-      src.includes('lb2GuestGateHtml'));
-  }
   // garde-fou (2026-07-21, bug réel trouvé en buildant le panneau Donation) : un "https://" brut au
   // milieu d'un template literal MULTI-LIGNE a fait planter le strip de commentaires du build
   // (scripts/build.py, strip_js_comments_safe) -- le "//" de l'URL a été avalé comme un commentaire
@@ -7280,8 +7259,37 @@
     }
   }
 
+  // Régression sur le retrait du mode invité (issue #18, 2026-08-03).
+  //
+  // Le retrait a touché 15 fichiers et le piège n'est pas d'en oublier un morceau, c'est d'en
+  // laisser un APPEL vivant vers un symbole disparu. Constaté pendant le retrait lui-même :
+  // `$a('btnLinkAccount').onclick = ...` s'exécutait au chargement de auth.js alors que le bouton
+  // venait d'être retiré du HTML, ce qui lève un TypeError et casse le démarrage complet du jeu.
+  // Un simple grep sur les sources ne l'aurait pas vu, le symbole étant légitimement absent.
+  function testAucunResteDuModeInvite() {
+    assert('isGuest() n\'existe plus', typeof isGuest === 'undefined');
+    assert('GUEST_SUNSET_DATE n\'existe plus', typeof GUEST_SUNSET_DATE === 'undefined');
+    assert('showGuestSunsetBannerIfGuest() n\'existe plus',
+      typeof showGuestSunsetBannerIfGuest === 'undefined');
+    assert('lb2GuestGateHtml() n\'existe plus', typeof lb2GuestGateHtml === 'undefined');
+    assert('startGuestOrShowAuth() a été renommée en showAuthScreen()',
+      typeof startGuestOrShowAuth === 'undefined' && typeof showAuthScreen === 'function');
+
+    if (typeof document === 'undefined') return;
+    ['guestSunsetBanner', 'btnLinkAccount', 'onlineGuests'].forEach(id => {
+      assert('#' + id + ' a bien disparu du DOM', !document.getElementById(id));
+    });
+    // Le vrai risque : un handler câblé sur un élément supprimé. On le prouve en rejouant les
+    // deux fonctions qui lisent la barre utilisateur, elles doivent survivre sans élément invité.
+    let erreur = null;
+    try { updateUserBar(); updatePseudoDisplay(); } catch (e) { erreur = e; }
+    assert('updateUserBar() et updatePseudoDisplay() ne dépendent plus d\'un élément invité',
+      !erreur, erreur && erreur.message);
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
+    testAucunResteDuModeInvite();
     testDataApiConfigCoherente();
     testAucunJwtEnDurPourLeClientDeDonnees();
     testFetchDonneesRetireLAutorisationVide();
@@ -7586,8 +7594,6 @@
     testLb2GsLadderExcludesStaleBalanceRecords();
     testAuthModesWellFormed();
     testLb2YourRankBarThresholdIsTop20();
-    testLb2GuestGateReusesMarketCopyAndRealLinkButton();
-    testOpenLeaderboard2ShowsStyledGuestGateNotRawAlert();
     testSidebarAndFloatWidgetsAreReskinnedNotLegacyGeorgia();
     testInfoBoxSharedShellUsesZoneRedesignTokens();
     testPatchImgBoxReusesInfoBoxShell();

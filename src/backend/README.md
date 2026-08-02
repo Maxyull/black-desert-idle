@@ -167,12 +167,9 @@ chaque sync — jamais utilisé par un classement avant ce jour).
   `player_stats.updated_at`, réutilise `pneRelativeTime()` (`progression/patch-notes-engage-
   react.js`, charge avant ce fichier) plutôt que dupliquer un formatage relatif de plus. Vert
   (`--green2`) si vu il y a moins d'1h.
-- **Panneau invité stylé** (`lb2GuestGateHtml()`) : remplace l'`alert()` brut de
-  `marketRequireAuth()` (`market/market.js`, non modifié) pour ce point d'entrée précis — réutilise
-  le texte EXACT de `market:market.auth_verified_required` et le VRAI bouton `#btnLinkAccount`
-  (déjà câblé plus haut dans ce fichier) plutôt que de dupliquer le flux de liaison de compte.
-  `openLeaderboard2()` ne bloque avec l'`alert()` historique que si `!sb || !currentUser` (aucune
-  session du tout, cas rare) — jamais pour un simple compte invité.
+- **Accès** : `openLeaderboard2()` ne bloque avec l'`alert()` historique de `marketRequireAuth()`
+  que si `!sb || !currentUser` (aucune session du tout, cas rare). Le panneau invité qui existait
+  ici a disparu avec le mode invité (issue #18).
 
 ## 2e vague de découpe (2026-07-22)
 
@@ -187,7 +184,7 @@ session, offline, télémétrie — le vrai noyau Supabase) :
 | `auth.js` | auth multi-provider + magic link + recovery **+ le point d'entrée de l'appli** | **en dernier** |
 
 > **`auth.js` charge en dernier, et ce n'est pas négociable.** Il contient l'IIFE de démarrage
-> (`sb.auth.getSession()` → `onAuthed` / `startGuestOrShowAuth`) et le câblage des boutons qui lit
+> (`sb.auth.getSession()` → `onAuthed` / `showAuthScreen`) et le câblage des boutons qui lit
 > `AUTH_MODES` **au chargement**. S'il remontait avant un fichier qui appelle une fonction auth au
 > chargement, ça casserait en silence côté dev (le bundle prod, lui, concatène tout — cf. le bug
 > `btnClearCacheAuth` de P5). Un test (`testGameSupabaseSplitKeepsOriginalScriptOrder`) verrouille

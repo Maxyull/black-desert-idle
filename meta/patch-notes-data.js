@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V498', d:'03/08/2026 00:00', name:{fr:'Retrait du mode invité', en:'Guest mode removed'}, fr:[
+      {t:'change', sub:'compte', tx:"Le mode invité est définitivement retiré. Plus aucune session invité n'était créée depuis le 10/07, et le bandeau de dernière chance annonçait ce retrait depuis le 22/07. Le jeu demande désormais un compte dès l'écran d'accueil, ce qui garantit que ta progression est sauvegardée sur le serveur et te suit d'un appareil à l'autre."},
+      {t:'change', sub:'interface', tx:"Le bouton « Lier un compte », le badge « Invité » et le décompte d'invités en ligne disparaissent : ils n'avaient plus d'objet."},
+    ], en:[
+      {t:'change', sub:'compte', tx:"Guest mode is gone for good. No guest session had been created since 10/07, and the last-chance banner had been announcing this removal since 22/07. The game now asks for an account right from the welcome screen, which guarantees your progress is saved server-side and follows you across devices."},
+      {t:'change', sub:'interface', tx:"The \"Link account\" button, the \"Guest\" badge and the online-guest counter are gone: they no longer had any purpose."},
+    ] },
   { v:'V497', d:'24/07/2026 03:00', name:{fr:'Tutoriels : la pop-up amène le menu concerné à l\'écran', en:'Tutorials: the pop-up brings the relevant menu into view'}, fr:[
       {t:'fix', sub:'tutoriel', tx:'Quand une étape parle d\'un menu qui se trouve hors du champ visible (ex. le panneau d\'optimisation dans la colonne de droite), la page défile désormais automatiquement pour l\'amener au centre de l\'écran — fini le « scrolle toi-même pour comprendre de quoi parle la bulle ».'},
       {t:'fix', sub:'tutoriel', tx:'Le bouton « Précédent » n\'apparaît plus grisé et inerte sur la première étape (ni sur les tutoriels d\'une seule étape) : il est simplement masqué tant qu\'il n\'y a rien avant, au lieu de paraître cassé.'},

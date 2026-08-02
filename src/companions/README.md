@@ -135,7 +135,7 @@ complet) vers Supabase toutes les 60s, via la RPC `sync_companion_stats` (voir
 `supabase/migrations/20260719190000_companion_stats.sql`) — pour alimenter le panneau admin
 `Contenu → Compagnons`. Comme l'iframe est **same-origin** (pas de `sandbox`, voir
 `combat/boss.js:openCompanionsModule`), le module réutilise directement le client
-`sb`/`currentUser`/`isGuest()` déjà authentifié de la page hôte via `window.parent` — pas de
+`sb`/`currentUser` déjà authentifié de la page hôte via `window.parent` — pas de
 second SDK Supabase ni d'auth séparée dans l'iframe. Fire-and-forget, jamais bloquant, no-op
 silencieux sans compte connecté (même garde que `queueFarmEvent`/`markItemTutorialSeen`
 ailleurs dans le jeu). Nouveau compteur à vie `totalHatched` (`economy.js`,
@@ -248,7 +248,7 @@ moyenne doeuf eclos/jour, stats entiere liste des fusion et grph completion inde
 
 **Classement cross-joueurs (2026-07-20, refonte "Classement Public" 2026-07-21)** :
 `companion_leaderboard()` — SEULE RPC de ce module SANS garde email (accessible à tout compte
-authentifié non-invité, même pattern que `get_online_players()`) — résout le pseudo via
+authentifié, même pattern que `get_online_players()`) — résout le pseudo via
 `profiles.pseudo` en priorité puis `player_stats.display_name`. Migration
 `supabase/migrations/20260720140000_companion_leaderboard.sql`.
 - **Refonte 2026-07-21 (port à l'identique d'un mockup externe `classement-public.html` fourni par

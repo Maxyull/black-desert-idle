@@ -36,7 +36,7 @@ rentables — la boucle centrale du jeu.
   propre table de loot (butin de base, matériau, bijou rare, composant de craft).
 - **Système d'enchantement fidèle à BDO** : +1 à +15 puis PRI/DUO/TRI/TET/PEN, avec risque de
   rétrogradation, failstack et protection par Pierre de Cron.
-- **Comptes joueurs + sauvegarde cloud** (Supabase) — jouable aussi en invité, sans compte.
+- **Comptes joueurs + sauvegarde cloud** (Supabase), connexion par pseudo ou email.
 - **Marché commun** entre joueurs (vrai carnet d'ordres achat/vente, pas d'annonces à prix fixe),
   **classement**, **chat** (mondial/trade/annonces, mentions @joueur).
 - **Boss mondial partagé** à horaires fixes, avec classement de contribution.

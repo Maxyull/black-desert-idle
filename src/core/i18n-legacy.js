@@ -37,15 +37,6 @@ const I18N = {
   btnLogout: { fr:'🚪 Déconnexion', en:'🚪 Log out' },
   authMobileBadge: { fr:'📱 BETA — Compatible mobile & tablette', en:'📱 BETA — Mobile & tablet compatible' },
   authSub: { fr:'Connecte-toi avec un vrai compte pour accéder au Marché et au Classement', en:'Sign in with a real account to access the Market and Leaderboard' },
-  btnLinkAccount: { fr:'🔗 Lier un compte', en:'🔗 Link account' },
-  // Fin de vie du mode invité (2026-07-22) — à supprimer avec le reste, voir GUEST_SUNSET_DATE.
-  // Date explicite plutôt qu'un vague "bientôt" : c'est la seule information qui permet à un invité
-  // de savoir combien de temps il lui reste pour sauver sa progression.
-  // (pas de ⚠️ ici : il est déjà dans le HTML du bandeau, comme le 🔌 de #offlineBanner)
-  guestSunsetMsg: {
-    fr: 'Le mode invité disparaît le 15/08/2026 — ta progression sera perdue. Clique ici pour lier un compte et la garder.',
-    en: 'Guest mode is going away on 2026-08-15 — your progress will be lost. Click here to link an account and keep it.',
-  },
   btnAccount: { fr:'👤 Mon compte', en:'👤 My account' },
   onlineLbl: { fr:'en ligne', en:'online' },
   registeredLbl: { fr:'inscrits', en:'registered' },

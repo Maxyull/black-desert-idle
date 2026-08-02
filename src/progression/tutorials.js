@@ -278,13 +278,13 @@ function tutorialTrackLoop() {
 // propre suivi via markItemTutorialSeen (progression/notifications-quests.js) et ne passent jamais
 // trackId, donc ce mécanisme reste totalement inerte pour eux (activeTutorialTrackId reste null).
 let activeTutorialTrackId = null;
-// fire-and-forget, même garde que markItemTutorialSeen (sb && currentUser && !isGuest()) -- réutilise
+// fire-and-forget, même garde que markItemTutorialSeen (sb && currentUser) -- réutilise
 // la RPC mark_item_tutorial_seen (généralisée le 2026-07-19 avec p_last_step/p_completed, voir
 // migration 20260719180000_onboarding_stats.sql) plutôt qu'une RPC dédiée en double.
 /** @param {boolean} completed @param {boolean} skipped. Journalise la progression du tutoriel suivi (RPC mark_item_tutorial_seen), fire-and-forget. No-op si aucun trackId actif ou invité. */
 function reportTutorialProgress(completed, skipped) {
   if (!activeTutorialTrackId) return;
-  if (!sb || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
+  if (!sb || !currentUser) return;
   try {
     // même bug que log_playtime_ping ci-dessus (ligne ~1004) : le builder Postgrest n'a pas de
     // .catch(), seulement .then() -- .then(null, cb) reste fire-and-forget sans planter silencieusement.

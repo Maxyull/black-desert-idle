@@ -53,8 +53,7 @@ async function syncCompanionStatsToServer() {
     // `function` (eux bien attachés à `window`) au lieu de lire les variables directement.
     const sb = typeof hostWin.getSbClient === 'function' ? hostWin.getSbClient() : null;
     const currentUser = typeof hostWin.getCurrentUserForSync === 'function' ? hostWin.getCurrentUserForSync() : null;
-    const isGuestFn = hostWin.isGuest;
-    if (!sb || !currentUser || (typeof isGuestFn === 'function' && isGuestFn())) return;
+    if (!sb || !currentUser) return;
     const breakdowns = computeCompanionBreakdowns();
     let hardAchCount = 0;
     if (completedAchievements && typeof ACHIEVEMENTS !== 'undefined') {

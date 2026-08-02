@@ -5,8 +5,8 @@
 // "Tes stats" reste 100% local (aucun appel réseau) -- juste une lecture groupée de compteurs déjà
 // suivis ailleurs (totalHatched, silverSpent, fusionCount...). Le classement, lui, appelle la RPC
 // publique companion_leaderboard() (voir supabase/migrations/20260721100000_companion_leaderboard_prestige.sql)
-// via le même pattern cross-window que sync.js (getSbClient()/getCurrentUserForSync()/
-// isGuest() sur window.parent -- jamais de 2e SDK Supabase dans l'iframe).
+// via le même pattern cross-window que sync.js (getSbClient()/getCurrentUserForSync() sur
+// window.parent -- jamais de 2e SDK Supabase dans l'iframe).
 //
 // Écarts assumés par rapport au mockup fourni :
 // - Onglet Guildes retiré : aucun système de guilde n'existe en jeu (src/social/chat.js). Pas de
@@ -85,9 +85,7 @@ async function fetchAndRenderCompanionLeaderboard(){
     if(!hostWin || hostWin===window){ lbError = i18next.t('companions:companions.leaderboard.unavailable_outside'); renderLeaderboardUi(); return; }
     const sb = typeof hostWin.getSbClient==='function' ? hostWin.getSbClient() : null;
     const currentUser = typeof hostWin.getCurrentUserForSync==='function' ? hostWin.getCurrentUserForSync() : null;
-    const isGuestFn = hostWin.isGuest;
     if(!sb || !currentUser){ lbError = i18next.t('companions:companions.leaderboard.login_required'); renderLeaderboardUi(); return; }
-    if(typeof isGuestFn==='function' && isGuestFn()){ lbError = i18next.t('companions:companions.leaderboard.guest_blocked'); renderLeaderboardUi(); return; }
     lbMyUserId = currentUser.id;
     const { data, error } = await sb.rpc('companion_leaderboard');
     if(error){ lbError = i18next.t('companions:companions.common.error_with_message', {message:escapeHtmlLb(error.message)}); renderLeaderboardUi(); return; }

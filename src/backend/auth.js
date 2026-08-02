@@ -5,7 +5,7 @@
 // apres les cuts presence/account ; l'auth etait le dernier gros domaine borne.
 //
 // CHARGE EN DERNIER, et c'est structurel : ce fichier contient le POINT D'ENTREE de l'appli
-// (l'IIFE de fin qui fait sb.auth.getSession() -> onAuthed / startGuestOrShowAuth). Il doit tourner
+// (l'IIFE de fin qui fait sb.auth.getSession() -> onAuthed / showAuthScreen). Il doit tourner
 // une fois que TOUT le reste est defini -- game-supabase (sb, loadCloudSave, saveToCloud),
 // presence (refreshPresenceSnapshot appele par onAuthedInner), les panneaux, etc.
 //
@@ -75,10 +75,8 @@ function showAuthOverlay(show) {
   // sinon on retomberait sur les champs du flux précédent, à contre-emploi du "aucun champ".
   if (show) { if (!inPasswordRecovery) setAuthMode('choice'); renderLastUsedBadge(); }
   // Croix de fermeture CONDITIONNELLE (2026-07-22) : uniquement quand une session existe déjà,
-  // c.-à-d. un invité qui a ouvert cet écran volontairement ("Lier un compte" ou le bandeau de fin
-  // de vie du mode invité) et qui change d'avis -- sa partie tourne derrière, il doit pouvoir y
-  // revenir. Sans elle, un simple clic sur le bandeau (en haut, cliquable, non masquable) coupait
-  // l'invité de son propre jeu, sans autre issue que créer un compte ou recharger la page.
+  // c.-à-d. un joueur connecté qui a ouvert cet écran volontairement et qui change d'avis -- sa
+  // partie tourne derrière, il doit pouvoir y revenir.
   // Sans session, l'écran reste un mur sans échappatoire : c'est la raison du retrait du
   // 2026-07-16 (fermer laissait le joueur devant un jeu vide sans retour possible), et elle reste
   // valable. Jamais pendant une récupération de mot de passe : la session existe, mais le joueur
@@ -90,11 +88,9 @@ function showAuthOverlay(show) {
 function updateUserBar() {
   $a('userBar').classList.toggle('show', !!currentUser);
   $a('userEmail').textContent = ''; // email retiré de l'affichage (demande du 2026-07-04)
-  $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
-  showGuestSunsetBannerIfGuest(); // bandeau de fin de vie du mode invité (à retirer le GUEST_SUNSET_DATE)
   // 2026-07-13 : #btnLogout/#adminBox (sidebar) retirés, doublons du header -- #btnLogoutTopbar/
   // #btnAdminTopbar sont désormais les SEULS éléments à afficher/masquer.
-  $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
+  $a('btnLogoutTopbar').style.display = '';
   const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
   // deep link admin (2026-07-20, bdi-admin-ux.md §7) : c'est ICI qu'on sait enfin si l'utilisateur
   // est admin. applyAdminHash() au chargement du script serait toujours arrivé trop tôt (isAdmin()
@@ -112,20 +108,18 @@ function updateUserBar() {
   updatePseudoDisplay();
   if (typeof updateChatInputVisibility === 'function') { updateChatInputVisibility(); fetchChatMessages(); }
 }
-// affiche le pseudo (ou "🎭 Invité") à côté du tag DÉMO — l'email n'est plus jamais affiché
-/** Affiche le pseudo (ou "Invité") à côté du tag DÉMO — l'email n'est jamais affiché. */
+// affiche le pseudo à côté du tag DÉMO — l'email n'est plus jamais affiché
+/** Affiche le pseudo à côté du tag DÉMO — l'email n'est jamais affiché. */
 function updatePseudoDisplay() {
   const el = $a('userPseudo');
   if (!el) return;
-  if (isGuest()) el.textContent = i18next.t('backend:backend.auth.guest_badge');
-  else el.textContent = (currentUser && myPseudo) ? myPseudo : '';
+  el.textContent = (currentUser && myPseudo) ? myPseudo : '';
   // raccourci header (2026-07-13) : même texte, à côté de l'icône compte du header
   const topbarEl = $a('userPseudoTopbar');
   if (topbarEl) topbarEl.textContent = el.textContent;
 }
 
-// upgrade d'une session invité en compte réel (garde le même user_id → la sauvegarde suit),
-// ou création classique si jamais aucune session n'existe encore
+// création de compte email/mot de passe
 // clé locale : mémorise le pseudo choisi à la création de compte le temps de confirmer l'email
 // (aucune session active à ce moment-là pour appeler set_pseudo tout de suite) -- appliqué au
 // prochain onAuthed() réussi, voir refreshMyPseudo()
@@ -148,17 +142,10 @@ async function doSignUp() {
   if (!email.includes('@')) { authShow(_authT('err_signup_needs_email'), true); return; }
   authShow(_authT('creating_account'));
   try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {}
-  if (isGuest()) {
-    // sans emailRedirectTo (2026-07-10, bug trouvé en vérification : "verifie que les redirection
-    // vers le jeu se font bien après inscription"), le lien de confirmation d'email utilisait le
-    // "Site URL" par défaut configuré côté dashboard Supabase au lieu de la page réellement visitée
-    // — source probable de l'erreur 404 signalée après inscription si ce réglage était périmé.
-    const { data, error } = await sb.auth.updateUser({ email, password: pass }, { emailRedirectTo: location.href });
-    if (error) { authShow(error.message, true); return; }
-    onAuthed(data.user);
-    authShow(_authT('account_linked'));
-    return;
-  }
+  // sans emailRedirectTo (2026-07-10, bug trouvé en vérification : "verifie que les redirection
+  // vers le jeu se font bien après inscription"), le lien de confirmation d'email utilise le
+  // "Site URL" par défaut configuré côté dashboard Supabase au lieu de la page réellement visitée
+  // — source probable de l'erreur 404 signalée après inscription si ce réglage est périmé.
   const { data, error } = await sb.auth.signUp({ email, password: pass, options: { emailRedirectTo: location.href } });
   if (error) { authShow(error.message, true); return; }
   if (data.session) { onAuthed(data.session.user); }
@@ -243,12 +230,12 @@ async function doLogout() {
   // rechargement, créer un NOUVEAU compte juste après une déconnexion faisait hériter le compte
   // neuf de toute la progression du précédent -- rien ne venait écraser S. Le reload garantit un
   // état vierge sans réinitialiser S champ par champ (~150 clés), et l'écran de connexion revient
-  // de toute façon au démarrage via startGuestOrShowAuth() : comportement identique pour le joueur.
+  // de toute façon au démarrage via showAuthScreen() : comportement identique pour le joueur.
   if (sb) { location.reload(); return; }
-  await startGuestOrShowAuth(); // mode local sans Supabase : pas de reload possible/utile
+  await showAuthScreen(); // mode local sans Supabase : pas de reload possible/utile
 }
 
-// connexion (ou liaison, si déjà invité/connecté) via Discord — demande le scope
+// connexion via Discord — demande le scope
 // guilds.join pour pouvoir ajouter automatiquement le joueur au serveur Discord ensuite
 /** Connexion/liaison via Discord OAuth (scope guilds.join pour l'ajout auto au serveur communautaire). */
 async function doSignInDiscord() {
@@ -365,10 +352,7 @@ if (sb) {
     // établir la session APRÈS notre vérification initiale (sb.auth.getSession() au chargement,
     // voir plus bas) -- sans ce relais, l'écran de connexion restait affiché malgré une connexion
     // réussie (bug remonté en jeu le 2026-07-05 : "on se connecte mais la page reste au premier plan").
-    // Exclu les sessions anonymes : signInAnonymously() déclenche aussi 'SIGNED_IN', mais ce cas
-    // est déjà géré de façon synchrone par startGuestOrShowAuth() -- appeler onAuthed() une 2e fois
-    // en parallèle dédoublait certains effets (ex: +80 silver de bienvenue compté deux fois)
-    if (event === 'SIGNED_IN' && session?.user && !session.user.is_anonymous
+    if (event === 'SIGNED_IN' && session?.user
         && (!currentUser || currentUser.id !== session.user.id)) {
       onAuthed(session.user);
     }
@@ -389,8 +373,7 @@ async function onAuthed(user) {
 /**
  * Traite une connexion réussie : vérifie le bannissement (déconnecte si banni), initialise l'UI,
  * réclame la session (claimPlayerSession, évince toute autre session active), charge pseudo/rôles/
- * overrides loot/sauvegarde cloud, démarre l'autosave/heartbeat/compteurs, affiche un rappel
- * proactif de connexion pour un invité.
+ * overrides loot/sauvegarde cloud, démarre l'autosave/heartbeat/compteurs.
  * @param {object} user - utilisateur Supabase authentifié.
  */
 async function onAuthedInner(user) {
@@ -399,21 +382,19 @@ async function onAuthedInner(user) {
   rememberLastLoginMethod((user && user.app_metadata && user.app_metadata.provider) || 'email');
   // check de bannissement (2026-07-18) : bloque l'accès avant tout autre effet de la connexion
   // (chargement de sauvegarde, présence en ligne...) si le compte est banni.
-  if (!isGuest()) {
-    try {
-      const { data: banStatus } = await sb.rpc('get_my_ban_status');
-      const row = Array.isArray(banStatus) ? banStatus[0] : banStatus;
-      if (isBanned(row)) {
-        const until = new Date(row.banned_until).toLocaleString(i18next.t('backend:backend.common.date_locale'));
-        const reason = row.ban_reason || i18next.t('backend:backend.auth.ban_reason_unspecified');
-        authShow(i18next.t('backend:backend.auth.ban_suspended', { until, reason }), true);
-        await sb.auth.signOut();
-        currentUser = null;
-        showAuthOverlay(true);
-        return;
-      }
-    } catch (e) {}
-  }
+  try {
+    const { data: banStatus } = await sb.rpc('get_my_ban_status');
+    const row = Array.isArray(banStatus) ? banStatus[0] : banStatus;
+    if (isBanned(row)) {
+      const until = new Date(row.banned_until).toLocaleString(i18next.t('backend:backend.common.date_locale'));
+      const reason = row.ban_reason || i18next.t('backend:backend.auth.ban_reason_unspecified');
+      authShow(i18next.t('backend:backend.auth.ban_suspended', { until, reason }), true);
+      await sb.auth.signOut();
+      currentUser = null;
+      showAuthOverlay(true);
+      return;
+    }
+  } catch (e) {}
   showAuthOverlay(false);
   updateUserBar();
   claimPlayerSession(); // fire-and-forget : cette session prend la main, évince toute autre session active
@@ -431,27 +412,13 @@ async function onAuthedInner(user) {
   // L'affichage initial est donc plus complet ET moins coûteux qu'avant.
   refreshPresenceSnapshot();
   refreshLiveBoss(); // affiche tout de suite un éventuel boss global déjà en cours
-  // rappel proactif pour un invité (2026-07-10, demande explicite : "verifie que l'invité a bien
-  // des notifications qui l'invitent à se connecter pour ne pas perdre son avancée") -- jusqu'ici
-  // le seul rappel était RÉACTIF (en tentant le Marché/Classement/parrainage) : rien n'avertissait
-  // un invité qui ne touche jamais à ces fonctionnalités, alors qu'une session anonyme est perdue
-  // dès qu'il change d'appareil ou vide son navigateur (voir doc Supabase Anonymous Sign-Ins).
-  // Poussée dans le centre de notifications (🔔), pas un toast intrusif — une seule fois par
-  // session, avec un léger délai pour ne pas se mélanger aux autres popups de démarrage.
-  if (isGuest()) {
-    setTimeout(() => {
-      pushNotif('🎭', i18next.t('backend:backend.auth.guest_mode_title'),
-        i18next.t('backend:backend.auth.guest_mode_body'),
-        'info');
-    }, 3000);
-  }
 }
 
 // détermine le pseudo effectif : pseudo choisi > pseudo Discord > partie locale de l'email
 /** Détermine le pseudo effectif (choisi > Discord > partie locale de l'email), applique un pseudo en attente (PENDING_PSEUDO_KEY) posé par doSignUp() faute de session active à ce moment. */
 async function refreshMyPseudo() {
   myPseudo = null;
-  if (!sb || !currentUser || isGuest()) return;
+  if (!sb || !currentUser) return;
   try {
     const { data } = await sb.from('profiles').select('pseudo').eq('user_id', currentUser.id).maybeSingle();
     myPseudo = data?.pseudo || discordUsername(currentUser) || (currentUser.email || '?').split('@')[0];
@@ -470,15 +437,11 @@ async function refreshMyPseudo() {
   updatePseudoDisplay();
 }
 
-// point d'entrée unique au chargement (et après déconnexion) — DÉSACTIVÉ le 2026-07-20 (demande
-// explicite : "Désactive les invité") : n'ouvre plus de session anonyme automatique pour un
-// nouveau visiteur, affiche directement le formulaire de connexion/inscription. Le nom de la
-// fonction reste inchangé (appelée depuis doLogout()/l'IIFE de démarrage plus bas) pour limiter le
-// diff — seul son comportement change. Les sessions invité créées AVANT ce changement continuent
-// de fonctionner normalement (isGuest() reste vrai pour elles, rien n'est supprimé côté serveur) ;
-// seule la création de NOUVELLES sessions anonymes est coupée.
-/** Affiche l'écran de connexion (les sessions invité automatiques sont désactivées depuis le 2026-07-20 ; les sessions invité déjà créées restent fonctionnelles). No-op si Supabase pas configuré. */
-async function startGuestOrShowAuth() {
+// point d'entrée unique au chargement (et après déconnexion) : affiche le formulaire de
+// connexion/inscription. Le mode invité a été coupé le 2026-07-20 (demande explicite :
+// "Désactive les invité") puis entièrement retiré, voir l'issue #18.
+/** Affiche l'écran de connexion. No-op si Supabase pas configuré (mode local). */
+async function showAuthScreen() {
   if (!sb) { showAuthOverlay(false); updateUserBar(); return; } // Supabase pas configuré → mode local, inchangé
   showAuthOverlay(true);
   authShow('');
@@ -533,12 +496,6 @@ $a('btnCopyUuid').onclick = async () => {
   hint.innerHTML = i18next.t('backend:backend.account.uuid_copied_msg');
   setTimeout(() => { hint.innerHTML = '📋 ' + i18next.t('backend:backend.account.copy_label') + ' UUID'; }, 1200);
 };
-$a('btnLinkAccount').onclick = () => {
-  // précise que "Se connecter" reprend un compte EXISTANT (contrairement à "Créer un
-  // compte" qui démarre une nouvelle progression) — source de confusion signalée en test
-  $a('authSub').textContent = i18next.t('backend:backend.account.link_account_prompt');
-  showAuthOverlay(true);
-};
 // #closeAuth retiré le 2026-07-16 (demande explicite) : fermer l'overlay sans session laissait
 // le joueur devant un jeu vide sans retour possible. Garde optionnelle si le bouton réapparaît.
 { const _ca = $a('closeAuth'); if (_ca) _ca.onclick = () => showAuthOverlay(false); }
@@ -547,7 +504,7 @@ $a('authOverlay').addEventListener('mousedown', e => { authMouseDownOnBackdrop =
 $a('authOverlay').addEventListener('click', e => { if (e.target.id === 'authOverlay' && authMouseDownOnBackdrop && currentUser) showAuthOverlay(false); });
 $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignIn(); });
 
-// au chargement : session déjà active ? sinon on démarre en invité (jamais de mur bloquant)
+// au chargement : session déjà active ? sinon écran de connexion
 (async () => {
   // Supabase pas configuré → jeu jouable directement (mode local). grantWelcomeSilver() ici aussi :
   // ce mode ne passe jamais par loadCloudSave(), il aurait donc perdu le cadeau de bienvenue en
@@ -555,5 +512,5 @@ $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignI
   if (!sb) { showAuthOverlay(false); updateUserBar(); authShow(''); saveReady = true; grantWelcomeSilver(); return; }
   const { data } = await sb.auth.getSession();
   if (data.session) onAuthed(data.session.user);
-  else await startGuestOrShowAuth();
+  else await showAuthScreen();
 })();
