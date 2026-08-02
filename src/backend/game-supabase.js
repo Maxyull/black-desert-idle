@@ -18,7 +18,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
 // comportement du jeu. Toute la mécanique est en place et testée, elle attend juste
 // que le VPS existe.
 //
-// LA BASCULE = mettre 'https://bdi.occulta.fr' ici, puis rebuild + push. Rien d'autre.
+// LA BASCULE = mettre 'https://bdi.maxyull.fr' ici, puis rebuild + push. Rien d'autre.
 // À ne faire QU'APRÈS bdi-infra/migration/07-verifier.sh au vert, sinon le jeu tape une
 // base qui n'existe pas. LE RETOUR ARRIÈRE = remettre '' (voir RUNBOOK.md).
 //
