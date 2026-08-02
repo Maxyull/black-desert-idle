@@ -36,6 +36,69 @@ multi navigateur and multidevice" + "Mode hors ligne")** :
   `testOfflineCacheRoundTripsPerUserAndTracksPendingSync`, `testSaveToCloudGuardsSessionLockAndOffline`,
   `testCheckPlayerSessionNeverLocksOnNetworkFailure` (`tests/tests.js`).
 
+**Bascule des données vers le VPS (2026-08-01, demande explicite : "on va tout transvaser sur
+le vps")**, outillage complet dans `D:\DEV\bdi-infra`, ici seulement le côté client.
+
+L'**authentification reste sur Supabase cloud** (153 comptes, 4 providers OAuth qu'on ne veut
+pas reconfigurer), seule la **base** descend sur un VPS OVH. Ça marche parce que le PostgREST
+du VPS vérifie les jetons du GoTrue cloud avec la **clé publique** du projet : `auth.uid()`
+renvoie le même UUID côté SQL, les 161 fonctions et les policies RLS n'ont pas été touchées
+d'une ligne.
+
+Le projet signe en **ES256 asymétrique** (constaté le 2026-08-02 ; la première version de ce
+montage supposait un secret HS256 partagé, ce qui était faux). Bénéfice au passage : le VPS ne
+détient qu'une clé de VÉRIFICATION, même entièrement compromis il ne peut forger aucun jeton.
+
+Deux clients dans ce fichier :
+- `sbAuth`, toujours le projet cloud. Porte l'auth, les edge functions, et le realtime
+  (presence/broadcast des lobbies boss et miniboss, qui ne lisent jamais la base ; le chat, lui,
+  fait du polling, voir `social/chat.js`). Rien de tout ça n'a bougé.
+- `sbData`, le VPS quand `DATA_API_URL` est renseignée, sinon `sbAuth`. Créé avec l'option
+  `accessToken` de supabase-js (mode « auth chez un fournisseur tiers ») : il ne gère aucune
+  session et redemande le jeton à `jetonPourDonnees()` à chaque requête. Une seule session
+  existe, celle de `sbAuth`, deux clients rafraîchissant le même `refresh_token` en concurrence
+  l'invalideraient à tous les coups.
+
+`sb` n'est plus un `SupabaseClient` mais un **`Proxy`** qui aiguille : `from`/`rpc`/`schema` vers
+`sbData`, tout le reste vers `sbAuth`. Choisi après comptage, **215 appels de données contre 29
+d'auth/realtime**, dans une douzaine de fichiers : réécrire 244 sites d'appel aurait garanti d'en
+oublier. Conséquence à connaître : toute propriété non listée dans `VERS_DONNEES` tombe sur le
+client d'auth. Si une manque un jour, elle **s'ajoute là**, pas en contournant `sb`.
+
+Deux pièges qui ont coûté cher à trouver :
+- **Aucune clé anon ne part vers le VPS.** La première version y envoyait l'ancienne clé anon
+  du projet (un JWT HS256), que le PostgREST en ES256 rejette. La bonne réponse est de retirer
+  complètement l'en-tête `Authorization` quand il n'y a pas de session : PostgREST retombe
+  alors sur `db-anon-role`, donc le rôle `anon`, et les lectures publiques passent. C'est le
+  rôle de `fetchDonnees()`, branchée en `global.fetch` du client de données. Tests :
+  `testAucunJwtEnDurPourLeClientDeDonnees`, `testFetchDonneesRetireLAutorisationVide`.
+- L'edge function `auth-by-identifier` fait de l'auth **et** trois RPC de données
+  (`email_for_login`, `rate_limit_hit`, `rate_limit_gc`). Elles ont été scindées : sans ça, un
+  joueur inscrit après la bascule ne pourrait plus se connecter par son pseudo, la fonction
+  lisant un `profiles` figé. **Mais elle ne peut pas appeler le VPS en PostgREST** : sa clé
+  `service_role` est un JWT HS256, le VPS ne vérifie que de l'ES256, il répond 401. Elle passe
+  donc par trois routes dédiées de l'API des dashboards, protégées par un secret partagé et
+  sans JWT : `bdi-infra/api/app/routes_interne.py`, variables `AUTH_INTERNE_URL` et
+  `AUTH_INTERNE_SECRET`. Tant qu'elles ne sont pas posées, la fonction appelle le cloud comme
+  avant, ce qui rend son déploiement neutre et la bascule réversible d'un geste.
+
+**État : `DATA_API_URL = 'https://bdi.maxyull.fr'`, la bascule est ARMÉE** (2026-08-02). Les
+données passent par le VPS, l'authentification et le realtime restent sur Supabase.
+Retour arrière = remettre `''` ici et dans `companions/viewer3d.js`, rebuild, push ; le cloud
+est conservé intact et rejouable pour ça. Voir `bdi-infra/migration/RUNBOOK.md`.
+
+⚠️ Les trois constantes doivent bouger **ensemble** : `DATA_API_URL`, `COMPANION_MODELS_BASE`
+et les variables `AUTH_INTERNE_*` de l'edge function. Armer le client seul enverrait les
+nouveaux profils sur le VPS pendant que la connexion par pseudo les chercherait encore dans le
+cloud ; poser les secrets seuls produirait la panne symétrique.
+
+Tests : `testDataApiConfigCoherente`, `testAucunJwtEnDurPourLeClientDeDonnees`,
+`testFetchDonneesRetireLAutorisationVide`, `testSbRouteLesDonneesEtLAuthSeparement`,
+`testJetonPourDonneesNeJetteJamaisHorsLigne`, `testCspAutoriseLeDomaineDeDonnees`
+(`tests/tests.js`), plus un garde-fou de cohérence de domaine en fin de
+`tests/companions.spec.js` (le module Compagnons est une iframe isolée, jamais bundlée : il
+duplique le domaine et peut donc désynchroniser en silence).
+
 ## Découpage du 2026-07-22 (audit repo P5)
 
 `game-supabase.js` avait atteint **3 124 lignes** — trois fois la limite de découpe obligatoire de

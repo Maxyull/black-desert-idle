@@ -26,7 +26,7 @@
 ## Périmètre / Scope
 
 Dans le périmètre / In scope :
-- Le site du jeu (`maxyull.github.io/black-desert-idle`) et ce dépôt.
+- Le site du jeu (`blackdesertidle.maxyull.fr`) et ce dépôt.
 - Le backend Supabase (RLS, RPC, Edge Functions) du projet.
 
 Hors périmètre / Out of scope :

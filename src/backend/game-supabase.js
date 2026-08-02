@@ -6,6 +6,46 @@
 const SUPABASE_URL = 'https://mkwwvzbjtyawpcyrnybk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
 
+// ---------- Bascule des données vers le VPS (2026-08-01, voir D:\DEV\bdi-infra) ----------
+// L'AUTHENTIFICATION reste sur Supabase cloud (153 comptes, 4 providers OAuth qu'on ne
+// veut pas reconfigurer). Seule la BASE descend sur le VPS, derrière un PostgREST qui
+// vérifie les jetons avec la CLÉ PUBLIQUE du projet (ES256, récupérée sur son JWKS) :
+// auth.uid() renvoie donc le même UUID côté SQL, et les 161 fonctions comme les policies
+// RLS sont inchangées.
+//
+// ARMÉ le 2026-08-02. Les données passent par le VPS, l'authentification reste sur
+// Supabase. Préalables vérifiés avant d'armer :
+//   * 07-verifier.sh au vert (57 tables, 162 fonctions, 48 policies) ;
+//   * le miroir auth.users se rafraîchit chaque minute depuis le cloud ;
+//   * la fonction edge auth-by-identifier résout les pseudos SUR LE VPS, via
+//     l'endpoint interne (bdi-infra/api/app/routes_interne.py). Sans cette étape,
+//     armer ici aurait suffi à casser la connexion par pseudo de tout compte créé
+//     après la bascule : le jeu aurait écrit les profils sur le VPS pendant que la
+//     fonction edge aurait continué de les chercher dans le cloud.
+//
+// LE RETOUR ARRIÈRE = remettre '' ici, rebuild, push. Le cloud est conservé intact
+// et rejouable pour ça, voir bdi-infra/migration/RUNBOOK.md et 09-rejouer-vers-cloud.sh.
+const DATA_API_URL = 'https://bdi.maxyull.fr';
+
+// ⚠️ PAS DE CLÉ ANON POUR LE VPS, et c'est délibéré.
+//
+// Première version (2026-08-01) : on y envoyait l'ancienne clé anon du projet, un JWT
+// HS256, en supposant que le VPS partagerait le secret symétrique de Supabase.
+//
+// Corrigé le 2026-08-02 : le projet signe en **ES256 asymétrique**, il n'existe plus de
+// secret partagé. Le PostgREST du VPS vérifie avec la clé PUBLIQUE du projet et
+// REJETTERAIT donc ce vieux jeton HS256, avec un 401 sur chaque lecture publique.
+//
+// La bonne réponse est de n'envoyer AUCUN en-tête `Authorization` quand il n'y a pas de
+// session : PostgREST retombe alors sur `db-anon-role`, c'est-à-dire exactement le rôle
+// `anon`, et les policies RLS de lecture publique s'appliquent normalement. C'est le rôle
+// de `fetchDonnees()` plus bas.
+//
+// Voir D:\DEV\bdi-infra\migration\NOTES-JWT.md.
+
+/** Valeur rendue par jetonPourDonnees() quand aucune session n'est ouverte. */
+const DATA_SANS_SESSION = '';
+
 let sb = null, currentUser = null;
 // verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
 // and multidevice") -- identifiant unique généré UNE FOIS par chargement de page (jamais persisté
@@ -20,9 +60,113 @@ let sessionLocked = false;
 // (saveToLocalOfflineCache) plutôt que de laisser échouer silencieusement l'upsert Supabase.
 let isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
 let pendingOfflineSync = false;
+// Client d'authentification : toujours le projet cloud. Porte aussi le realtime
+// (presence/broadcast des lobbies boss et miniboss), qui ne lit jamais la base, le chat,
+// lui, fait du polling (chat.js) et n'a rien à voir là-dedans.
+let sbAuth = null;
+// Client de données : le VPS si DATA_API_URL est renseignée, sinon le cloud.
+let sbData = null;
+
+/**
+ * Jeton à présenter au PostgREST du VPS pour la requête en cours.
+ *
+ * Fonction nommée (et non une lambda dans createClient) pour rester testable :
+ * c'est du code réseau, il doit être couvert en ligne ET hors ligne (CLAUDE.md §11).
+ *
+ * Ne jette JAMAIS. Si la session est illisible (hors ligne, stockage corrompu,
+ * jeton expiré non rafraîchissable), on renvoie DATA_SANS_SESSION, et
+ * `fetchDonnees()` retire alors l'en-tête `Authorization` : le jeu se comporte
+ * exactement comme pour un joueur déconnecté, au lieu de faire remonter une
+ * exception depuis les entrailles de supabase-js à chaque requête.
+ * @returns {Promise<string>} le jeton de session, ou DATA_SANS_SESSION. Jamais null.
+ */
+async function jetonPourDonnees() {
+  try {
+    const { data } = await sbAuth.auth.getSession();
+    return (data && data.session && data.session.access_token) || DATA_SANS_SESSION;
+  } catch (e) {
+    return DATA_SANS_SESSION;
+  }
+}
+
+/**
+ * `fetch` du client de données, qui retire l'en-tête `Authorization` vide.
+ *
+ * POURQUOI C'EST NÉCESSAIRE
+ * supabase-js construit toujours `Authorization: Bearer <jeton>` à partir de ce que
+ * renvoie `accessToken`. Sans session, il enverrait donc `Bearer ` tout court, que
+ * PostgREST refuse en 401 au lieu de traiter la requête en anonyme.
+ *
+ * Or PostgREST a exactement le comportement voulu quand l'en-tête est ABSENT : il
+ * applique `db-anon-role`, c'est-à-dire le rôle `anon`, et les policies RLS de lecture
+ * publique s'appliquent. D'où ce retrait, plutôt que l'envoi d'une clé anon.
+ *
+ * On ne peut pas se contenter d'envoyer un vieux JWT anon : le projet signe en ES256
+ * asymétrique depuis le 2026-08-02, un jeton HS256 serait rejeté. Voir NOTES-JWT.md.
+ *
+ * @param {RequestInfo} entree - URL ou Request, passé tel quel à fetch.
+ * @param {RequestInit} [options] - options fetch, dont les en-têtes.
+ * @returns {Promise<Response>}
+ */
+function fetchDonnees(entree, options) {
+  const opts = options || {};
+  let entetes;
+  try {
+    entetes = new Headers(opts.headers || {});
+  } catch (e) {
+    // Environnement sans Headers (test unitaire minimal) : on laisse passer tel quel
+    // plutôt que de faire échouer la requête.
+    return fetch(entree, opts);
+  }
+  const autorisation = entetes.get('Authorization') || '';
+  if (/^Bearer\s*$/i.test(autorisation)) entetes.delete('Authorization');
+  const suivantes = {};
+  for (const cle in opts) if (Object.prototype.hasOwnProperty.call(opts, cle)) suivantes[cle] = opts[cle];
+  suivantes.headers = entetes;
+  return fetch(entree, suivantes);
+}
+
 try {
   if (window.supabase && SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('TON-PROJET')) {
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    sbAuth = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    if (DATA_API_URL && DATA_API_URL.startsWith('https://')) {
+      // `accessToken` est le mode « auth chez un fournisseur tiers » de supabase-js
+      // (>= 2.40) : ce client ne gère AUCUNE session, il redemande le jeton à chaque
+      // requête. C'est exactement ce qu'il nous faut, une seule session, détenue par
+      // sbAuth, et jamais deux clients qui rafraîchissent le même refresh_token en
+      // concurrence (ce qui invaliderait la session à tous les coups).
+      // La clé passée ici ne sert QUE d'en-tête `apikey`, que PostgREST ignore :
+      // c'est `accessToken` qui fournit l'autorisation réelle. On y met donc la clé
+      // publiable du projet, et surtout pas un JWT, pour qu'aucun jeton HS256 ne
+      // parte vers un serveur qui ne vérifie que de l'ES256.
+      sbData = window.supabase.createClient(DATA_API_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        accessToken: jetonPourDonnees,
+        global: { fetch: fetchDonnees },
+      });
+    } else {
+      sbData = sbAuth;
+    }
+
+    // ---------- Le routeur ----------
+    // Le jeu compte 215 appels de données (`sb.from`/`sb.rpc`) contre 29 appels
+    // d'auth/realtime, répartis dans une douzaine de fichiers. Plutôt que de réécrire
+    // 244 sites d'appel, et d'en oublier, `sb` reste LE client unique du projet et
+    // devient un aiguillage : les données vont au VPS, l'auth et le realtime au cloud.
+    //
+    // Conséquence à connaître : `sb` n'est plus une instance SupabaseClient. Tout code
+    // qui ferait `sb instanceof ...` ou lirait une propriété non listée ci-dessous
+    // tomberait sur le client d'auth par défaut. Si un jour une propriété manque, elle
+    // s'ajoute ici, pas en contournant `sb`.
+    const VERS_DONNEES = ['from', 'rpc', 'schema'];
+    sb = new Proxy(sbAuth, {
+      get(cible, propriete) {
+        const source = VERS_DONNEES.includes(propriete) ? sbData : cible;
+        const valeur = source[propriete];
+        return typeof valeur === 'function' ? valeur.bind(source) : valeur;
+      },
+    });
   }
 } catch (e) { console.warn('Supabase non initialisé :', e); }
 

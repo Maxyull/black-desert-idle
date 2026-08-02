@@ -1,6 +1,6 @@
 # ⚔️ Black Desert Idle
 
-[![Play now](https://img.shields.io/badge/%E2%96%B6%20Play%20now-2ea44f?style=for-the-badge)](https://maxyull.github.io/black-desert-idle/)
+[![Play now](https://img.shields.io/badge/%E2%96%B6%20Play%20now-2ea44f?style=for-the-badge)](https://blackdesertidle.maxyull.fr/)
 
 [![CI](https://github.com/Maxyull/black-desert-idle/actions/workflows/ci.yml/badge.svg)](https://github.com/Maxyull/black-desert-idle/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Maxyull/black-desert-idle/actions/workflows/codeql.yml/badge.svg)](https://github.com/Maxyull/black-desert-idle/actions/workflows/codeql.yml)
@@ -13,9 +13,9 @@ Un jeu idle/incrémental dans le navigateur, inspiré de **Black Desert Online**
 progression par zones, enchantement d'équipement, et une vraie couche multijoueur (comptes, sauvegarde
 cloud, marché, chat, classement, boss mondial).
 
-🎮 **Jouer :** https://maxyull.github.io/black-desert-idle/
+🎮 **Jouer :** https://blackdesertidle.maxyull.fr/
 💬 **Discord :** https://discord.gg/fEubtqMjtP
-💛 **Soutenir le projet :** [page de don](https://maxyull.github.io/black-desert-idle/donation/index.html) — 100% gratuit, les dons couvrent juste les coûts d'infra (voir [politique de don](https://maxyull.github.io/black-desert-idle/donation/donation-policy.html))
+💛 **Soutenir le projet :** [page de don](https://blackdesertidle.maxyull.fr/donation/index.html) — 100% gratuit, les dons couvrent juste les coûts d'infra (voir [politique de don](https://blackdesertidle.maxyull.fr/donation/donation-policy.html))
 
 > Projet de fan gratuit, non officiel, sans aucune affiliation ni partenariat avec Pearl Abyss. Les
 > noms/styles s'inspirent de Black Desert Online pour l'ambiance ; tous les visuels (icônes, sprites)

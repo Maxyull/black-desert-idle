@@ -2747,3 +2747,46 @@ test('companion module renders in English when velia-idle-lang=en (own i18next i
 
   expect(pageErrors).toEqual([]);
 });
+
+// ============================================================
+// Bascule des données vers le VPS (2026-08-01, voir D:\DEV\bdi-infra)
+// ============================================================
+// Garde-fou statique, sans navigateur : on lit les deux fichiers sur disque.
+//
+// Pourquoi ce test vit ICI et pas dans tests/tests.js : `viewer3d.js` appartient au
+// module Compagnons, qui tourne en iframe isolée et n'est JAMAIS bundlé par
+// scripts/build.py (CLAUDE.md §28). La suite navigateur ne peut donc pas lire sa
+// constante, et un fetch() synchrone n'y est pas possible.
+//
+// Ce que ça protège : `COMPANION_MODELS_BASE` duplique le domaine de `DATA_API_URL`
+// parce que les deux fichiers ne partagent aucun scope. Si l'un bascule sans l'autre,
+// les 55 modèles 3D renvoient 404, et loadModel() gère l'erreur proprement, donc
+// rien ne casse visiblement : les compagnons s'affichent juste sans leur modèle, en
+// silence, potentiellement pendant des semaines.
+test('COMPANION_MODELS_BASE pointe vers le même hôte que DATA_API_URL', async () => {
+  const fs = require('fs');
+  const path = require('path');
+  const racine = path.join(__dirname, '..');
+
+  const supabaseJs = fs.readFileSync(path.join(racine, 'src/backend/game-supabase.js'), 'utf8');
+  const viewer3d = fs.readFileSync(path.join(racine, 'src/companions/viewer3d.js'), 'utf8');
+
+  const mDonnees = supabaseJs.match(/const\s+DATA_API_URL\s*=\s*'([^']*)'/);
+  const mModeles = viewer3d.match(/const\s+COMPANION_MODELS_BASE\s*=\s*'([^']+)'/);
+
+  expect(mDonnees, 'DATA_API_URL introuvable dans game-supabase.js').not.toBeNull();
+  expect(mModeles, 'COMPANION_MODELS_BASE introuvable dans viewer3d.js').not.toBeNull();
+
+  const mSupabase = supabaseJs.match(/const\s+SUPABASE_URL\s*=\s*'([^']+)'/);
+  // DATA_API_URL vide = retour arrière, tout est redescendu sur le cloud : les modèles
+  // doivent alors être servis par Supabase Storage, pas par un VPS qui ne sert plus rien.
+  const attendu = new URL(mDonnees[1] || mSupabase[1]).host;
+  const reel = new URL(mModeles[1]).host;
+
+  expect(reel, `viewer3d.js sert les .glb depuis ${reel} alors que les données vont vers ` +
+    `${attendu}, les 55 modèles renverraient 404 en silence`).toBe(attendu);
+
+  // Le chemin, lui, doit rester celui de Supabase Storage : le Caddy du VPS le reproduit
+  // à l'identique justement pour que seul l'hôte change (bdi-infra/migration/05-postgrest.sh).
+  expect(mModeles[1]).toContain('/storage/v1/object/public/companion-models');
+});

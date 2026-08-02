@@ -13,7 +13,21 @@
 //    une entrée ici dès qu'un nouveau .glb est uploadé — ne jamais deviner une URL non confirmée
 //    (404 silencieux sinon, voir gestion d'erreur de loadModel()).
 
-const COMPANION_MODELS_BASE = 'https://mkwwvzbjtyawpcyrnybk.supabase.co/storage/v1/object/public/companion-models';
+// 2026-08-01 (bascule des données vers le VPS, voir D:\DEV\bdi-infra) : à la bascule, les
+// .glb passeront de Supabase Storage au Caddy du VPS, qui reproduit le MÊME chemin d'URL
+// (`/storage/v1/object/public/…`) exprès, seul l'hôte change ici.
+//
+// Encore sur Supabase pour l'instant, comme DATA_API_URL qui est désarmée
+// (game-supabase.js). Les deux se basculent ENSEMBLE, et seulement après que
+// bdi-infra/migration/06-storage.sh ait réellement copié les 60 fichiers : basculer
+// celui-ci trop tôt donne 404 sur les 55 modèles, et loadModel() gère l'erreur
+// proprement, donc ça passerait inaperçu longtemps.
+//
+// Ce module tourne en iframe isolée et n'est JAMAIS bundlé par scripts/build.py : il ne
+// voit pas les constantes de game-supabase.js, d'où ce domaine en double. Un test
+// Playwright vérifie que les deux restent cohérents (tests/companions.spec.js, dernier
+// test du fichier).
+const COMPANION_MODELS_BASE = 'https://bdi.maxyull.fr/storage/v1/object/public/companion-models';
 const VIEWER3D_TEST_MODEL = COMPANION_MODELS_BASE + '/loot/black_mask_cat_T5.glb';
 
 // nom de pet (catalog.js) -> { section, slug } ; l'URL finale est construite comme
