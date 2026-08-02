@@ -28,8 +28,23 @@ regexes = [
 description = "Valeurs publiques par design (non secrètes)"
 # Clé Supabase PUBLIABLE (anon) : conçue pour être exposée côté client, protégée par RLS.
 # Ce n'est PAS un secret (contrairement à la service_role key, jamais committée).
+#
+# Le 2e motif est l'ANCIENNE clé anon du même projet, au format JWT HS256. Même nature
+# que la première : elle n'ouvre que le rôle `anon`, borné par les policies RLS, et
+# Supabase la documente comme publiable. La règle JWT par défaut de gitleaks la signale
+# quand même, faute de pouvoir distinguer un jeton anon d'un jeton porteur de droits.
+#
+# Elle est arrivée dans l'historique le 2026-08-01 : la bascule vers le VPS supposait
+# alors un secret HS256 partagé, et le client l'envoyait comme repli anonyme. Le projet
+# signe en réalité en ES256 asymétrique, donc cette clé a été RETIRÉE du code le
+# 2026-08-02 (voir bdi-infra/migration/NOTES-JWT.md). Elle ne subsiste que dans les
+# commits intermédiaires, jamais réécrits.
+#
+# Motif volontairement ANCRÉ sur cette valeur précise, et non sur un motif JWT générique :
+# un vrai jeton porteur de droits committé un jour doit continuer de faire échouer la CI.
 regexes = [
   '''sb_publishable_[A-Za-z0-9_-]+''',
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rd3d2emJqdHlhd3BjeXJueWJrIiwicm9sZSI6ImFub24i[A-Za-z0-9_.-]+''',
 ]
 # URL publique du projet Supabase (identifiant de projet, non secret).
 paths = [

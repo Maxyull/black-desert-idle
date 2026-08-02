@@ -231,7 +231,7 @@ async function closeOverlays(page) {
     const d = document.createElement('div');
     d.style.cssText = 'position:fixed;inset:0;background:rgba(6,8,14,.94);z-index:99998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;opacity:0;transition:opacity 1s ease';
     d.innerHTML = '<div style="font-family:Georgia,serif;font-size:64px;font-weight:bold;color:#d4a955;letter-spacing:2px">BLACK DESERT IDLE</div>' +
-      '<div style="font-family:Georgia,serif;font-size:30px;color:#f0e6d2">maxyull.github.io/black-desert-idle</div>' +
+      '<div style="font-family:Georgia,serif;font-size:30px;color:#f0e6d2">blackdesertidle.maxyull.fr</div>' +
       '<div style="font-family:Georgia,serif;font-size:24px;color:#9aa4b5">Free · Unofficial fan project · Feedback welcome</div>';
     document.body.appendChild(d);
     requestAnimationFrame(() => { d.style.opacity = '1'; });
