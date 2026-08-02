@@ -15307,7 +15307,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
 
 const DATA_API_URL = '';
 
-const DATA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rd3d2emJqdHlhd3BjeXJueWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDM1NzcsImV4cCI6MjA5ODU3OTU3N30.bOLK7wf61ivPdVbTZ9cq-eNYHgI8jWRc7PZnRc3-SKw';
+const DATA_SANS_SESSION = '';
 
 let sb = null, currentUser = null;
 
@@ -15325,10 +15325,27 @@ let sbData = null;
 async function jetonPourDonnees() {
   try {
     const { data } = await sbAuth.auth.getSession();
-    return (data && data.session && data.session.access_token) || DATA_ANON_KEY;
+    return (data && data.session && data.session.access_token) || DATA_SANS_SESSION;
   } catch (e) {
-    return DATA_ANON_KEY;
+    return DATA_SANS_SESSION;
   }
+}
+
+function fetchDonnees(entree, options) {
+  const opts = options || {};
+  let entetes;
+  try {
+    entetes = new Headers(opts.headers || {});
+  } catch (e) {
+    
+    return fetch(entree, opts);
+  }
+  const autorisation = entetes.get('Authorization') || '';
+  if (/^Bearer\s*$/i.test(autorisation)) entetes.delete('Authorization');
+  const suivantes = {};
+  for (const cle in opts) if (Object.prototype.hasOwnProperty.call(opts, cle)) suivantes[cle] = opts[cle];
+  suivantes.headers = entetes;
+  return fetch(entree, suivantes);
 }
 
 try {
@@ -15337,9 +15354,10 @@ try {
 
     if (DATA_API_URL && DATA_API_URL.startsWith('https://')) {
       
-      sbData = window.supabase.createClient(DATA_API_URL, DATA_ANON_KEY, {
+      sbData = window.supabase.createClient(DATA_API_URL, SUPABASE_ANON_KEY, {
         auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
         accessToken: jetonPourDonnees,
+        global: { fetch: fetchDonnees },
       });
     } else {
       sbData = sbAuth;

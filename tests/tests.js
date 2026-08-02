@@ -7116,11 +7116,6 @@
   // casser en silence, c'est-à-dire sans erreur visible, avec juste des données
   // vides ou périmées à l'écran.
 
-  /** Décode la charge utile d'un JWT sans vérifier la signature (on ne teste pas la crypto ici). */
-  function _chargeJwt(jeton) {
-    try { return JSON.parse(atob(String(jeton).split('.')[1])); } catch (e) { return null; }
-  }
-
   // Unitaire : la configuration de la bascule doit être cohérente avant même de
   // regarder comment elle est utilisée.
   function testDataApiConfigCoherente() {
@@ -7130,27 +7125,62 @@
       assert('DATA_API_URL est en https (le jeu est servi en https par GitHub Pages, ' +
         'un appel en http serait bloqué en mixed content)',
         DATA_API_URL.startsWith('https://'), DATA_API_URL);
-      assert('DATA_API_URL n\'a pas de barre oblique finale (supabase-js concatène sans normaliser, ' +
-        'on obtiendrait //rest/v1/)',
+      assert("DATA_API_URL n'a pas de barre oblique finale (supabase-js concatène sans " +
+        'normaliser, on obtiendrait //rest/v1/)',
         !DATA_API_URL.endsWith('/'), DATA_API_URL);
     }
+    assert("DATA_SANS_SESSION est la chaîne vide (fetchDonnees s'en sert pour repérer " +
+      "l'absence de session et retirer l'en-tête Authorization)",
+      DATA_SANS_SESSION === '', `recu=${JSON.stringify(DATA_SANS_SESSION)}`);
+  }
 
-    // LE piège de la bascule. SUPABASE_ANON_KEY est au format `sb_publishable_…`, que
-    // seul Supabase cloud sait interpréter. Un PostgREST auto-hébergé tenterait de le
-    // décoder comme un JWT et répondrait 401 à TOUTES les requêtes anonymes, invités
-    // et classement public affiché avant connexion. D'où DATA_ANON_KEY, l'ancienne clé
-    // anon du même projet, qui est un vrai JWT HS256.
-    const charge = _chargeJwt(DATA_ANON_KEY);
-    assert('DATA_ANON_KEY est un JWT décodable (et NON une clé sb_publishable_…, ' +
-      'que le PostgREST du VPS ne sait pas lire)', charge !== null,
-      String(DATA_ANON_KEY).slice(0, 24));
-    if (charge) {
-      assert('DATA_ANON_KEY porte le rôle anon', charge.role === 'anon', `role=${charge.role}`);
-      assert('DATA_ANON_KEY vise bien le projet du jeu', charge.ref === 'mkwwvzbjtyawpcyrnybk',
-        `ref=${charge.ref}`);
-      assert('DATA_ANON_KEY n\'est pas expirée',
-        !charge.exp || charge.exp * 1000 > Date.now(),
-        `exp=${charge.exp}`);
+  // Régression sur une vraie erreur d'architecture, corrigée le 2026-08-02.
+  //
+  // La première version envoyait au VPS l'ancienne clé anon du projet, un JWT HS256,
+  // en supposant un secret symétrique partagé. Or le projet signe en ES256 ASYMÉTRIQUE :
+  // le PostgREST du VPS vérifie avec la clé publique et rejette tout jeton HS256, donc
+  // 401 sur chaque lecture publique (le classement affiché avant connexion).
+  //
+  // Aucun JWT ne doit plus partir vers le client de données.
+  function testAucunJwtEnDurPourLeClientDeDonnees() {
+    const source = typeof jetonPourDonnees === 'function' ? jetonPourDonnees.toString() : '';
+    assert('jetonPourDonnees ne renvoie aucun JWT en dur',
+      !/eyJ[A-Za-z0-9_-]{10,}/.test(source), source.slice(0, 120));
+    assert("DATA_ANON_KEY n'existe plus (remplacée par le retrait de l'en-tête, " +
+      'voir bdi-infra/migration/NOTES-JWT.md)',
+      typeof DATA_ANON_KEY === 'undefined');
+    assert("SUPABASE_ANON_KEY n'est PAS un JWT (c'est une clé sb_publishable_, elle ne " +
+      "part qu'en en-tête apikey, jamais en Authorization)",
+      !/^eyJ/.test(String(SUPABASE_ANON_KEY)), String(SUPABASE_ANON_KEY).slice(0, 16));
+  }
+
+  // Régression : c'est fetchDonnees qui rend les lectures publiques possibles.
+  // Sans lui, supabase-js enverrait « Authorization: Bearer » tout court, que
+  // PostgREST refuse en 401 au lieu de traiter la requête en anonyme.
+  function testFetchDonneesRetireLAutorisationVide() {
+    assert('fetchDonnees existe', typeof fetchDonnees === 'function');
+    if (typeof fetchDonnees !== 'function' || typeof Headers === 'undefined') return;
+
+    const vraiFetch = window.fetch;
+    let vues = null;
+    try {
+      window.fetch = (url, opts) => { vues = opts.headers; return Promise.resolve({ ok: true }); };
+
+      fetchDonnees('https://exemple/rest/v1/x', { headers: { Authorization: 'Bearer ', apikey: 'k' } });
+      assert("sans session, l'en-tête Authorization est RETIRÉ (PostgREST retombe alors sur db-anon-role)",
+        vues && !vues.has('Authorization'), vues && vues.get('Authorization'));
+      assert('les autres en-têtes sont préservés', vues && vues.get('apikey') === 'k');
+
+      fetchDonnees('https://exemple/rest/v1/x', { headers: { Authorization: 'Bearer jeton.de.session' } });
+      assert("avec session, l'en-tête Authorization est CONSERVÉ intact",
+        vues && vues.get('Authorization') === 'Bearer jeton.de.session',
+        vues && vues.get('Authorization'));
+
+      fetchDonnees('https://exemple/rest/v1/x', { method: 'POST', headers: { Authorization: 'Bearer' } });
+      assert('« Bearer » sans espace ni jeton est aussi retiré',
+        vues && !vues.has('Authorization'));
+    } finally {
+      window.fetch = vraiFetch;
     }
   }
 
@@ -7224,8 +7254,8 @@
     const src = jetonPourDonnees.toString();
     assert('jetonPourDonnees enveloppe getSession dans un try/catch',
       /try\s*{[\s\S]*getSession[\s\S]*}\s*catch/.test(src));
-    assert('jetonPourDonnees retombe sur DATA_ANON_KEY plutôt que de propager l\'erreur',
-      src.includes('DATA_ANON_KEY'));
+    assert("jetonPourDonnees retombe sur DATA_SANS_SESSION plutôt que de propager l'erreur",
+      src.includes('DATA_SANS_SESSION'));
     assert('jetonPourDonnees ne relance jamais (aucun `throw`)', !/\bthrow\b/.test(src));
   }
 
@@ -7253,6 +7283,8 @@
   window.runRegressionTests = function() {
     results.length = 0;
     testDataApiConfigCoherente();
+    testAucunJwtEnDurPourLeClientDeDonnees();
+    testFetchDonneesRetireLAutorisationVide();
     testSbRouteLesDonneesEtLAuthSeparement();
     testJetonPourDonneesNeJetteJamaisHorsLigne();
     testCspAutoriseLeDomaineDeDonnees();

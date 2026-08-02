@@ -40,10 +40,14 @@ multi navigateur and multidevice" + "Mode hors ligne")** :
 le vps")**, outillage complet dans `D:\DEV\bdi-infra`, ici seulement le côté client.
 
 L'**authentification reste sur Supabase cloud** (153 comptes, 4 providers OAuth qu'on ne veut
-pas reconfigurer), seule la **base** descend sur un VPS OVH. Ça marche parce que le projet
-signe ses JWT en **HS256 symétrique** : le PostgREST du VPS partage le même `JWT_SECRET`, valide
-donc les tokens émis par le GoTrue cloud, et `auth.uid()` renvoie le même UUID côté SQL, les
-161 fonctions et les policies RLS n'ont pas été touchées d'une ligne.
+pas reconfigurer), seule la **base** descend sur un VPS OVH. Ça marche parce que le PostgREST
+du VPS vérifie les jetons du GoTrue cloud avec la **clé publique** du projet : `auth.uid()`
+renvoie le même UUID côté SQL, les 161 fonctions et les policies RLS n'ont pas été touchées
+d'une ligne.
+
+Le projet signe en **ES256 asymétrique** (constaté le 2026-08-02 ; la première version de ce
+montage supposait un secret HS256 partagé, ce qui était faux). Bénéfice au passage : le VPS ne
+détient qu'une clé de VÉRIFICATION, même entièrement compromis il ne peut forger aucun jeton.
 
 Deux clients dans ce fichier :
 - `sbAuth`, toujours le projet cloud. Porte l'auth, les edge functions, et le realtime
@@ -62,10 +66,12 @@ oublier. Conséquence à connaître : toute propriété non listée dans `VERS_D
 client d'auth. Si une manque un jour, elle **s'ajoute là**, pas en contournant `sb`.
 
 Deux pièges qui ont coûté cher à trouver :
-- `DATA_ANON_KEY` ≠ `SUPABASE_ANON_KEY`. Cette dernière est au format `sb_publishable_…`, qui
-  n'est **pas un JWT** : Supabase cloud sait le lire, un PostgREST auto-hébergé non, il
-  renverrait 401 sur **toutes** les requêtes anonymes (invités, classement public affiché avant
-  connexion). D'où l'ancienne clé anon du même projet, un vrai JWT HS256.
+- **Aucune clé anon ne part vers le VPS.** La première version y envoyait l'ancienne clé anon
+  du projet (un JWT HS256), que le PostgREST en ES256 rejette. La bonne réponse est de retirer
+  complètement l'en-tête `Authorization` quand il n'y a pas de session : PostgREST retombe
+  alors sur `db-anon-role`, donc le rôle `anon`, et les lectures publiques passent. C'est le
+  rôle de `fetchDonnees()`, branchée en `global.fetch` du client de données. Tests :
+  `testAucunJwtEnDurPourLeClientDeDonnees`, `testFetchDonneesRetireLAutorisationVide`.
 - L'edge function `auth-by-identifier` fait de l'auth **et** trois RPC de données
   (`email_for_login`, `rate_limit_hit`, `rate_limit_gc`) sur la même constante. Elles ont été
   scindées (`DATA_API_URL` côté Deno, avec repli) : sans ça, un joueur inscrit après la bascule
@@ -78,7 +84,8 @@ vérifié. Voir `bdi-infra/migration/RUNBOOK.md` § « Armer la bascule ». Livr
 ça évite
 de faire atterrir le même jour le refactor du client et le déménagement de la base.
 
-Tests : `testDataApiConfigCoherente`, `testSbRouteLesDonneesEtLAuthSeparement`,
+Tests : `testDataApiConfigCoherente`, `testAucunJwtEnDurPourLeClientDeDonnees`,
+`testFetchDonneesRetireLAutorisationVide`, `testSbRouteLesDonneesEtLAuthSeparement`,
 `testJetonPourDonneesNeJetteJamaisHorsLigne`, `testCspAutoriseLeDomaineDeDonnees`
 (`tests/tests.js`), plus un garde-fou de cohérence de domaine en fin de
 `tests/companions.spec.js` (le module Compagnons est une iframe isolée, jamais bundlée : il
