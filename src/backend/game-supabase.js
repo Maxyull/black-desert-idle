@@ -13,19 +13,19 @@ const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
 // auth.uid() renvoie donc le même UUID côté SQL, et les 161 fonctions comme les policies
 // RLS sont inchangées.
 //
-// ⚠️ DÉSARMÉ POUR L'INSTANT. Chaîne vide = tout reste sur le cloud, exactement comme
-// avant : sbData retombe sur sbAuth et l'aiguillage ci-dessous ne change rien au
-// comportement du jeu. Toute la mécanique est en place et testée, elle attend juste
-// que le VPS existe.
+// ARMÉ le 2026-08-02. Les données passent par le VPS, l'authentification reste sur
+// Supabase. Préalables vérifiés avant d'armer :
+//   * 07-verifier.sh au vert (57 tables, 162 fonctions, 48 policies) ;
+//   * le miroir auth.users se rafraîchit chaque minute depuis le cloud ;
+//   * la fonction edge auth-by-identifier résout les pseudos SUR LE VPS, via
+//     l'endpoint interne (bdi-infra/api/app/routes_interne.py). Sans cette étape,
+//     armer ici aurait suffi à casser la connexion par pseudo de tout compte créé
+//     après la bascule : le jeu aurait écrit les profils sur le VPS pendant que la
+//     fonction edge aurait continué de les chercher dans le cloud.
 //
-// LA BASCULE = mettre 'https://bdi.maxyull.fr' ici, puis rebuild + push. Rien d'autre.
-// À ne faire QU'APRÈS bdi-infra/migration/07-verifier.sh au vert, sinon le jeu tape une
-// base qui n'existe pas. LE RETOUR ARRIÈRE = remettre '' (voir RUNBOOK.md).
-//
-// Volontairement livré désarmé plutôt qu'armé : ça évite de faire atterrir le même jour
-// le refactor du client ET le déménagement de la base. Si quelque chose casse après la
-// bascule, on sait immédiatement lequel des deux est en cause.
-const DATA_API_URL = '';
+// LE RETOUR ARRIÈRE = remettre '' ici, rebuild, push. Le cloud est conservé intact
+// et rejouable pour ça, voir bdi-infra/migration/RUNBOOK.md et 09-rejouer-vers-cloud.sh.
+const DATA_API_URL = 'https://bdi.maxyull.fr';
 
 // ⚠️ PAS DE CLÉ ANON POUR LE VPS, et c'est délibéré.
 //

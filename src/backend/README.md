@@ -73,16 +73,24 @@ Deux pièges qui ont coûté cher à trouver :
   rôle de `fetchDonnees()`, branchée en `global.fetch` du client de données. Tests :
   `testAucunJwtEnDurPourLeClientDeDonnees`, `testFetchDonneesRetireLAutorisationVide`.
 - L'edge function `auth-by-identifier` fait de l'auth **et** trois RPC de données
-  (`email_for_login`, `rate_limit_hit`, `rate_limit_gc`) sur la même constante. Elles ont été
-  scindées (`DATA_API_URL` côté Deno, avec repli) : sans ça, un joueur inscrit après la bascule
-  ne pourrait plus se connecter par son pseudo, la fonction lisant un `profiles` figé.
+  (`email_for_login`, `rate_limit_hit`, `rate_limit_gc`). Elles ont été scindées : sans ça, un
+  joueur inscrit après la bascule ne pourrait plus se connecter par son pseudo, la fonction
+  lisant un `profiles` figé. **Mais elle ne peut pas appeler le VPS en PostgREST** : sa clé
+  `service_role` est un JWT HS256, le VPS ne vérifie que de l'ES256, il répond 401. Elle passe
+  donc par trois routes dédiées de l'API des dashboards, protégées par un secret partagé et
+  sans JWT : `bdi-infra/api/app/routes_interne.py`, variables `AUTH_INTERNE_URL` et
+  `AUTH_INTERNE_SECRET`. Tant qu'elles ne sont pas posées, la fonction appelle le cloud comme
+  avant, ce qui rend son déploiement neutre et la bascule réversible d'un geste.
 
-**État : `DATA_API_URL = ''`, la bascule est DÉSARMÉE.** Le jeu parle au cloud exactement comme
-avant, le comportement est inchangé. Armer = remplir cette constante (+ `COMPANION_MODELS_BASE`
-dans `companions/viewer3d.js`, et la variable d'env de l'edge function), une fois le VPS
-vérifié. Voir `bdi-infra/migration/RUNBOOK.md` § « Armer la bascule ». Livré désarmé exprès :
-ça évite
-de faire atterrir le même jour le refactor du client et le déménagement de la base.
+**État : `DATA_API_URL = 'https://bdi.maxyull.fr'`, la bascule est ARMÉE** (2026-08-02). Les
+données passent par le VPS, l'authentification et le realtime restent sur Supabase.
+Retour arrière = remettre `''` ici et dans `companions/viewer3d.js`, rebuild, push ; le cloud
+est conservé intact et rejouable pour ça. Voir `bdi-infra/migration/RUNBOOK.md`.
+
+⚠️ Les trois constantes doivent bouger **ensemble** : `DATA_API_URL`, `COMPANION_MODELS_BASE`
+et les variables `AUTH_INTERNE_*` de l'edge function. Armer le client seul enverrait les
+nouveaux profils sur le VPS pendant que la connexion par pseudo les chercherait encore dans le
+cloud ; poser les secrets seuls produirait la panne symétrique.
 
 Tests : `testDataApiConfigCoherente`, `testAucunJwtEnDurPourLeClientDeDonnees`,
 `testFetchDonneesRetireLAutorisationVide`, `testSbRouteLesDonneesEtLAuthSeparement`,

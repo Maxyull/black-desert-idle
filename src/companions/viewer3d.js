@@ -27,7 +27,7 @@
 // voit pas les constantes de game-supabase.js, d'où ce domaine en double. Un test
 // Playwright vérifie que les deux restent cohérents (tests/companions.spec.js, dernier
 // test du fichier).
-const COMPANION_MODELS_BASE = 'https://mkwwvzbjtyawpcyrnybk.supabase.co/storage/v1/object/public/companion-models';
+const COMPANION_MODELS_BASE = 'https://bdi.maxyull.fr/storage/v1/object/public/companion-models';
 const VIEWER3D_TEST_MODEL = COMPANION_MODELS_BASE + '/loot/black_mask_cat_T5.glb';
 
 // nom de pet (catalog.js) -> { section, slug } ; l'URL finale est construite comme
