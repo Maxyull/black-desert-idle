@@ -20571,9 +20571,9 @@ function AdmDashboard() {
     const [health, kpi, reports, integrity] = await Promise.all([
       sb.rpc('admin_health'),
       sb.rpc('admin_dashboard_kpis', { p_hours: hours }),
-      sb.rpc('admin_patch_note_pending_reports').catch(() => ({ data: [] })),
       
-      sb.rpc('admin_integrity_summary').catch(() => ({ data: [] })),
+      Promise.resolve(sb.rpc('admin_patch_note_pending_reports')).catch(() => ({ data: [] })),
+      Promise.resolve(sb.rpc('admin_integrity_summary')).catch(() => ({ data: [] })),
     ]);
     const kpis = {};
     (kpi.data || []).forEach(r => { kpis[r.metric] = { current: r.current_value, previous: r.previous_value }; });

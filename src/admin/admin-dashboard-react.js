@@ -144,10 +144,17 @@ function AdmDashboard() {
     const [health, kpi, reports, integrity] = await Promise.all([
       sb.rpc('admin_health'),
       sb.rpc('admin_dashboard_kpis', { p_hours: hours }),
-      sb.rpc('admin_patch_note_pending_reports').catch(() => ({ data: [] })),
       // .catch : un client déployé avant la migration 20260724180000 n'a pas encore cette RPC.
       // Le dashboard doit continuer de répondre à Q1/Q2 dans ce cas, pas rester bloqué.
-      sb.rpc('admin_integrity_summary').catch(() => ({ data: [] })),
+      // Promise.resolve(...) : sb.rpc() renvoie un PostgrestBuilder, un thenable qui expose .then
+      // mais PAS .catch — `sb.rpc(...).catch(...)` levait un TypeError SYNCHRONE, avant même le
+      // Promise.all, donc load() échouait en entier et le dashboard restait bloqué sur son
+      // squelette à CHAQUE ouverture (104 occurrences dans public.client_errors du 2026-07-20 au
+      // 2026-08-02, 91 en V496 + 13 en V497, qui polluaient en plus le KPI erreurs_client_24h).
+      // Promise.resolve adopte le thenable en vraie Promise — même correctif que
+      // combat/miniboss.js:542 et le ping log_playtime_ping de backend/game-supabase.js.
+      Promise.resolve(sb.rpc('admin_patch_note_pending_reports')).catch(() => ({ data: [] })),
+      Promise.resolve(sb.rpc('admin_integrity_summary')).catch(() => ({ data: [] })),
     ]);
     const kpis = {};
     (kpi.data || []).forEach(r => { kpis[r.metric] = { current: r.current_value, previous: r.previous_value }; });

@@ -3912,6 +3912,112 @@
     }
     sb = origSb; currentUser = origCurrentUser;
   }
+  // `sb.rpc(...)` / `sb.from(...)` suivis DIRECTEMENT de `.catch(` -- tolère un niveau de parenthèses
+  // imbriquées dans les arguments ({ p_hours: hours }, f(x)...). Ne matche PAS la forme corrigée
+  // `Promise.resolve(sb.rpc(...)).catch(` (une parenthèse fermante s'intercale), ni `.then(...).catch(`
+  // (le .then renvoie une VRAIE Promise, .catch y est légitime -- cf. combat/boss.js:1405).
+  const BARE_POSTGREST_CATCH_RE = /\bsb\s*\.\s*(?:rpc|from)\s*\((?:[^()]|\([^()]*\))*\)\s*\.\s*catch\s*\(/;
+  // TEST UNITAIRE du correctif dashboard admin (2026-08-03) -- 5e occurrence du MÊME bug dans ce
+  // repo. AdmDashboard.load() faisait `sb.rpc('admin_patch_note_pending_reports').catch(...)` et
+  // `sb.rpc('admin_integrity_summary').catch(...)` : le TypeError est levé SYNCHRONEMENT, avant même
+  // le Promise.all, donc load() échouait en entier et le dashboard restait bloqué sur son squelette
+  // à CHAQUE ouverture. Mesuré sur le VPS : 104 lignes dans public.client_errors entre le 2026-07-20
+  // et le 2026-08-02 (91 en V496, 13 en V497), qui gonflaient en plus le KPI erreurs_client_24h du
+  // dashboard de supervision -- le bug polluait donc l'outil censé le signaler.
+  // Deux volets : (1) la forme corrigée survit à un builder sans .catch et la forme fautive lève
+  // bien (sinon le test ne prouverait rien), (2) inspection statique de AdmDashboard.
+  function testAdminDashboardRpcCallsSurviveCatchlessBuilder() {
+    // reproduit fidèlement le vrai PostgrestFilterBuilder : .then() existe, .catch() n'existe PAS
+    const makeBuilder = () => ({ then(onFulfilled) { if (onFulfilled) onFulfilled({ data: [], error: null }); return this; } });
+    assert('mock builder fidèle au vrai PostgrestBuilder : aucun .catch dessus', typeof makeBuilder().catch !== 'function');
+    let threwBare = false;
+    try { makeBuilder().catch(() => ({ data: [] })); } catch (e) { threwBare = true; }
+    assert('builder.catch(...) direct lève bien un TypeError (le bug d\'origine reproduit)', threwBare);
+    let threwFixed = false;
+    try { Promise.resolve(makeBuilder()).catch(() => ({ data: [] })); } catch (e) { threwFixed = true; }
+    assert('Promise.resolve(builder).catch(...) ne lève pas (forme du correctif)', !threwFixed);
+    if (typeof AdmDashboard !== 'function') return; // hors contexte navigateur / React indisponible
+    const src = AdmDashboard.toString();
+    assert('AdmDashboard interroge toujours admin_patch_note_pending_reports (sinon ce test est obsolète)',
+      src.includes('admin_patch_note_pending_reports') && src.includes('admin_integrity_summary'));
+    assert('AdmDashboard ne pose plus de .catch() nu sur sb.rpc(...) (régression 2026-08-03)',
+      !BARE_POSTGREST_CATCH_RE.test(stripJsCommentsForScan(src)), src.slice(0, 400));
+    assert('AdmDashboard enveloppe ses RPC optionnelles dans Promise.resolve() avant .catch()',
+      /Promise\.resolve\(\s*sb\s*\.\s*rpc\(/.test(src));
+  }
+  // Retire commentaires de ligne et de bloc avant de chercher le motif fautif. Indispensable :
+  // ce motif est CITÉ mot pour mot dans les commentaires qui documentent le bug (miniboss.js,
+  // admin-dashboard-react.js, game-supabase.js) — sans ce filtre le garde-fou signalait ses propres
+  // notes explicatives (constaté au 1er run). Même esprit que le parseur de scripts/build.py :
+  // caractère par caractère en respectant les chaînes, PAS une regex naïve. Les littéraux regex ne
+  // sont pas modélisés : un `/['"]/` peut faire avaler la suite comme si c'était une chaîne, ce qui
+  // donne au pire un FAUX NÉGATIF (motif manqué), jamais un faux positif qui bloquerait la CI.
+  function stripJsCommentsForScan(src) {
+    let out = '';
+    for (let i = 0, n = src.length; i < n; ) {
+      const c = src[i], c2 = src[i + 1];
+      if (c === '/' && c2 === '/') { while (i < n && src[i] !== '\n') i++; continue; }
+      if (c === '/' && c2 === '*') { i += 2; while (i < n && !(src[i] === '*' && src[i + 1] === '/')) i++; i += 2; continue; }
+      if (c === '"' || c === '\'' || c === '`') {
+        out += c; i++;
+        while (i < n && src[i] !== c) {
+          if (src[i] === '\\') { out += src[i] + (src[i + 1] || ''); i += 2; continue; }
+          out += src[i]; i++;
+        }
+        out += c; i++; continue;
+      }
+      out += c; i++;
+    }
+    return out;
+  }
+  // TEST DE RÉGRESSION à l'échelle du repo (2026-08-03) : le bug est revenu CINQ fois par des
+  // chemins différents (log_playtime_ping 2026-07-08, miniboss 2026-07-14, mark_item_tutorial_seen
+  // + sync_companion_stats 2026-07-20, dashboard admin 2026-08-02) -- un garde-fou par fonction
+  // fautive ne suffit visiblement pas. Celui-ci balaie TOUTES les fonctions globales chargées et
+  // échoue en nommant la coupable, quel que soit le fichier qui l'introduit.
+  // Limite assumée : ne voit que ce qui est atteignable depuis window, donc les `function` top-level
+  // (l'écrasante majorité du projet, scope global partagé oblige — voir CLAUDE.md §7) et leurs
+  // closures internes via toString(). Un `const f = () => ...` top-level ne crée pas de propriété
+  // window et échapperait au balayage ; c'est le prix d'un test synchrone (le runner ne peut pas
+  // await un fetch des sources).
+  function testNoBareCatchOnPostgrestBuilderAnywhereInLoadedCode() {
+    if (typeof window === 'undefined') return;
+    // (0) prouver que le détecteur détecte quelque chose — un garde-fou qui ne matche jamais rien
+    // passe au vert pour de mauvaises raisons (ces fonctions ne sont JAMAIS appelées, juste lues)
+    const detect = fn => BARE_POSTGREST_CATCH_RE.test(stripJsCommentsForScan(typeof fn === 'string' ? fn : fn.toString()));
+    assert('détecteur : repère bien un sb.rpc(...).catch nu',
+      detect(function () { return sb.rpc('x').catch(() => {}); }));
+    assert('détecteur : repère bien un sb.from(...).catch nu',
+      detect(function () { return sb.from('t').catch(() => {}); }));
+    assert('détecteur : ne signale PAS la forme corrigée Promise.resolve(sb.rpc(...)).catch',
+      !detect(function () { return Promise.resolve(sb.rpc('x', { p_h: 1 })).catch(() => {}); }));
+    assert('détecteur : ne signale PAS sb.rpc(...).then(...).catch (le .then rend une vraie Promise)',
+      !detect(function () { return sb.rpc('x').then(r => r).catch(() => {}); }));
+    assert('détecteur : ignore le motif quand il est cité en commentaire',
+      !detect('function f() { /* interdit : sb.rpc(...).catch(...) */ // idem sb.from(x).catch(y)\n return 1; }'));
+    // une chaîne contenant // ne doit PAS être prise pour un commentaire (et le vrai commentaire
+    // qui la suit doit quand même disparaître). Volontairement pas une URL en dur : CodeQL lit
+    // tout `.includes('http...')` comme une validation d'URL incomplète (faux positif, PR #93).
+    const stripped = stripJsCommentsForScan('const s = "a//b"; // vraiCommentaire');
+    assert('stripJsCommentsForScan préserve les chaînes contenant //', stripped.indexOf('a//b') !== -1, stripped);
+    assert('stripJsCommentsForScan retire bien le commentaire de ligne qui suit', stripped.indexOf('vraiCommentaire') === -1, stripped);
+    // (1) balayage réel
+    const offenders = [];
+    Object.getOwnPropertyNames(window).forEach(k => {
+      let v;
+      try { v = window[k]; } catch (e) { return; } // certains accesseurs lèvent (props dépréciées)
+      if (typeof v !== 'function') return;
+      let src;
+      try { src = Function.prototype.toString.call(v); } catch (e) { return; }
+      if (!src || src.indexOf('.catch') === -1) return; // filtre rapide avant le parseur
+      if (BARE_POSTGREST_CATCH_RE.test(stripJsCommentsForScan(src))) offenders.push(k);
+    });
+    assert('Aucune fonction globale ne pose de .catch() nu sur sb.rpc(...)/sb.from(...) (thenable Postgrest sans .catch)',
+      offenders.length === 0, 'fonction(s) fautive(s) : ' + offenders.join(', ') + ' — envelopper dans Promise.resolve(...) ou passer par await + try/catch');
+    // sanity : le balayage voit bien les fonctions du jeu, sinon il passerait au vert à vide
+    assert('Le balayage atteint bien les fonctions globales du jeu (sinon le test est vide)',
+      typeof window.saveToCloud === 'function' || typeof window.hud === 'function');
+  }
   // garde-fou (2026-07-20, "quand je reste longtemps dans compagnon le dashboard s'affiche") :
   // showPlayerInventoryWindow() ouvre une popup "Inventaire joueur" depuis le panneau admin, et
   // sondait toutes les 400ms si elle était fermée pour rouvrir openAdminPanel() -- MÊME si l'admin
@@ -7409,6 +7515,8 @@
     testHeaderShortcutButtonsExistWithTitleAndAdminHidden();
     testHeaderShortcutButtonsDelegateToSidebarClick();
     testRpcFireAndForgetCallsNeverUseBareCatch();
+    testAdminDashboardRpcCallsSurviveCatchlessBuilder();
+    testNoBareCatchOnPostgrestBuilderAnywhereInLoadedCode();
     testAdminHourlyReadsRealPlaytimeColumns();
     testPopupCloseOnlyReopensAdminPanelIfStillOpen();
     testPatchPagesCoverAllEntriesWithinBounds();
