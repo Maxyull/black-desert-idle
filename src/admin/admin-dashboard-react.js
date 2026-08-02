@@ -62,8 +62,23 @@ const ADM_HEALTH_TARGET = {
   silver_drift: ['economy', 'silver'],
   db_size: ['system', 'danger'],
 };
-/** @param {object[]} checks - lignes de admin_health(). @returns {React.Element} bandeau Q1. */
-function AdmHealthBanner({ checks, checkedAt }) {
+/** @param {object[]} checks - lignes de admin_health(). @param {boolean} [unreachable] - admin_health
+ *  n'a pas répondu. @returns {React.Element} bandeau Q1. */
+function AdmHealthBanner({ checks, checkedAt, unreachable }) {
+  // Sans ce cas explicite, une liste de checks VIDE (réseau coupé, RPC en erreur) tombait sur le
+  // reduce ci-dessous avec 'ok' comme valeur initiale : le bandeau affichait 🟢 « Tout est normal »
+  // alors qu'on ne savait strictement RIEN de l'état du jeu. Un dashboard de supervision qui ment
+  // en vert est pire que pas de dashboard du tout — on distingue donc « tout va bien » de « je
+  // n'ai pas pu demander ». Tonalité warn (🟠) et non muted : ne pas joindre sa propre source de
+  // surveillance est une anomalie à traiter, pas un détail à noyer en gris.
+  if (unreachable) {
+    return admH('div', { className: 'admHealthBanner tone-warn' },
+      admH('div', { className: 'admHealthMain' },
+        admH('span', { className: 'admHealthDot' }, '🟠'),
+        admH('span', { className: 'admHealthTitle' }, i18next.t('admin:admin.dash.health_unreachable'))
+      )
+    );
+  }
   const bad = (checks || []).filter(c => c.status === 'warn' || c.status === 'down');
   const worst = (checks || []).reduce((w, c) => (ADM_STATUS_RANK[c.status] < ADM_STATUS_RANK[w] ? c.status : w), 'ok');
   const tone = worst === 'down' ? 'crit' : worst === 'warn' ? 'warn' : worst === 'unknown' ? 'muted' : 'good';
@@ -100,10 +115,22 @@ const ADM_KPIS = [
   { key: 'client_errors',  icon: '🐞', dir: 'up-is-bad',  label: () => i18next.t('admin:admin.dash.kpi_client_errors') },
   { key: 'market_sales',   icon: '🏛️', dir: 'up-is-good', label: () => i18next.t('admin:admin.dash.kpi_market_sales') },
 ];
-/** @param {object} kpis - {metric: {current, previous}}. @returns {React.Element} rangée Q2. */
-function AdmKpiRow({ kpis, hours }) {
+/** @param {object} kpis - {metric: {current, previous}}. @param {boolean} [unavailable] -
+ *  admin_dashboard_kpis n'a pas répondu. @returns {React.Element} rangée Q2. */
+function AdmKpiRow({ kpis, hours, unavailable }) {
   return admH('div', { className: 'admKpiRow' },
     ADM_KPIS.map(def => {
+      // Même piège que le bandeau : sans données, le `|| { current: 0 }` affichait « 0 erreurs
+      // client » / « 0 joueurs actifs » comme si c'étaient des mesures. Un tiret dit la vérité
+      // (« pas de mesure ») là où un zéro affirme un fait faux, et sur ces KPI précis le zéro est
+      // justement la valeur rassurante — donc celle qui trompe le plus.
+      if (unavailable) {
+        return admH('div', { key: def.key, className: 'admKpiCard' },
+          admH('div', { className: 'admKpiLbl' }, def.icon + ' ' + def.label()),
+          admH('div', { className: 'admKpiVal' }, '—'),
+          admH('div', { className: 'admKpiDelta tone-neutral' }, '—')
+        );
+      }
       const row = (kpis || {})[def.key] || { current: 0, previous: 0 };
       const d = deltaBadge(row.current, row.previous, def.dir);
       return admH('div', { key: def.key, className: 'admKpiCard' },
@@ -117,9 +144,14 @@ function AdmKpiRow({ kpis, hours }) {
 }
 
 // ---------- Q3 : à traiter ----------
-/** @param {object[]} actions - {icon,label,cat,id}. @returns {React.Element} liste Q3 (état vide explicite). */
-function AdmActionList({ actions }) {
+/** @param {object[]} actions - {icon,label,cat,id}. @param {boolean} [incomplete] - au moins une
+ *  source de Q3 n'a pas répondu. @returns {React.Element} liste Q3 (état vide explicite). */
+function AdmActionList({ actions, incomplete }) {
   if (!actions || actions.length === 0) {
+    // Q3 se déduit des données de Q1/Q2 : si elles manquent, la liste est vide pour une raison qui
+    // n'a rien à voir avec « il n'y a rien à faire ». Afficher le ✅ dans ce cas revient à donner
+    // un feu vert qu'on n'a pas vérifié — troisième et dernier faux « tout va bien » du panneau.
+    if (incomplete) return admH('div', { className: 'admActionsEmpty' }, '⚠️ ' + i18next.t('admin:admin.dash.actions_unknown'));
     return admH('div', { className: 'admActionsEmpty' }, '✅ ' + i18next.t('admin:admin.dash.nothing_todo'));
   }
   return admH('div', { className: 'admActionsList' },
@@ -139,23 +171,42 @@ function AdmDashboard() {
   const [state, setState] = React.useState({ loading: true, checks: [], kpis: {}, actions: [] });
   const hours = adminPeriodHours();
 
+  // Une RPC qui ne répond pas ne doit JAMAIS faire échouer load(). Sinon setState n'est jamais
+  // appelé, `loading` reste à true, et le dashboard est figé sur son squelette POUR TOUJOURS :
+  // sans message, et même sans bouton Rafraîchir puisque celui-ci n'est rendu qu'une fois le
+  // chargement terminé. Seule sortie : fermer et rouvrir le panneau, pour retomber sur le même mur.
+  //
+  // Promise.resolve(...) : sb.rpc() renvoie un PostgrestBuilder, un thenable qui expose .then mais
+  // PAS .catch — `sb.rpc(...).catch(...)` levait un TypeError SYNCHRONE, avant même le Promise.all
+  // (104 occurrences dans public.client_errors du 2026-07-20 au 2026-08-02, 91 en V496 + 13 en
+  // V497, qui polluaient en plus le KPI erreurs_client_24h). Promise.resolve adopte le thenable en
+  // vraie Promise — même correctif que combat/miniboss.js et le ping log_playtime_ping de
+  // backend/game-supabase.js.
+  //
+  // On renvoie la même forme qu'une réponse Supabase ratée ({data, error}) plutôt qu'un {data: []}
+  // muet : un rejet réseau et une RPC absente deviennent ainsi indiscernables EN AVAL, et un seul
+  // test `.error` couvre les deux — au lieu de faire passer « je n'ai pas pu demander » pour
+  // « la réponse est : rien ».
+  const safeRpc = React.useCallback((fn, args) => (
+    Promise.resolve(args === undefined ? sb.rpc(fn) : sb.rpc(fn, args))
+      .catch(e => ({ data: null, error: e || { message: 'unreachable' } }))
+  ), []);
+
   const load = React.useCallback(async () => {
-    if (!sb) return;
+    // sb absent (CDN Supabase bloqué, init ratée) : même impasse que ci-dessus si on sortait sans
+    // toucher à l'état. On rend un dashboard honnêtement vide plutôt qu'un squelette éternel.
+    if (!sb) { setState({ loading: false, checks: [], kpis: {}, actions: [], healthDown: true, kpisDown: true }); return; }
     const [health, kpi, reports, integrity] = await Promise.all([
-      sb.rpc('admin_health'),
-      sb.rpc('admin_dashboard_kpis', { p_hours: hours }),
-      // .catch : un client déployé avant la migration 20260724180000 n'a pas encore cette RPC.
-      // Le dashboard doit continuer de répondre à Q1/Q2 dans ce cas, pas rester bloqué.
-      // Promise.resolve(...) : sb.rpc() renvoie un PostgrestBuilder, un thenable qui expose .then
-      // mais PAS .catch — `sb.rpc(...).catch(...)` levait un TypeError SYNCHRONE, avant même le
-      // Promise.all, donc load() échouait en entier et le dashboard restait bloqué sur son
-      // squelette à CHAQUE ouverture (104 occurrences dans public.client_errors du 2026-07-20 au
-      // 2026-08-02, 91 en V496 + 13 en V497, qui polluaient en plus le KPI erreurs_client_24h).
-      // Promise.resolve adopte le thenable en vraie Promise — même correctif que
-      // combat/miniboss.js:542 et le ping log_playtime_ping de backend/game-supabase.js.
-      Promise.resolve(sb.rpc('admin_patch_note_pending_reports')).catch(() => ({ data: [] })),
-      Promise.resolve(sb.rpc('admin_integrity_summary')).catch(() => ({ data: [] })),
+      safeRpc('admin_health'),
+      safeRpc('admin_dashboard_kpis', { p_hours: hours }),
+      // ces deux-là étaient DÉJÀ tolérantes, pour une autre raison : un client déployé avant la
+      // migration 20260724180000 n'a pas encore ces RPC. Leur échec reste silencieux (Q3 sera
+      // juste incomplet), là où celui de admin_health/admin_dashboard_kpis doit se voir.
+      safeRpc('admin_patch_note_pending_reports'),
+      safeRpc('admin_integrity_summary'),
     ]);
+    const healthDown = !health || !!health.error || !health.data;
+    const kpisDown = !kpi || !!kpi.error || !kpi.data;
     const kpis = {};
     (kpi.data || []).forEach(r => { kpis[r.metric] = { current: r.current_value, previous: r.previous_value }; });
     // Q3 se déduit des mêmes données : pas de source séparée à maintenir en plus.
@@ -172,8 +223,14 @@ function AdmDashboard() {
     (health.data || []).filter(c => c.status === 'down').forEach(c => {
       actions.push({ icon: '🔴', label: (c.label || c.key) + (c.message ? ' — ' + c.message : ''), cat: 'system', id: 'danger' });
     });
-    setState({ loading: false, checks: health.data || [], kpis, actions,
+    setState({ loading: false, checks: health.data || [], kpis, actions, healthDown, kpisDown,
+               // une source manquante rend Q3 incomplète : les signalements et les violations
+               // d'intégrité ne remontent QUE par ces RPC, leur silence n'est pas un « zéro ».
+               actionsIncomplete: healthDown || kpisDown || !!(reports && reports.error) || !!(integrity && integrity.error),
                checkedAt: (health.data || []).reduce((m, c) => (!m || c.checked_at > m ? c.checked_at : m), null) });
+    // deps [] volontairement inchangées : `hours` y semble manquant, mais setAdminPeriod()
+    // (admin-panel.js) re-rend la section entière, donc REMONTE le composant avec une valeur
+    // fraîche — l'ajouter aux deps ne changerait rien et sortirait du périmètre de ce correctif.
   }, []);
 
   React.useEffect(() => { load(); }, [load]);
@@ -186,11 +243,11 @@ function AdmDashboard() {
     );
   }
   return admH('div', { className: 'admDashV2' },
-    admH(AdmHealthBanner, { checks: state.checks, checkedAt: state.checkedAt }),
+    admH(AdmHealthBanner, { checks: state.checks, checkedAt: state.checkedAt, unreachable: state.healthDown }),
     admH('div', { className: 'admDashQLabel' }, i18next.t('admin:admin.dash.q2_title', { period: adminPeriodLabel() })),
-    admH(AdmKpiRow, { kpis: state.kpis, hours }),
+    admH(AdmKpiRow, { kpis: state.kpis, hours, unavailable: state.kpisDown }),
     admH('div', { className: 'admDashQLabel' }, i18next.t('admin:admin.dash.q3_title')),
-    admH(AdmActionList, { actions: state.actions }),
+    admH(AdmActionList, { actions: state.actions, incomplete: state.actionsIncomplete }),
     admH('button', { className: 'admDashRefresh', onClick: load }, '⟳ ' + i18next.t('admin:admin.dash.refresh'))
   );
 }

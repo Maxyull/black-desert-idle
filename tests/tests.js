@@ -3942,8 +3942,17 @@
       src.includes('admin_patch_note_pending_reports') && src.includes('admin_integrity_summary'));
     assert('AdmDashboard ne pose plus de .catch() nu sur sb.rpc(...) (régression 2026-08-03)',
       !BARE_POSTGREST_CATCH_RE.test(stripJsCommentsForScan(src)), src.slice(0, 400));
-    assert('AdmDashboard enveloppe ses RPC optionnelles dans Promise.resolve() avant .catch()',
-      /Promise\.resolve\(\s*sb\s*\.\s*rpc\(/.test(src));
+    // 2026-08-03 : l'assertion cherchait littéralement `Promise.resolve(sb.rpc(` — la forme exacte
+    // du 1er correctif. Les quatre RPC passent désormais par un helper safeRpc() unique, qui
+    // enveloppe au même endroit pour tout le monde ; l'ancienne regex ne matchait donc plus alors
+    // que l'invariant, lui, est mieux respecté qu'avant. On vérifie l'INVARIANT (tout sb.rpc est
+    // adopté en vraie Promise avant tout .catch) et non plus une écriture particulière, pour ne pas
+    // reproduire un test qui casse au prochain refactor sans qu'aucun bug ne soit revenu.
+    assert('AdmDashboard adopte ses appels sb.rpc en vraie Promise avant tout .catch()',
+      /Promise\.resolve\(/.test(src) && /\.catch\(/.test(src));
+    const rpcCalls = src.match(/\bsb\s*\.\s*rpc\s*\(/g) || [];
+    assert('AdmDashboard : tous les appels sb.rpc partent du helper safeRpc (un seul point d\'enveloppe)',
+      rpcCalls.length > 0 && /safeRpc\s*=/.test(src), `appels sb.rpc trouvés : ${rpcCalls.length}`);
   }
   // Retire commentaires de ligne et de bloc avant de chercher le motif fautif. Indispensable :
   // ce motif est CITÉ mot pour mot dans les commentaires qui documentent le bug (miniboss.js,
@@ -4017,6 +4026,109 @@
     // sanity : le balayage voit bien les fonctions du jeu, sinon il passerait au vert à vide
     assert('Le balayage atteint bien les fonctions globales du jeu (sinon le test est vide)',
       typeof window.saveToCloud === 'function' || typeof window.hud === 'function');
+  }
+
+  // ---------- Dashboard admin : dégradation hors ligne (2026-08-03, CLAUDE.md §11) ----------
+  // Suite du correctif .catch (PR #93) : admin_health et admin_dashboard_kpis n'avaient AUCUNE
+  // protection. Un rejet réseau sur l'une des deux et load() échouait en entier -> setState jamais
+  // appelé -> `loading` bloqué à true -> squelette éternel, sans message ET sans bouton Rafraîchir
+  // (il n'est rendu qu'une fois le chargement fini). Mais le piège le plus grave est en aval : une
+  // fois load() rendu tolérant, des données VIDES traversaient les trois quadrants en se faisant
+  // passer pour des mesures rassurantes -- 🟢 « Tout est normal », « 0 erreurs client », ✅ « Rien à
+  // traiter ». Un panneau de supervision qui affiche un feu vert qu'il n'a pas vérifié est pire
+  // qu'un panneau cassé : cassé, ça se voit. Les trois tests ci-dessous couvrent chacun le scénario
+  // EN LIGNE (comportement normal préservé) ET HORS LIGNE (aveu explicite), comme l'exige §11.
+  // Rendu synchrone via flushSync dans un noeud détaché, même pattern que
+  // testReconnectHistoryDetailRendersSessionBreakdown.
+  function admRenderToHtml(Component, props) {
+    const container = document.createElement('div');
+    const root = ReactDOM.createRoot(container);
+    try {
+      ReactDOM.flushSync(() => root.render(React.createElement(Component, props)));
+      return container.innerHTML;
+    } finally { root.unmount(); }
+  }
+  function testAdminHealthBannerNeverClaimsAllNormalWhenUnreachable() {
+    if (typeof AdmHealthBanner !== 'function' || typeof React === 'undefined' || typeof ReactDOM === 'undefined') return;
+    const allNormal = i18next.t('admin:admin.dash.all_normal');
+    // EN LIGNE, tout va bien : le comportement d'origine ne doit pas bouger
+    const okHtml = admRenderToHtml(AdmHealthBanner, { checks: [{ key:'db_size', status:'ok' }], checkedAt: null });
+    assert('Bandeau EN LIGNE sans problème : affiche toujours "Tout est normal" en vert',
+      okHtml.includes(allNormal) && okHtml.includes('tone-good'), okHtml.slice(0, 200));
+    // EN LIGNE, un check down : toujours signalé
+    const downHtml = admRenderToHtml(AdmHealthBanner, { checks: [{ key:'db_size', status:'down', label:'Base' }], checkedAt: null });
+    assert('Bandeau EN LIGNE avec un check down : passe en rouge et ne dit pas "Tout est normal"',
+      downHtml.includes('tone-crit') && !downHtml.includes(allNormal), downHtml.slice(0, 200));
+    // HORS LIGNE : c'est ICI que l'ancien code mentait -- checks vide + valeur initiale 'ok' dans
+    // le reduce donnaient 🟢 "Tout est normal" alors qu'on n'avait rien pu demander.
+    const offHtml = admRenderToHtml(AdmHealthBanner, { checks: [], checkedAt: null, unreachable: true });
+    assert('Bandeau HORS LIGNE : ne prétend JAMAIS "Tout est normal" (le faux feu vert d\'origine)',
+      !offHtml.includes(allNormal), offHtml.slice(0, 250));
+    assert('Bandeau HORS LIGNE : dit explicitement que le serveur est injoignable',
+      offHtml.includes(i18next.t('admin:admin.dash.health_unreachable')), offHtml.slice(0, 250));
+    assert('Bandeau HORS LIGNE : tonalité warn, visuellement distincte du vert',
+      offHtml.includes('tone-warn') && !offHtml.includes('tone-good'), offHtml.slice(0, 250));
+    // le cas vraiment vicieux : checks VIDE sans le drapeau -> comportement d'origine conservé,
+    // c'est bien le drapeau qui porte l'information, pas une heuristique sur la taille du tableau
+    const emptyHtml = admRenderToHtml(AdmHealthBanner, { checks: [], checkedAt: null });
+    assert('Bandeau : une liste vide SANS drapeau reste "tout est normal" (aucune régression silencieuse)',
+      emptyHtml.includes(allNormal), emptyHtml.slice(0, 200));
+  }
+  function testAdminKpiRowShowsDashInsteadOfFakeZeroWhenUnavailable() {
+    if (typeof AdmKpiRow !== 'function' || typeof React === 'undefined' || typeof ReactDOM === 'undefined') return;
+    // EN LIGNE : les vraies valeurs s'affichent
+    const onHtml = admRenderToHtml(AdmKpiRow, { kpis: { client_errors: { current: 42, previous: 10 } }, hours: 24 });
+    assert('KPI EN LIGNE : la valeur mesurée est bien affichée', onHtml.includes('42'), onHtml.slice(0, 300));
+    // HORS LIGNE : un "0" ici est un mensonge rassurant (0 erreur client, 0 joueur actif...) --
+    // c'est précisément la valeur qui trompe le plus sur ces KPI.
+    const offHtml = admRenderToHtml(AdmKpiRow, { kpis: {}, hours: 24, unavailable: true });
+    assert('KPI HORS LIGNE : affiche un tiret, pas un 0 fabriqué',
+      offHtml.includes('—'), offHtml.slice(0, 300));
+    assert('KPI HORS LIGNE : aucune valeur numérique affichée (pas de faux zéro)',
+      !/>0</.test(offHtml), offHtml.slice(0, 300));
+    assert('KPI HORS LIGNE : les 5 libellés restent visibles (mise en page stable, pas un trou)',
+      ADM_KPIS.every(def => offHtml.includes(def.label())), offHtml.slice(0, 400));
+  }
+  function testAdminActionListDistinguishesNothingTodoFromUnknown() {
+    if (typeof AdmActionList !== 'function' || typeof React === 'undefined' || typeof ReactDOM === 'undefined') return;
+    const nothing = i18next.t('admin:admin.dash.nothing_todo');
+    const unknown = i18next.t('admin:admin.dash.actions_unknown');
+    // EN LIGNE, rien à faire : le ✅ est légitime, il a été vérifié
+    const okHtml = admRenderToHtml(AdmActionList, { actions: [] });
+    assert('Q3 EN LIGNE et vide : affiche bien le ✅ "Rien à traiter"',
+      okHtml.includes(nothing) && !okHtml.includes(unknown), okHtml.slice(0, 250));
+    // HORS LIGNE : la liste est vide parce qu'on n'a pas pu demander, pas parce qu'il n'y a rien
+    const offHtml = admRenderToHtml(AdmActionList, { actions: [], incomplete: true });
+    assert('Q3 HORS LIGNE : ne donne PAS le feu vert "Rien à traiter"',
+      !offHtml.includes(nothing), offHtml.slice(0, 250));
+    assert('Q3 HORS LIGNE : dit que les données manquent', offHtml.includes(unknown), offHtml.slice(0, 250));
+    // des actions connues restent affichées même si la liste est incomplète : mieux vaut une
+    // information partielle explicite que rien du tout
+    const partial = admRenderToHtml(AdmActionList, { actions: [{ icon:'🐞', label:'TestActionQ3', cat:'monitoring', id:'errors' }], incomplete: true });
+    assert('Q3 partiellement chargée : les actions connues restent listées', partial.includes('TestActionQ3'), partial.slice(0, 250));
+  }
+  // GARDE-FOU RÉSEAU (statique) : la politique du projet assume l'inspection de source pour les
+  // scénarios réseau (CLAUDE.md §11, modèles testSaveToCloudGuardsSessionLockAndOffline...), le
+  // runner étant synchrone et load() asynchrone. Vérifie les deux invariants qui empêchent le
+  // squelette éternel de revenir : aucun sb.rpc() nu, et aucune sortie de load() sans setState.
+  function testAdminDashboardLoadAlwaysLeavesLoadingState() {
+    if (typeof AdmDashboard !== 'function') return;
+    const src = stripJsCommentsForScan(AdmDashboard.toString());
+    ['admin_health', 'admin_dashboard_kpis', 'admin_patch_note_pending_reports', 'admin_integrity_summary'].forEach(rpc => {
+      assert(`load() appelle ${rpc} via safeRpc (jamais sb.rpc nu, qui ferait échouer tout Promise.all)`,
+        new RegExp('safeRpc\\(\\s*[\'"]' + rpc + '[\'"]').test(src), src.slice(0, 600));
+    });
+    assert('load() ne passe plus par un sb.rpc() direct (toutes les RPC sont protégées)',
+      !/\bsb\s*\.\s*rpc\s*\(\s*['"]admin_/.test(src), src.slice(0, 600));
+    // le `if (!sb) return;` d'origine laissait AUSSI loading à true pour toujours quand le CDN
+    // Supabase ne chargeait pas -- la branche doit désormais poser un état terminal.
+    assert('La sortie anticipée !sb appelle setState au lieu de laisser le squelette éternel',
+      /if\s*\(\s*!sb\s*\)\s*\{[^}]*setState/.test(src), src.slice(0, 600));
+    // le rejet doit ressortir sous la forme d'une réponse Supabase ratée ({data:null, error}), pas
+    // en {data: []} : sinon « je n'ai pas pu demander » devient indiscernable de « la réponse est
+    // vide », et c'est exactement ce qui produisait les faux « tout va bien » en aval.
+    assert('safeRpc neutralise le rejet en réponse Supabase ({data:null, error}) plutôt qu\'en donnée vide',
+      /\.catch\(\s*\w*\s*=>\s*\(?\s*\{\s*data:\s*null\s*,\s*error:/.test(src), src.slice(0, 800));
   }
   // garde-fou (2026-07-20, "quand je reste longtemps dans compagnon le dashboard s'affiche") :
   // showPlayerInventoryWindow() ouvre une popup "Inventaire joueur" depuis le panneau admin, et
@@ -7517,6 +7629,10 @@
     testRpcFireAndForgetCallsNeverUseBareCatch();
     testAdminDashboardRpcCallsSurviveCatchlessBuilder();
     testNoBareCatchOnPostgrestBuilderAnywhereInLoadedCode();
+    testAdminHealthBannerNeverClaimsAllNormalWhenUnreachable();
+    testAdminKpiRowShowsDashInsteadOfFakeZeroWhenUnavailable();
+    testAdminActionListDistinguishesNothingTodoFromUnknown();
+    testAdminDashboardLoadAlwaysLeavesLoadingState();
     testAdminHourlyReadsRealPlaytimeColumns();
     testPopupCloseOnlyReopensAdminPanelIfStillOpen();
     testPatchPagesCoverAllEntriesWithinBounds();
