@@ -13,27 +13,61 @@
 // verify_jwt = false : l'écran de connexion n'est pas authentifié. La fonction n'expose aucune
 // donnée sensible : login renvoie uniquement les tokens de session de l'utilisateur qui s'authentifie
 // (son propre email est déjà dans son JWT, normal), reset ne renvoie rien.
+//
+// 2026-08-02, bascule vers le VPS. Cette fonction fait DEUX choses qui ne vivent plus au même
+// endroit :
+//   * de l'AUTH (/auth/v1/token, /otp, /recover) -> reste sur Supabase, l'arbitrage est de garder
+//     GoTrue dans le cloud ;
+//   * de la DONNÉE (email_for_login, rate_limit_hit, rate_limit_gc) -> passe sur le VPS, où vivent
+//     désormais `profiles` et `auth_rate_limit`. Continuer à les lire dans le cloud servirait une
+//     copie figée à la date de la bascule, et un joueur inscrit depuis ne pourrait plus se
+//     connecter par son pseudo.
+// Voir le bloc AUTH_INTERNE_* plus bas pour le pourquoi du transport choisi.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-// 2026-08-01, bascule des données vers le VPS (voir D:\DEV\bdi-infra).
-// Cette fonction fait DEUX choses qui ne vivent plus au même endroit :
-//   * de l'AUTH (/auth/v1/token, /otp, /recover) -> reste sur SUPABASE_URL ;
-//   * de la DONNÉE (rpc/email_for_login, rpc/rate_limit_hit, rpc/rate_limit_gc)
-//     -> doit désormais viser le VPS, où vivent les tables `profiles` et
-//        `auth_rate_limit`. Les interroger encore sur le cloud lirait une copie
-//        figée à la date de la migration : un joueur inscrit après la bascule ne
-//        pourrait plus se connecter par son pseudo.
+// --------------------------------------------------------------------------
+// Les trois RPC dont cette fonction dépend (email_for_login, rate_limit_hit,
+// rate_limit_gc) vivent sur le VPS depuis la bascule. On ne peut PAS les y
+// appeler en PostgREST : la clé service_role est un JWT signé en HS256, alors
+// que le PostgREST du VPS ne vérifie que de l'ES256 (JWKS public). Il répond
+// 401 « No suitable key was found to decode the JWT ». Constaté le 2026-08-02
+// en cassant la connexion par pseudo en production pendant deux minutes.
 //
-// SERVICE_ROLE reste valable sur le VPS : c'est un JWT HS256 signé avec le secret
-// du projet, que le PostgREST du VPS partage. Il y ouvre le même rôle service_role.
+// On passe donc par trois routes dédiées de l'API des dashboards, protégées
+// par un secret partagé et sans JWT du tout : bdi-infra/api/app/routes_interne.py.
 //
-// Repli sur SUPABASE_URL si la variable n'est pas définie : la fonction continue
-// donc de marcher telle quelle tant que DATA_API_URL n'est pas configurée.
-const DATA_API_URL = Deno.env.get("DATA_API_URL") || SUPABASE_URL;
+// Tant que les deux variables ne sont pas posées, on continue d'appeler le
+// cloud exactement comme avant. C'est volontaire : le code peut être déployé
+// AVANT les secrets sans rien changer au comportement, et la bascule se fait
+// ensuite en posant les secrets, dans un geste isolé et réversible.
+// --------------------------------------------------------------------------
+const INTERNE_URL = (Deno.env.get("AUTH_INTERNE_URL") || "").replace(/\/+$/, "");
+const INTERNE_SECRET = Deno.env.get("AUTH_INTERNE_SECRET") || "";
+const VERS_VPS = Boolean(INTERNE_URL && INTERNE_SECRET);
+
+function interne(chemin: string, corps: unknown): Promise<Response> {
+  return fetch(`${INTERNE_URL}/${chemin}`, {
+    method: "POST",
+    headers: { "x-auth-interne": INTERNE_SECRET, "Content-Type": "application/json" },
+    body: JSON.stringify(corps),
+  });
+}
+
+function cloudRpc(nom: string, corps: unknown): Promise<Response> {
+  return fetch(`${SUPABASE_URL}/rest/v1/rpc/${nom}`, {
+    method: "POST",
+    headers: {
+      apikey: SERVICE_ROLE,
+      Authorization: `Bearer ${SERVICE_ROLE}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(corps),
+  });
+}
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -55,10 +89,14 @@ function clientIp(req: Request): string {
 // du limiteur, qui n'est qu'une protection anti-bruteforce best-effort.
 async function rateOk(key: string, max: number, windowSeconds: number): Promise<boolean> {
   try {
-    const r = await fetch(`${DATA_API_URL}/rest/v1/rpc/rate_limit_hit`, {
-      method: "POST",
-      headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ p_key: key, p_max: max, p_window_seconds: windowSeconds }),
+    if (VERS_VPS) {
+      const r = await interne("limite-debit", { cle: key, max, fenetre_secondes: windowSeconds });
+      if (!r.ok) return true;
+      const data = await r.json();
+      return data?.autorise !== false;
+    }
+    const r = await cloudRpc("rate_limit_hit", {
+      p_key: key, p_max: max, p_window_seconds: windowSeconds,
     });
     if (!r.ok) return true;
     const allowed = await r.json();
@@ -66,19 +104,42 @@ async function rateOk(key: string, max: number, windowSeconds: number): Promise<
   } catch { return true; }
 }
 
-// pseudo|email -> email, via le RPC email_for_login (grant service_role uniquement).
+// pseudo|email -> email. Sur le VPS via /interne, sinon via le RPC email_for_login
+// du cloud (grant service_role uniquement).
+//
+// ÉCHEC FERMÉ, contrairement au limiteur : si la source ne répond pas, on renvoie
+// null, donc « invalid ». Pas de repli silencieux vers le cloud, qui servirait un
+// `profiles` figé à la date de la bascule et laisserait un joueur inscrit depuis
+// se voir refuser son pseudo sans que rien ne le signale. Après la bascule, un VPS
+// injoignable veut de toute façon dire que le jeu entier est hors service.
 async function resolveEmail(identifier: string): Promise<string | null> {
   const id = (identifier || "").trim();
   if (!id) return null;
   if (id.includes("@")) return id;
-  const r = await fetch(`${DATA_API_URL}/rest/v1/rpc/email_for_login`, {
-    method: "POST",
-    headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ p_identifier: id }),
-  });
-  if (!r.ok) return null;
-  const email = await r.json();
-  return typeof email === "string" && email ? email : null;
+  // Aucun pseudo ne fait cette taille, et l'endpoint interne refuserait en 422 :
+  // on coupe court plutôt que de journaliser une erreur pour une saisie absurde.
+  if (id.length > 120) return null;
+  try {
+    if (VERS_VPS) {
+      const r = await interne("email-pour-connexion", { identifiant: id });
+      if (!r.ok) {
+        // Tracé côté serveur : sans ça, un secret périmé ou une API arrêtée
+        // se manifesterait uniquement par des « identifiants invalides » en
+        // masse, sans le moindre indice sur la cause.
+        console.error("interne_email_http", r.status, await r.text().catch(() => ""));
+        return null;
+      }
+      const data = await r.json();
+      return typeof data?.email === "string" && data.email ? data.email : null;
+    }
+    const r = await cloudRpc("email_for_login", { p_identifier: id });
+    if (!r.ok) return null;
+    const email = await r.json();
+    return typeof email === "string" && email ? email : null;
+  } catch (erreur) {
+    console.error("interne_email_reseau", String(erreur));
+    return null;
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -146,11 +207,8 @@ Deno.serve(async (req: Request) => {
     // purge best-effort ~1x/h : le seau horaire "gc:<h>" n'autorise qu'un seul passage par heure.
     rateOk("gc:" + Math.floor(Date.now() / 3.6e6), 1, 3600).then((first) => {
       if (!first) return;
-      fetch(`${DATA_API_URL}/rest/v1/rpc/rate_limit_gc`, {
-        method: "POST",
-        headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": "application/json" },
-        body: "{}",
-      }).catch(() => {});
+      const purge = VERS_VPS ? interne("purge-limites", {}) : cloudRpc("rate_limit_gc", {});
+      purge.catch(() => {});
     });
     const email = await resolveEmail(String(body.identifier || ""));
     if (email) {
