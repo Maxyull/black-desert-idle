@@ -36,6 +36,61 @@ multi navigateur and multidevice" + "Mode hors ligne")** :
   `testOfflineCacheRoundTripsPerUserAndTracksPendingSync`, `testSaveToCloudGuardsSessionLockAndOffline`,
   `testCheckPlayerSessionNeverLocksOnNetworkFailure` (`tests/tests.js`).
 
+**Bascule des données vers le VPS (2026-08-01, demande explicite : "on va tout transvaser sur
+le vps")**, outillage complet dans `D:\DEV\bdi-infra`, ici seulement le côté client.
+
+L'**authentification reste sur Supabase cloud** (153 comptes, 4 providers OAuth qu'on ne veut
+pas reconfigurer), seule la **base** descend sur un VPS OVH. Ça marche parce que le PostgREST
+du VPS vérifie les jetons du GoTrue cloud avec la **clé publique** du projet : `auth.uid()`
+renvoie le même UUID côté SQL, les 161 fonctions et les policies RLS n'ont pas été touchées
+d'une ligne.
+
+Le projet signe en **ES256 asymétrique** (constaté le 2026-08-02 ; la première version de ce
+montage supposait un secret HS256 partagé, ce qui était faux). Bénéfice au passage : le VPS ne
+détient qu'une clé de VÉRIFICATION, même entièrement compromis il ne peut forger aucun jeton.
+
+Deux clients dans ce fichier :
+- `sbAuth`, toujours le projet cloud. Porte l'auth, les edge functions, et le realtime
+  (presence/broadcast des lobbies boss et miniboss, qui ne lisent jamais la base ; le chat, lui,
+  fait du polling, voir `social/chat.js`). Rien de tout ça n'a bougé.
+- `sbData`, le VPS quand `DATA_API_URL` est renseignée, sinon `sbAuth`. Créé avec l'option
+  `accessToken` de supabase-js (mode « auth chez un fournisseur tiers ») : il ne gère aucune
+  session et redemande le jeton à `jetonPourDonnees()` à chaque requête. Une seule session
+  existe, celle de `sbAuth`, deux clients rafraîchissant le même `refresh_token` en concurrence
+  l'invalideraient à tous les coups.
+
+`sb` n'est plus un `SupabaseClient` mais un **`Proxy`** qui aiguille : `from`/`rpc`/`schema` vers
+`sbData`, tout le reste vers `sbAuth`. Choisi après comptage, **215 appels de données contre 29
+d'auth/realtime**, dans une douzaine de fichiers : réécrire 244 sites d'appel aurait garanti d'en
+oublier. Conséquence à connaître : toute propriété non listée dans `VERS_DONNEES` tombe sur le
+client d'auth. Si une manque un jour, elle **s'ajoute là**, pas en contournant `sb`.
+
+Deux pièges qui ont coûté cher à trouver :
+- **Aucune clé anon ne part vers le VPS.** La première version y envoyait l'ancienne clé anon
+  du projet (un JWT HS256), que le PostgREST en ES256 rejette. La bonne réponse est de retirer
+  complètement l'en-tête `Authorization` quand il n'y a pas de session : PostgREST retombe
+  alors sur `db-anon-role`, donc le rôle `anon`, et les lectures publiques passent. C'est le
+  rôle de `fetchDonnees()`, branchée en `global.fetch` du client de données. Tests :
+  `testAucunJwtEnDurPourLeClientDeDonnees`, `testFetchDonneesRetireLAutorisationVide`.
+- L'edge function `auth-by-identifier` fait de l'auth **et** trois RPC de données
+  (`email_for_login`, `rate_limit_hit`, `rate_limit_gc`) sur la même constante. Elles ont été
+  scindées (`DATA_API_URL` côté Deno, avec repli) : sans ça, un joueur inscrit après la bascule
+  ne pourrait plus se connecter par son pseudo, la fonction lisant un `profiles` figé.
+
+**État : `DATA_API_URL = ''`, la bascule est DÉSARMÉE.** Le jeu parle au cloud exactement comme
+avant, le comportement est inchangé. Armer = remplir cette constante (+ `COMPANION_MODELS_BASE`
+dans `companions/viewer3d.js`, et la variable d'env de l'edge function), une fois le VPS
+vérifié. Voir `bdi-infra/migration/RUNBOOK.md` § « Armer la bascule ». Livré désarmé exprès :
+ça évite
+de faire atterrir le même jour le refactor du client et le déménagement de la base.
+
+Tests : `testDataApiConfigCoherente`, `testAucunJwtEnDurPourLeClientDeDonnees`,
+`testFetchDonneesRetireLAutorisationVide`, `testSbRouteLesDonneesEtLAuthSeparement`,
+`testJetonPourDonneesNeJetteJamaisHorsLigne`, `testCspAutoriseLeDomaineDeDonnees`
+(`tests/tests.js`), plus un garde-fou de cohérence de domaine en fin de
+`tests/companions.spec.js` (le module Compagnons est une iframe isolée, jamais bundlée : il
+duplique le domaine et peut donc désynchroniser en silence).
+
 ## Découpage du 2026-07-22 (audit repo P5)
 
 `game-supabase.js` avait atteint **3 124 lignes** — trois fois la limite de découpe obligatoire de
