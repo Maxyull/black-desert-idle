@@ -3995,8 +3995,12 @@
       !detect(function () { return sb.rpc('x').then(r => r).catch(() => {}); }));
     assert('détecteur : ignore le motif quand il est cité en commentaire',
       !detect('function f() { /* interdit : sb.rpc(...).catch(...) */ // idem sb.from(x).catch(y)\n return 1; }'));
-    assert('stripJsCommentsForScan préserve les chaînes contenant //',
-      stripJsCommentsForScan('const u = "https://x.fr"; // note').includes('https://x.fr'));
+    // une chaîne contenant // ne doit PAS être prise pour un commentaire (et le vrai commentaire
+    // qui la suit doit quand même disparaître). Volontairement pas une URL en dur : CodeQL lit
+    // tout `.includes('http...')` comme une validation d'URL incomplète (faux positif, PR #93).
+    const stripped = stripJsCommentsForScan('const s = "a//b"; // vraiCommentaire');
+    assert('stripJsCommentsForScan préserve les chaînes contenant //', stripped.indexOf('a//b') !== -1, stripped);
+    assert('stripJsCommentsForScan retire bien le commentaire de ligne qui suit', stripped.indexOf('vraiCommentaire') === -1, stripped);
     // (1) balayage réel
     const offenders = [];
     Object.getOwnPropertyNames(window).forEach(k => {
