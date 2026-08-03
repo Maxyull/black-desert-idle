@@ -29,10 +29,8 @@ function marketSb(){ const w=marketHostWin(); return w && typeof w.getSbClient==
 function marketUser(){ const w=marketHostWin(); return w && typeof w.getCurrentUserForSync==='function' ? w.getCurrentUserForSync() : null; }
 /** @returns {string} pseudo affiché du joueur courant (repli 'Joueur' si indisponible). */
 function marketPseudo(){ const w=marketHostWin(); return w && typeof w.getMyPseudoForSync==='function' ? w.getMyPseudoForSync() : i18next.t('companions:companions.market.default_pseudo'); }
-/** @returns {boolean} true si le compte courant est un invité (Marché inaccessible aux invités). */
-function marketIsGuest(){ const w=marketHostWin(); return w && typeof w.isGuest==='function' ? w.isGuest() : false; }
-/** @returns {boolean} true si le Marché peut être utilisé (Supabase + user dispo, pas invité). */
-function marketReady(){ return !!(marketSb() && marketUser() && !marketIsGuest()); }
+/** @returns {boolean} true si le Marché peut être utilisé (Supabase + user dispo). */
+function marketReady(){ return !!(marketSb() && marketUser()); }
 
 /** @param {object} pet - familier local. @returns {object} snapshot sérialisable envoyé au serveur (pet_snapshot), assez d'info pour recréer le pet côté acheteur. */
 function petSnapshotOf(pet){
@@ -66,7 +64,7 @@ function renderMarketTab(){
   if(!body) return;
   if(!marketReady()){
     body.innerHTML = `<div style="padding:24px;text-align:center;font-size:12px;color:var(--cream3)">
-      ${marketIsGuest()?i18next.t('companions:companions.market.guest_blocked'):i18next.t('companions:companions.market.login_required')}
+      ${i18next.t('companions:companions.market.login_required')}
     </div>`;
     return;
   }

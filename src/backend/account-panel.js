@@ -24,19 +24,9 @@ async function acctFetchGsRank() {
     return lb2ComputeYourRankInfo(data, 'gs', currentUser.id);
   } catch(e) { return null; }
 }
-/** Ouvre le panneau "Mon compte" refonte en cartes (identité/palier, progression, rang, connexion+streak, pseudo, sécurité, comptes liés, parrainage, maintenance/suppression). Version simplifiée (cache navigateur uniquement) pour un invité. */
+/** Ouvre le panneau "Mon compte" refonte en cartes (identité/palier, progression, rang, connexion+streak, pseudo, sécurité, comptes liés, parrainage, maintenance/suppression). */
 async function openAccountPanel() {
   if (!sb || !currentUser) return;
-  if (isGuest()) {
-    openInfo(i18next.t('backend:backend.account.panel_title'), `
-      <p>${i18next.t('backend:backend.account.guest_intro')}</p>
-      <h3>🧹 ${i18next.t('backend:backend.account.cache_title')}</h3>
-      <p class="mHint">${i18next.t('backend:backend.account.cache_hint')}</p>
-      <button id="btnClearCache">🧹 ${i18next.t('backend:backend.account.cache_clear_button')}</button>
-    `);
-    $a('btnClearCache').onclick = clearGameCache;
-    return;
-  }
   let code = '', count = 0, referrals = [];
   try { const { data } = await sb.rpc('ensure_referral_code'); code = data || ''; } catch(e) {}
   try { const { data } = await sb.rpc('get_referral_count'); count = data || 0; } catch(e) {}

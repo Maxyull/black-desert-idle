@@ -18,7 +18,11 @@
 /** Signale la présence du joueur (RPC heartbeat_presence, zone -1 pour Velia) et vérifie la session en même cadence (20s). */
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
-  try { await sb.rpc('heartbeat_presence', { p_is_guest: isGuest(), p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
+  // p_is_guest reste dans la signature SQL de heartbeat_presence et vaut donc toujours false
+  // depuis le retrait du mode invité (issue #18). Le paramètre se retirera côté base dans une
+  // migration dédiée : le supprimer ici sans toucher à la fonction ferait échouer la résolution
+  // de surcharge par PostgREST.
+  try { await sb.rpc('heartbeat_presence', { p_is_guest: false, p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
   checkPlayerSession(); // même cadence (20s, voir setInterval(heartbeatPresence,20000) plus bas)
 }
 // joueurs actuellement en ville (2026-07-16, demande explicite : "on peut voir la liste des
@@ -102,10 +106,7 @@ async function refreshPresenceSnapshot() {
 
     // --- online (ex-refreshOnlineCounter) ---
     if (data.online) {
-      const { total, guests } = data.online;
-      $a('onlineTotal').textContent = total;
-      $a('onlineGuests').textContent = guests > 0
-        ? ` (${guests} ${i18next.t('backend:backend.presence.guests_suffix')})` : '';
+      $a('onlineTotal').textContent = data.online.total;
     }
 
     // --- zones (ex-refreshZonePlayerCounts) ---
@@ -162,9 +163,7 @@ async function refreshOnlineCounter() {
   try {
     const { data, error } = await sb.rpc('get_online_counts', { p_window_seconds: 90 });
     if (error || !data || !data[0]) return;
-    const { total, guests } = data[0];
-    $a('onlineTotal').textContent = total;
-    $a('onlineGuests').textContent = guests > 0 ? ` (${guests} ${i18next.t('backend:backend.presence.guests_suffix')})` : '';
+    $a('onlineTotal').textContent = data[0].total;
   } catch(e) {}
 }
 // nombre total de comptes inscrits (2026-07-05, demande explicite) : change rarement, pas besoin

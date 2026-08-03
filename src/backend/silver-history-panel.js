@@ -325,7 +325,7 @@ function hideSilverBreakdownTip() { const tip = $a('silverBreakdownTip'); if (ti
 // silencieux hors ligne / invité / erreur RPC. Appelé depuis loadCloudSave (game-supabase.js).
 let silverByCategoryBackfilled = false;
 async function backfillSilverByCategory() {
-  if (silverByCategoryBackfilled || !sb || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
+  if (silverByCategoryBackfilled || !sb || !currentUser) return;
   silverByCategoryBackfilled = true;
   try {
     const { data, error } = await sb.rpc('my_silver_by_category');

@@ -124,14 +124,6 @@
      coupure réseau (save locale, voir saveToLocalOfflineCache(), game-supabase.js), synchronisée
      dès le retour en ligne. -->
 <div id="offlineBanner" class="hidden">🔌 <span data-i18n="offlineBannerMsg">Hors ligne — ta progression est sauvegardée localement, synchronisation dès le retour du réseau.</span></div>
-<!-- Dépréciation du mode invité (2026-07-22) : plus AUCUN invité n'est créé depuis le 2026-07-10
-     (startGuestOrShowAuth n'appelle plus signInAnonymously), mais 127 sessions anonymes existent
-     encore en base, dont une à 30 h de jeu / niveau 32. Leur session vit dans le localStorage de
-     LEUR navigateur : la seule façon de les prévenir est ce bandeau, à leur retour. Cliquable (il
-     ouvre directement la liaison de compte) et volontairement non masquable : c'est la dernière
-     chance de sauver leur progression avant le retrait du mode invité (voir GUEST_SUNSET_DATE,
-     game-supabase.js). À SUPPRIMER avec tout le reste du code invité à cette date. -->
-<div id="guestSunsetBanner" class="hidden">⚠️ <span data-i18n="guestSunsetMsg">Le mode invité disparaît bientôt — clique ici pour lier un compte et garder ta progression.</span></div>
 <div id="sessionLockOverlay" class="hidden">
   <div id="sessionLockBox">
     <div id="sessionLockIcon">⏸️</div>
@@ -145,9 +137,8 @@
     <!-- Croix de fermeture : réintroduite le 2026-07-22, mais CONDITIONNELLE (voir showAuthOverlay).
          Elle avait été retirée le 2026-07-16 parce que fermer l'écran SANS session laissait le
          joueur devant un jeu vide sans retour possible. Ce raisonnement ne vaut QUE sans session :
-         un INVITÉ qui clique "Lier un compte" (ou le bandeau de fin de vie du mode invité) a une
-         partie qui tourne derrière et doit pouvoir revenir en arrière -- sinon un clic accidentel
-         sur le bandeau le coupe de son propre jeu. N'est affichée que si currentUser existe. -->
+         un joueur connecté qui rouvre cet écran volontairement a une partie qui tourne derrière
+         et doit pouvoir revenir en arrière. N'est affichée que si currentUser existe. -->
     <button id="closeAuth" class="hidden" aria-label="Fermer" title="Fermer">✕</button>
     <span id="demoBadge">DEMO</span>
     <div id="authLangRow">
@@ -547,7 +538,6 @@
           <span id="userPseudo"></span>
           <span id="userEmail"></span>
         </div>
-        <button id="btnLinkAccount" data-i18n="btnLinkAccount" style="display:none">🔗 Lier un compte</button>
         <span id="saveStatus"></span>
         <div id="uuidRow" style="display:none">
           <button id="btnCopyUuid" title="Cliquer pour copier ton UUID">
@@ -557,7 +547,7 @@
         <button id="btnTester" style="display:none">🧪 <span data-i18n="btnTester">Tester</span></button>
       </div>
       <div id="onlineStatsBox">
-        <div id="onlineCounter">🟢 <b id="onlineTotal">—</b> <span data-i18n="onlineLbl">en ligne</span><span id="onlineGuests"></span></div>
+        <div id="onlineCounter">🟢 <b id="onlineTotal">—</b> <span data-i18n="onlineLbl">en ligne</span></div>
         <div id="registeredCounter">👤 <b id="registeredTotal">—</b> <span data-i18n="registeredLbl">inscrits</span></div>
       </div>
     </div>

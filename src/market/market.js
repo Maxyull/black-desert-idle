@@ -1,13 +1,9 @@
 // ============================================================
 // HÔTEL DES VENTES
 // ============================================================
-/** @returns {boolean} vrai si connecté et vérifié (pas invité), affiche une alerte sinon. */
+/** @returns {boolean} vrai si connecté, affiche une alerte sinon. */
 function marketRequireAuth() {
   if (!sb || !currentUser) { alert('Connecte-toi pour accéder au marché.'); return false; }
-  if (isGuest()) {
-    alert(i18next.t('market:market.auth_verified_required'));
-    return false;
-  }
   return true;
 }
 

@@ -1434,10 +1434,10 @@ function isItemTutorialSeen(id) {
 function markItemTutorialSeen(id, skipped) {
   try { localStorage.setItem(itemTutoStorageKey(id), '1'); } catch(e) {}
   // best-effort, ne bloque jamais le jeu (voir consigne : fire-and-forget, jamais await/bloquant) --
-  // même garde que queueFarmEvent (sb && currentUser && !isGuest()) : pas de compte vérifié → pas
+  // même garde que queueFarmEvent (sb && currentUser) : pas de session → pas
   // de journalisation, mais le flag localStorage ci-dessus suffit pour le "ne plus jamais montrer"
   // côté client, indépendamment du compte
-  if (typeof sb !== 'undefined' && sb && typeof currentUser !== 'undefined' && currentUser && typeof isGuest === 'function' && !isGuest()) {
+  if (typeof sb !== 'undefined' && sb && typeof currentUser !== 'undefined' && currentUser) {
     // bug déjà rencontré ailleurs (voir game-supabase.js:1004, log_playtime_ping) : le builder
     // Postgrest renvoyé par sb.rpc(...) n'implémente QUE .then() (thenable), pas .catch() — appeler
     // .catch() dessus levait silencieusement "TypeError: ...catch is not a function", AVANT même que

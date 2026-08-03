@@ -488,11 +488,9 @@ const I18N_RESOURCES = {
       "backend.account.github_connected": "✅ Compte GitHub connecté.",
       "backend.account.google_connect_button": "Connecter Google",
       "backend.account.google_connected": "✅ Compte Google connecté.",
-      "backend.account.guest_intro": "Tu joues en mode invité. Lie un compte vérifié (bouton \"🔗 Lier un compte\") pour accéder au parrainage, au marché et au classement — ta progression actuelle sera conservée.",
       "backend.account.has_code_prompt": "Tu as un code d'un autre joueur ?",
       "backend.account.last_login_label": "Dernière connexion",
       "backend.account.level_label": "Niv.",
-      "backend.account.link_account_prompt": "Compte existant ? clique \"Se connecter\". Sinon \"Créer un compte\" (remplace ta progression invité).",
       "backend.account.linked_accounts_title": "🔗 Comptes liés",
       "backend.account.maintenance_title": "Maintenance",
       "backend.account.member_since_label": "Membre depuis",
@@ -529,10 +527,7 @@ const I18N_RESOURCES = {
       "backend.auth.ban_reason_unspecified": "non précisé",
       "backend.auth.ban_suspended": "Compte suspendu jusqu'au {{until}} — Motif : {{reason}}",
       "backend.auth.email_first": "Entre ton pseudo ou ton email d'abord, puis clique à nouveau.",
-      "backend.auth.guest_badge": "🎭 Invité",
       "backend.auth.last_used": "Dernière fois",
-      "backend.auth.guest_mode_body": "Ta progression n'est sauvegardée que sur cet appareil/navigateur — elle serait perdue en cas de changement ou de nettoyage du cache. Clique sur \"🔗 Lier un compte\" pour créer un compte (ta progression actuelle sera conservée) ou te reconnecter à un compte existant.",
-      "backend.auth.guest_mode_title": "Tu joues en mode invité",
       "backend.auth.reset_email_sent": "Email envoyé — vérifie ta boîte mail pour réinitialiser ton mot de passe.",
       "backend.auth.sending": "Envoi en cours…",
       "backend.auth.err_config": "Supabase n'est pas configuré.",
@@ -593,7 +588,6 @@ const I18N_RESOURCES = {
       "backend.leaderboard.cat_treasure_tip": "Morceaux du Trésor de Velia ramassés à vie.",
       "backend.leaderboard.cat_zone_label": "Meilleure zone",
       "backend.leaderboard.cat_zone_tip": "Zone la plus avancée jamais atteinte.",
-      "backend.leaderboard.link_account_button": "🔗 Lier un compte",
       "backend.leaderboard.me_toggle": "📍 Ma position",
       "backend.leaderboard.new_tag": "NOUVEAU",
       "backend.leaderboard.no_data": "Pas encore de données",
@@ -624,7 +618,6 @@ const I18N_RESOURCES = {
       "backend.patch_notes.removed_tag": "🗑 Supprimé",
       "backend.patch_notes.subcategory_label": "Sous-catégorie",
       "backend.patch_notes.unread_banner": "note(s) de version non lue(s) — clique pour remonter",
-      "backend.presence.guests_suffix": "invités",
       "backend.silver_hist.title": "💰 Historique de silver",
       "backend.silver_hist.live_label": "Session en cours",
       "backend.silver_hist.record_label": "Record à vie",
@@ -1698,11 +1691,9 @@ const I18N_RESOURCES = {
       "backend.account.github_connected": "✅ GitHub account connected.",
       "backend.account.google_connect_button": "Connect Google",
       "backend.account.google_connected": "✅ Google account connected.",
-      "backend.account.guest_intro": "You're playing as a guest. Link a verified account (the \"🔗 Link account\" button) to access referrals, the market and the leaderboard — your current progress will be kept.",
       "backend.account.has_code_prompt": "Got someone else's code?",
       "backend.account.last_login_label": "Last login",
       "backend.account.level_label": "Lvl",
-      "backend.account.link_account_prompt": "Existing account? click \"Sign in\". Otherwise \"Create account\" (replaces your guest progress).",
       "backend.account.linked_accounts_title": "🔗 Linked accounts",
       "backend.account.maintenance_title": "Maintenance",
       "backend.account.member_since_label": "Member since",
@@ -1739,10 +1730,7 @@ const I18N_RESOURCES = {
       "backend.auth.ban_reason_unspecified": "unspecified",
       "backend.auth.ban_suspended": "Account suspended until {{until}} — Reason: {{reason}}",
       "backend.auth.email_first": "Enter your username or email first, then click again.",
-      "backend.auth.guest_badge": "🎭 Guest",
       "backend.auth.last_used": "Last used",
-      "backend.auth.guest_mode_body": "Your progress is only saved on this device/browser — it would be lost if you switch or clear your cache. Click \"🔗 Link account\" to create an account (your current progress is kept) or sign back into an existing one.",
-      "backend.auth.guest_mode_title": "You're playing as a guest",
       "backend.auth.reset_email_sent": "Email sent — check your inbox to reset your password.",
       "backend.auth.sending": "Sending…",
       "backend.auth.err_config": "Supabase is not configured.",
@@ -1803,7 +1791,6 @@ const I18N_RESOURCES = {
       "backend.leaderboard.cat_treasure_tip": "Lifetime Velia Treasure pieces picked up.",
       "backend.leaderboard.cat_zone_label": "Best zone",
       "backend.leaderboard.cat_zone_tip": "Furthest zone ever reached.",
-      "backend.leaderboard.link_account_button": "🔗 Link account",
       "backend.leaderboard.me_toggle": "📍 My position",
       "backend.leaderboard.new_tag": "NEW",
       "backend.leaderboard.no_data": "No data yet",
@@ -1834,7 +1821,6 @@ const I18N_RESOURCES = {
       "backend.patch_notes.removed_tag": "🗑 Removed",
       "backend.patch_notes.subcategory_label": "Subcategory",
       "backend.patch_notes.unread_banner": "unread patch note(s) — click to jump to newest",
-      "backend.presence.guests_suffix": "guests",
       "backend.silver_hist.title": "💰 Silver history",
       "backend.silver_hist.live_label": "Current session",
       "backend.silver_hist.record_label": "Lifetime record",
@@ -6412,7 +6398,7 @@ function isItemTutorialSeen(id) {
 function markItemTutorialSeen(id, skipped) {
   try { localStorage.setItem(itemTutoStorageKey(id), '1'); } catch(e) {}
   
-  if (typeof sb !== 'undefined' && sb && typeof currentUser !== 'undefined' && currentUser && typeof isGuest === 'function' && !isGuest()) {
+  if (typeof sb !== 'undefined' && sb && typeof currentUser !== 'undefined' && currentUser) {
     
     try { sb.rpc('mark_item_tutorial_seen', { p_tutorial_id: id, p_skipped: !!skipped }).then(null, ()=>{}); } catch(e) {}
   }
@@ -15386,7 +15372,7 @@ let myIsTester = false;
 
 async function refreshMyTesterStatus() {
   myIsTester = false;
-  if (sb && currentUser && !isGuest()) {
+  if (sb && currentUser) {
     try { const { data } = await sb.from('testers').select('user_id').eq('user_id', currentUser.id).maybeSingle(); myIsTester = !!data; } catch (e) {}
   }
   const b = $a('btnTester'); if (b) b.style.display = myIsTester ? '' : 'none';
@@ -15394,7 +15380,7 @@ async function refreshMyTesterStatus() {
 
 async function refreshMyModStatus() {
   myIsMod = false;
-  if (!sb || !currentUser || isGuest()) { if (typeof renderChatTabs==='function') renderChatTabs(); return; }
+  if (!sb || !currentUser) { if (typeof renderChatTabs==='function') renderChatTabs(); return; }
   try {
     const { data } = await sb.from('chat_mods').select('user_id').eq('user_id', currentUser.id).maybeSingle();
     myIsMod = !!data;
@@ -15424,8 +15410,6 @@ function isBanned(banStatus) {
   return !isNaN(t) && t > Date.now();
 }
 
-function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
-
 function getSbClient() { return sb; }
 
 function getCurrentUserForSync() { return currentUser; }
@@ -15443,7 +15427,7 @@ function addGameSilverForCompanion(delta, note) {
 let farmEventQueue = new Map();
 
 function queueFarmEvent(kind, name, qty, silverVal) {
-  if (!sb || !currentUser || isGuest()) return; 
+  if (!sb || !currentUser) return; 
   const zone = Z().name;
   const key = kind + '|' + name + '|' + zone;
   const cur = farmEventQueue.get(key);
@@ -15452,7 +15436,7 @@ function queueFarmEvent(kind, name, qty, silverVal) {
 }
 
 async function flushFarmEvents() {
-  if (!sb || !currentUser || isGuest() || farmEventQueue.size === 0) return;
+  if (!sb || !currentUser || farmEventQueue.size === 0) return;
   const batch = Array.from(farmEventQueue.values());
   farmEventQueue.clear();
   try { await sb.from('farm_events').insert(batch); } catch(e) {  }
@@ -15463,7 +15447,7 @@ window.addEventListener('beforeunload', flushFarmEvents);
 let silverLedgerQueue = new Map();
 
 function queueSilverLedger(delta, category, note) {
-  if (!sb || !currentUser || isGuest() || !delta) return; 
+  if (!sb || !currentUser || !delta) return; 
   const key = category + '|' + (note || '');
   const cur = silverLedgerQueue.get(key);
   if (cur) cur.delta += Math.round(delta);
@@ -15471,7 +15455,7 @@ function queueSilverLedger(delta, category, note) {
 }
 
 async function flushSilverLedger() {
-  if (!sb || !currentUser || isGuest() || silverLedgerQueue.size === 0) return;
+  if (!sb || !currentUser || silverLedgerQueue.size === 0) return;
   const batch = Array.from(silverLedgerQueue.values()).filter(r => r.delta !== 0);
   silverLedgerQueue.clear();
   if (batch.length === 0) return;
@@ -15590,15 +15574,6 @@ async function flushOfflineSaveIfNeeded() {
   if (!error) { pendingOfflineSync = false; clearLocalOfflineCache(); }
 }
 
-const GUEST_SUNSET_DATE = '2026-08-15'; 
-
-function showGuestSunsetBannerIfGuest() {
-  const el = $a('guestSunsetBanner');
-  if (!el) return;
-  el.classList.toggle('hidden', !isGuest());
-  el.onclick = () => { const b = $a('btnLinkAccount'); if (b) b.click(); };
-}
-
 function showOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.remove('hidden'); }
 function hideOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.add('hidden'); }
 window.addEventListener('offline', () => { isOffline = true; showOfflineBanner(); });
@@ -15644,7 +15619,7 @@ async function saveToCloud() {
 }
 
 async function syncPlayerStats() {
-  if (!sb || !currentUser || isGuest()) return; 
+  if (!sb || !currentUser) return; 
   
   const best = bestFarmedItem();
   
@@ -15945,7 +15920,8 @@ setInterval(async () => { if (sb && currentUser && !document.hidden) { try { awa
 // ==== src/backend/presence.js ====
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
-  try { await sb.rpc('heartbeat_presence', { p_is_guest: isGuest(), p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
+  
+  try { await sb.rpc('heartbeat_presence', { p_is_guest: false, p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
   checkPlayerSession(); 
 }
 
@@ -15990,10 +15966,7 @@ async function refreshPresenceSnapshot() {
     if (error || !data) return;
 
     if (data.online) {
-      const { total, guests } = data.online;
-      $a('onlineTotal').textContent = total;
-      $a('onlineGuests').textContent = guests > 0
-        ? ` (${guests} ${i18next.t('backend:backend.presence.guests_suffix')})` : '';
+      $a('onlineTotal').textContent = data.online.total;
     }
 
     zonePlayerCounts = {};
@@ -16044,9 +16017,7 @@ async function refreshOnlineCounter() {
   try {
     const { data, error } = await sb.rpc('get_online_counts', { p_window_seconds: 90 });
     if (error || !data || !data[0]) return;
-    const { total, guests } = data[0];
-    $a('onlineTotal').textContent = total;
-    $a('onlineGuests').textContent = guests > 0 ? ` (${guests} ${i18next.t('backend:backend.presence.guests_suffix')})` : '';
+    $a('onlineTotal').textContent = data[0].total;
   } catch(e) {}
 }
 
@@ -16084,16 +16055,6 @@ async function acctFetchGsRank() {
 
 async function openAccountPanel() {
   if (!sb || !currentUser) return;
-  if (isGuest()) {
-    openInfo(i18next.t('backend:backend.account.panel_title'), `
-      <p>${i18next.t('backend:backend.account.guest_intro')}</p>
-      <h3>🧹 ${i18next.t('backend:backend.account.cache_title')}</h3>
-      <p class="mHint">${i18next.t('backend:backend.account.cache_hint')}</p>
-      <button id="btnClearCache">🧹 ${i18next.t('backend:backend.account.cache_clear_button')}</button>
-    `);
-    $a('btnClearCache').onclick = clearGameCache;
-    return;
-  }
   let code = '', count = 0, referrals = [];
   try { const { data } = await sb.rpc('ensure_referral_code'); code = data || ''; } catch(e) {}
   try { const { data } = await sb.rpc('get_referral_count'); count = data || 0; } catch(e) {}
@@ -16330,12 +16291,6 @@ const I18N = {
   btnLogout: { fr:'🚪 Déconnexion', en:'🚪 Log out' },
   authMobileBadge: { fr:'📱 BETA — Compatible mobile & tablette', en:'📱 BETA — Mobile & tablet compatible' },
   authSub: { fr:'Connecte-toi avec un vrai compte pour accéder au Marché et au Classement', en:'Sign in with a real account to access the Market and Leaderboard' },
-  btnLinkAccount: { fr:'🔗 Lier un compte', en:'🔗 Link account' },
-  
-  guestSunsetMsg: {
-    fr: 'Le mode invité disparaît le 15/08/2026 — ta progression sera perdue. Clique ici pour lier un compte et la garder.',
-    en: 'Guest mode is going away on 2026-08-15 — your progress will be lost. Click here to link an account and keep it.',
-  },
   btnAccount: { fr:'👤 Mon compte', en:'👤 My account' },
   onlineLbl: { fr:'en ligne', en:'online' },
   registeredLbl: { fr:'inscrits', en:'registered' },
@@ -17190,7 +17145,7 @@ let activeTutorialTrackId = null;
 
 function reportTutorialProgress(completed, skipped) {
   if (!activeTutorialTrackId) return;
-  if (!sb || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
+  if (!sb || !currentUser) return;
   try {
     
     sb.rpc('mark_item_tutorial_seen', {
@@ -17909,27 +17864,8 @@ function lb2SeenInfo(updatedAtIso) {
   return { text: i18next.t('backend:backend.leaderboard.seen_label', { time }), recent };
 }
 
-function lb2GuestGateHtml() {
-  return `<div class="lb2GuestGate">
-    <div class="lb2GuestIcon">🔒</div>
-    <div class="lb2GuestTxt">${escapeHtml(i18next.t('market:market.auth_verified_required'))}</div>
-    <button class="lb2GuestBtn" id="lb2LinkAccountBtn">${escapeHtml(i18next.t('backend:backend.leaderboard.link_account_button'))}</button>
-  </div>`;
-}
-
-function lb2WireGuestGate() {
-  const btn = $a('lb2LinkAccountBtn');
-  
-  if (btn) btn.onclick = () => { const real = $a('btnLinkAccount'); if (real) real.click(); };
-}
-
 async function openLeaderboard2() {
   if (!sb || !currentUser) { marketRequireAuth(); return; } 
-  if (isGuest()) {
-    openInfo(i18next.t('backend:backend.leaderboard.panel_title'), lb2GuestGateHtml());
-    lb2WireGuestGate();
-    return;
-  }
   lb2Error = null;
   openInfo(i18next.t('backend:backend.leaderboard.panel_title'), lb2ShellHtml());
   const { data, error } = await sb.from('player_stats').select('*').limit(500);
@@ -18316,7 +18252,7 @@ function hideSilverBreakdownTip() { const tip = $a('silverBreakdownTip'); if (ti
 
 let silverByCategoryBackfilled = false;
 async function backfillSilverByCategory() {
-  if (silverByCategoryBackfilled || !sb || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
+  if (silverByCategoryBackfilled || !sb || !currentUser) return;
   silverByCategoryBackfilled = true;
   try {
     const { data, error } = await sb.rpc('my_silver_by_category');
@@ -20988,7 +20924,7 @@ function updateChatInputVisibility() {
   if (chatChannel === 'modéré') {
     row.style.display = 'none';
     note.textContent = i18next.t('social:social.chat_note_moderated_log');
-  } else if (!currentUser || isGuest()) {
+  } else if (!currentUser) {
     row.style.display = 'none';
     note.textContent = i18next.t('social:social.chat_note_signin_required');
   } else if (chatChannel === 'annonce' && !isAdmin()) {
@@ -21090,7 +21026,7 @@ async function fetchChatMessages() {
 }
 
 async function pollChatUnread() {
-  if (!sb || !currentUser || isGuest()) return;
+  if (!sb || !currentUser) return;
   for (const c of chatVisibleChannels()) {
     if (c.id === 'modéré') continue; 
     if (c.id === chatChannel && !chatFolded) continue; 
@@ -21155,7 +21091,7 @@ $a('chatSendBtn').onclick = sendChatMessage;
 let onlinePlayersCache = [];
 
 async function refreshOnlinePlayersCache() {
-  if (!sb || !currentUser || isGuest()) return;
+  if (!sb || !currentUser) return;
   try {
     const { data } = await sb.rpc('get_online_players');
     onlinePlayersCache = (data||[]).map(r => r.pseudo).filter(Boolean);
@@ -21263,10 +21199,6 @@ pollChatUnread();
 // ==== src/market/market.js ====
 function marketRequireAuth() {
   if (!sb || !currentUser) { alert('Connecte-toi pour accéder au marché.'); return false; }
-  if (isGuest()) {
-    alert(i18next.t('market:market.auth_verified_required'));
-    return false;
-  }
   return true;
 }
 
@@ -22079,10 +22011,8 @@ function showAuthOverlay(show) {
 function updateUserBar() {
   $a('userBar').classList.toggle('show', !!currentUser);
   $a('userEmail').textContent = ''; 
-  $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
-  showGuestSunsetBannerIfGuest(); 
   
-  $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
+  $a('btnLogoutTopbar').style.display = '';
   const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
   
   if (typeof applyAdminHash === 'function') applyAdminHash();
@@ -22098,8 +22028,7 @@ function updateUserBar() {
 function updatePseudoDisplay() {
   const el = $a('userPseudo');
   if (!el) return;
-  if (isGuest()) el.textContent = i18next.t('backend:backend.auth.guest_badge');
-  else el.textContent = (currentUser && myPseudo) ? myPseudo : '';
+  el.textContent = (currentUser && myPseudo) ? myPseudo : '';
   
   const topbarEl = $a('userPseudoTopbar');
   if (topbarEl) topbarEl.textContent = el.textContent;
@@ -22119,14 +22048,7 @@ async function doSignUp() {
   if (!email.includes('@')) { authShow(_authT('err_signup_needs_email'), true); return; }
   authShow(_authT('creating_account'));
   try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {}
-  if (isGuest()) {
-    
-    const { data, error } = await sb.auth.updateUser({ email, password: pass }, { emailRedirectTo: location.href });
-    if (error) { authShow(error.message, true); return; }
-    onAuthed(data.user);
-    authShow(_authT('account_linked'));
-    return;
-  }
+  
   const { data, error } = await sb.auth.signUp({ email, password: pass, options: { emailRedirectTo: location.href } });
   if (error) { authShow(error.message, true); return; }
   if (data.session) { onAuthed(data.session.user); }
@@ -22197,7 +22119,7 @@ async function doLogout() {
   saveReady = false; 
   
   if (sb) { location.reload(); return; }
-  await startGuestOrShowAuth(); 
+  await showAuthScreen(); 
 }
 
 async function doSignInDiscord() {
@@ -22288,7 +22210,7 @@ if (sb) {
       joinDiscordGuild(session.provider_token, session.user);
     }
     
-    if (event === 'SIGNED_IN' && session?.user && !session.user.is_anonymous
+    if (event === 'SIGNED_IN' && session?.user
         && (!currentUser || currentUser.id !== session.user.id)) {
       onAuthed(session.user);
     }
@@ -22312,21 +22234,19 @@ async function onAuthedInner(user) {
   
   rememberLastLoginMethod((user && user.app_metadata && user.app_metadata.provider) || 'email');
   
-  if (!isGuest()) {
-    try {
-      const { data: banStatus } = await sb.rpc('get_my_ban_status');
-      const row = Array.isArray(banStatus) ? banStatus[0] : banStatus;
-      if (isBanned(row)) {
-        const until = new Date(row.banned_until).toLocaleString(i18next.t('backend:backend.common.date_locale'));
-        const reason = row.ban_reason || i18next.t('backend:backend.auth.ban_reason_unspecified');
-        authShow(i18next.t('backend:backend.auth.ban_suspended', { until, reason }), true);
-        await sb.auth.signOut();
-        currentUser = null;
-        showAuthOverlay(true);
-        return;
-      }
-    } catch (e) {}
-  }
+  try {
+    const { data: banStatus } = await sb.rpc('get_my_ban_status');
+    const row = Array.isArray(banStatus) ? banStatus[0] : banStatus;
+    if (isBanned(row)) {
+      const until = new Date(row.banned_until).toLocaleString(i18next.t('backend:backend.common.date_locale'));
+      const reason = row.ban_reason || i18next.t('backend:backend.auth.ban_reason_unspecified');
+      authShow(i18next.t('backend:backend.auth.ban_suspended', { until, reason }), true);
+      await sb.auth.signOut();
+      currentUser = null;
+      showAuthOverlay(true);
+      return;
+    }
+  } catch (e) {}
   showAuthOverlay(false);
   updateUserBar();
   claimPlayerSession(); 
@@ -22342,19 +22262,11 @@ async function onAuthedInner(user) {
   
   refreshPresenceSnapshot();
   refreshLiveBoss(); 
-  
-  if (isGuest()) {
-    setTimeout(() => {
-      pushNotif('🎭', i18next.t('backend:backend.auth.guest_mode_title'),
-        i18next.t('backend:backend.auth.guest_mode_body'),
-        'info');
-    }, 3000);
-  }
 }
 
 async function refreshMyPseudo() {
   myPseudo = null;
-  if (!sb || !currentUser || isGuest()) return;
+  if (!sb || !currentUser) return;
   try {
     const { data } = await sb.from('profiles').select('pseudo').eq('user_id', currentUser.id).maybeSingle();
     myPseudo = data?.pseudo || discordUsername(currentUser) || (currentUser.email || '?').split('@')[0];
@@ -22372,7 +22284,7 @@ async function refreshMyPseudo() {
   updatePseudoDisplay();
 }
 
-async function startGuestOrShowAuth() {
+async function showAuthScreen() {
   if (!sb) { showAuthOverlay(false); updateUserBar(); return; } 
   showAuthOverlay(true);
   authShow('');
@@ -22413,11 +22325,6 @@ $a('btnCopyUuid').onclick = async () => {
   hint.innerHTML = i18next.t('backend:backend.account.uuid_copied_msg');
   setTimeout(() => { hint.innerHTML = '📋 ' + i18next.t('backend:backend.account.copy_label') + ' UUID'; }, 1200);
 };
-$a('btnLinkAccount').onclick = () => {
-  
-  $a('authSub').textContent = i18next.t('backend:backend.account.link_account_prompt');
-  showAuthOverlay(true);
-};
 
 { const _ca = $a('closeAuth'); if (_ca) _ca.onclick = () => showAuthOverlay(false); }
 let authMouseDownOnBackdrop = false;
@@ -22430,5 +22337,5 @@ $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignI
   if (!sb) { showAuthOverlay(false); updateUserBar(); authShow(''); saveReady = true; grantWelcomeSilver(); return; }
   const { data } = await sb.auth.getSession();
   if (data.session) onAuthed(data.session.user);
-  else await startGuestOrShowAuth();
+  else await showAuthScreen();
 })();

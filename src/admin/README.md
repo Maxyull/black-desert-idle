@@ -141,10 +141,10 @@ Migration `20260719210000_admin_list_players_provider.sql` (DROP obligatoire ava
 le type de retour change).
 
 **Invités désactivés + Google/GitHub (2026-07-20, demande explicite : "Désactive les invités,
-ajoute inscription google, github")** : `startGuestOrShowAuth()` ne tente plus
-`signInAnonymously()` pour un NOUVEAU visiteur -- affiche directement le formulaire de connexion
-(les sessions invité déjà existantes avant ce changement continuent de fonctionner normalement,
-rien n'est supprimé côté serveur). `doSignInGoogle()`/`doSignInGithub()` (game-supabase.js) même
+ajoute inscription google, github")** : plus aucune session anonyme n'est ouverte pour un NOUVEAU
+visiteur, `showAuthScreen()` affiche directement le formulaire de connexion. Le mode invité a été
+entièrement retiré du code le 2026-08-03 (issue #18), sessions restantes comprises.
+`doSignInGoogle()`/`doSignInGithub()` (game-supabase.js) même
 pattern que `doSignInDiscord()`. ⚠️ Les providers Google/GitHub doivent être activés avec un
 Client ID/Secret OAuth côté Dashboard Supabase (Authentication > Providers) -- action externe,
 impossible à faire depuis le code.

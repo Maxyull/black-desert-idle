@@ -184,10 +184,8 @@ function pvpHostWin() { return (window.parent && window.parent !== window) ? win
 function pvpSb() { const w = pvpHostWin(); return w && typeof w.getSbClient === 'function' ? w.getSbClient() : null; }
 /** @returns {object|null} utilisateur courant, via le jeu hôte. */
 function pvpUser() { const w = pvpHostWin(); return w && typeof w.getCurrentUserForSync === 'function' ? w.getCurrentUserForSync() : null; }
-/** @returns {boolean} true si invité (tournoi nécessite un compte -- même garde que le Marché). */
-function pvpIsGuest() { const w = pvpHostWin(); return w && typeof w.isGuest === 'function' ? w.isGuest() : false; }
-/** @returns {boolean} true si le tournoi est utilisable (Supabase + user dispo, pas invité). */
-function pvpTournamentReady() { return !!(pvpSb() && pvpUser() && !pvpIsGuest()); }
+/** @returns {boolean} true si le tournoi est utilisable (Supabase + user dispo). */
+function pvpTournamentReady() { return !!(pvpSb() && pvpUser()); }
 
 /**
  * Heure Paris courante, dérivée de façon fiable via Intl (gère automatiquement l'heure d'été/hiver,
@@ -237,7 +235,7 @@ let pvpTournamentState = { day: null, registrantCount: 0, myRegistered: false, m
 
 /** Inscrit l'équipe actuellement déployée au prochain tournoi (RPC register_pvp_team). @returns {Promise<void>} */
 async function registerForPvpTournament() {
-  if (!pvpTournamentReady()) { toast('⚠️', pvpIsGuest() ? i18next.t('companions:companions.pvp.tournament_needs_account') : i18next.t('companions:companions.pvp.tournament_login')); return; }
+  if (!pvpTournamentReady()) { toast('⚠️', i18next.t('companions:companions.pvp.tournament_login')); return; }
   const deployed = currentlyDeployedPets();
   if (!deployed.length) { toast('⚠️', i18next.t('companions:companions.pvp.deploy_before_register')); return; }
   const team = buildTeamSnapshot(deployed);
@@ -349,7 +347,7 @@ function renderPvpTournamentCard() {
   if (pvpCountdownInterval) { clearInterval(pvpCountdownInterval); pvpCountdownInterval = null; }
 
   if (!pvpTournamentReady()) {
-    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:16px;text-align:center">${pvpIsGuest() ? i18next.t('companions:companions.pvp.tournament_needs_account') : i18next.t('companions:companions.pvp.tournament_join_login')}</div>`;
+    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:16px;text-align:center">${i18next.t('companions:companions.pvp.tournament_join_login')}</div>`;
     return;
   }
 

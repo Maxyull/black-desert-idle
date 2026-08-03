@@ -24,13 +24,7 @@
 // compendiumOverallPct()/game-core.js et déjà envoyée à chaque sync -- jamais utilisée par un
 // classement avant), barre "Ta position" quand le joueur est hors du top LB2_TOP_N (rang réel
 // calculé sur les jusqu'à 500 lignes déjà chargées, aucune requête supplémentaire), "vu il y a
-// Xmin/Xj" par ligne (podium ET tableau) via player_stats.updated_at, et remplacement de l'alerte
-// navigateur brute (marketRequireAuth()) par un panneau invité stylé (lb2GuestGateHtml()) --
-// réutilise le texte EXACT de market:market.auth_verified_required et le VRAI bouton
-// #btnLinkAccount (game-supabase.js) plutôt que de dupliquer le flux de liaison de compte.
-// market.js n'est PAS modifié : marketRequireAuth() garde son alert() pour le Marché, ce fichier
-// fait sa propre vérification isGuest()/currentUser (mêmes globals déjà lus par
-// marketRequireAuth(), pas une nouvelle logique).
+// Xmin/Xj" par ligne (podium ET tableau) via player_stats.updated_at.
 
 /** @returns {object} définitions des 8 catégories du classement public (icône, label, formateur, extracteur de valeur), recalculées à chaque appel pour suivre i18next.t() en direct. */
 function LB2_CATS_() {
@@ -119,34 +113,9 @@ function lb2SeenInfo(updatedAtIso) {
   return { text: i18next.t('backend:backend.leaderboard.seen_label', { time }), recent };
 }
 
-// invité (compte anonyme) : panneau stylé réutilisant le texte EXACT de marketRequireAuth() (voir
-// market.js) et le VRAI bouton de liaison de compte (#btnLinkAccount, game-supabase.js) --
-// n'appelle PAS marketRequireAuth() ici (son alert() reste réservé au cas "aucune session du
-// tout", ci-dessous) pour ne pas déclencher son alert() natif sur le cas invité qu'on veut styliser.
-/** @returns {string} HTML du panneau invité stylé (compte anonyme), réutilise le texte de marketRequireAuth() et le vrai bouton de liaison de compte. */
-function lb2GuestGateHtml() {
-  return `<div class="lb2GuestGate">
-    <div class="lb2GuestIcon">🔒</div>
-    <div class="lb2GuestTxt">${escapeHtml(i18next.t('market:market.auth_verified_required'))}</div>
-    <button class="lb2GuestBtn" id="lb2LinkAccountBtn">${escapeHtml(i18next.t('backend:backend.leaderboard.link_account_button'))}</button>
-  </div>`;
-}
-/** Câble le bouton du panneau invité (délègue au vrai bouton #btnLinkAccount, jamais de logique dupliquée). */
-function lb2WireGuestGate() {
-  const btn = $a('lb2LinkAccountBtn');
-  // délègue au VRAI bouton de liaison de compte déjà câblé (game-supabase.js) plutôt que de
-  // réimplémenter showAuthOverlay(true)/authSub ici -- un seul endroit source de vérité pour ce flux.
-  if (btn) btn.onclick = () => { const real = $a('btnLinkAccount'); if (real) real.click(); };
-}
-
-/** Ouvre le panneau Classement public : panneau invité si compte anonyme, sinon charge player_stats (jusqu'à 500 lignes) et rend le corps. */
+/** Ouvre le panneau Classement public : charge player_stats (jusqu'à 500 lignes) et rend le corps. */
 async function openLeaderboard2() {
   if (!sb || !currentUser) { marketRequireAuth(); return; } // aucune session du tout (cas rare) -- alerte historique conservée
-  if (isGuest()) {
-    openInfo(i18next.t('backend:backend.leaderboard.panel_title'), lb2GuestGateHtml());
-    lb2WireGuestGate();
-    return;
-  }
   lb2Error = null;
   openInfo(i18next.t('backend:backend.leaderboard.panel_title'), lb2ShellHtml());
   const { data, error } = await sb.from('player_stats').select('*').limit(500);

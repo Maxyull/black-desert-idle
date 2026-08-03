@@ -56,7 +56,7 @@ function updateChatInputVisibility() {
   if (chatChannel === 'modéré') {
     row.style.display = 'none';
     note.textContent = i18next.t('social:social.chat_note_moderated_log');
-  } else if (!currentUser || isGuest()) {
+  } else if (!currentUser) {
     row.style.display = 'none';
     note.textContent = i18next.t('social:social.chat_note_signin_required');
   } else if (chatChannel === 'annonce' && !isAdmin()) {
@@ -178,7 +178,7 @@ async function fetchChatMessages() {
 // n'a pas été lu dans un channel où tu n'es pas"
 /** Sonde les canaux non actuellement suivis pour du non-lu (halo sur onglet), déclenche l'alerte de mention @moi si un ping arrive dans un canal non suivi. */
 async function pollChatUnread() {
-  if (!sb || !currentUser || isGuest()) return;
+  if (!sb || !currentUser) return;
   for (const c of chatVisibleChannels()) {
     if (c.id === 'modéré') continue; // pas de notion de "non lu" pour le journal modéré
     if (c.id === chatChannel && !chatFolded) continue; // canal actif et déplié : déjà tenu à jour par fetchChatMessages
@@ -252,7 +252,7 @@ $a('chatSendBtn').onclick = sendChatMessage;
 let onlinePlayersCache = [];
 /** Rafraîchit onlinePlayersCache (RPC get_online_players), utilisé pour les suggestions et le surlignage de mentions @. */
 async function refreshOnlinePlayersCache() {
-  if (!sb || !currentUser || isGuest()) return;
+  if (!sb || !currentUser) return;
   try {
     const { data } = await sb.rpc('get_online_players');
     onlinePlayersCache = (data||[]).map(r => r.pseudo).filter(Boolean);

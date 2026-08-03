@@ -182,7 +182,7 @@ let myIsTester = false; // le joueur courant est-il testeur (table testers) ? �
 /** Vérifie si le joueur courant est testeur (table testers) et bascule la visibilité du bouton Tester. */
 async function refreshMyTesterStatus() {
   myIsTester = false;
-  if (sb && currentUser && !isGuest()) {
+  if (sb && currentUser) {
     try { const { data } = await sb.from('testers').select('user_id').eq('user_id', currentUser.id).maybeSingle(); myIsTester = !!data; } catch (e) {}
   }
   const b = $a('btnTester'); if (b) b.style.display = myIsTester ? '' : 'none';
@@ -190,7 +190,7 @@ async function refreshMyTesterStatus() {
 /** Vérifie si le joueur courant est modérateur (table chat_mods) et re-render les onglets du chat (le statut mod peut débloquer le canal "modéré"). */
 async function refreshMyModStatus() {
   myIsMod = false;
-  if (!sb || !currentUser || isGuest()) { if (typeof renderChatTabs==='function') renderChatTabs(); return; }
+  if (!sb || !currentUser) { if (typeof renderChatTabs==='function') renderChatTabs(); return; }
   try {
     const { data } = await sb.from('chat_mods').select('user_id').eq('user_id', currentUser.id).maybeSingle();
     myIsMod = !!data;
@@ -226,9 +226,6 @@ function isBanned(banStatus) {
   const t = new Date(banStatus.banned_until).getTime();
   return !isNaN(t) && t > Date.now();
 }
-// invité = session anonyme Supabase (pas d'email/mot de passe) — jeu jouable et sauvegardé,
-// mais aucun accès au marché/classement (surfaces les plus exposées à la triche multi-comptes)
-function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 
 // bug corrigé (2026-07-20, "toujours aucunes stats declosion... verifie si tout est connecté a
 // supabase") : `sb`/`currentUser` sont déclarés en `let` top-level -- contrairement à `var` ou à
@@ -271,7 +268,7 @@ function addGameSilverForCompanion(delta, note) {
 let farmEventQueue = new Map();
 /** @param {string} kind @param {string} name @param {number} qty @param {number} silverVal. Agrège un événement de farm dans farmEventQueue (clé objet+zone) pour un envoi groupé par flushFarmEvents(), no-op si invité/déconnecté. */
 function queueFarmEvent(kind, name, qty, silverVal) {
-  if (!sb || !currentUser || isGuest()) return; // pas de compte vérifié → pas de journalisation
+  if (!sb || !currentUser) return; // pas de session → pas de journalisation
   const zone = Z().name;
   const key = kind + '|' + name + '|' + zone;
   const cur = farmEventQueue.get(key);
@@ -280,7 +277,7 @@ function queueFarmEvent(kind, name, qty, silverVal) {
 }
 /** Envoie farmEventQueue en un seul lot (insert batch) puis vide la queue. Appelé toutes les 25s + à la fermeture de page. */
 async function flushFarmEvents() {
-  if (!sb || !currentUser || isGuest() || farmEventQueue.size === 0) return;
+  if (!sb || !currentUser || farmEventQueue.size === 0) return;
   const batch = Array.from(farmEventQueue.values());
   farmEventQueue.clear();
   try { await sb.from('farm_events').insert(batch); } catch(e) { /* pas grave, prochain lot rattrapera */ }
@@ -302,7 +299,7 @@ window.addEventListener('beforeunload', flushFarmEvents);
 let silverLedgerQueue = new Map();
 /** @param {number} delta - variation de silver. @param {string} category @param {string} note. Agrège dans silverLedgerQueue (clé catégorie+note) pour un envoi groupé par flushSilverLedger(). */
 function queueSilverLedger(delta, category, note) {
-  if (!sb || !currentUser || isGuest() || !delta) return; // pas de compte vérifié → pas de journalisation
+  if (!sb || !currentUser || !delta) return; // pas de session → pas de journalisation
   const key = category + '|' + (note || '');
   const cur = silverLedgerQueue.get(key);
   if (cur) cur.delta += Math.round(delta);
@@ -310,7 +307,7 @@ function queueSilverLedger(delta, category, note) {
 }
 /** Envoie silverLedgerQueue en un seul lot (filtre les deltas nuls) puis vide la queue. */
 async function flushSilverLedger() {
-  if (!sb || !currentUser || isGuest() || silverLedgerQueue.size === 0) return;
+  if (!sb || !currentUser || silverLedgerQueue.size === 0) return;
   const batch = Array.from(silverLedgerQueue.values()).filter(r => r.delta !== 0);
   silverLedgerQueue.clear();
   if (batch.length === 0) return;
@@ -473,29 +470,9 @@ async function flushOfflineSaveIfNeeded() {
   const { error } = await sb.from('game_saves').upsert({ user_id: currentUser.id, save_data: cached.save_data });
   if (!error) { pendingOfflineSync = false; clearLocalOfflineCache(); }
 }
-// ============ DÉPRÉCIATION DU MODE INVITÉ — tout ce bloc est à supprimer le GUEST_SUNSET_DATE ============
-// Constat du 2026-07-22 : plus AUCUN invité n'est créé depuis le 2026-07-10 (startGuestOrShowAuth
-// n'appelle plus signInAnonymously) -- le mode invité est déjà mort côté création. Mais 127 sessions
-// anonymes subsistent en base, dont 43 avec sauvegarde et UNE à 30 h de jeu / niveau 32 / 10,3M
-// silver (plus aucune activité depuis le 2026-07-11).
-//
-// Ces comptes n'ont ni email ni pseudo : impossible de prévenir qui que ce soit. Leur session vit
-// dans le localStorage de LEUR navigateur, donc la seule fenêtre pour les avertir est leur retour
-// sur le jeu -- d'où ce bandeau. Sans lui, retirer le code invité leur supprimerait silencieusement
-// leur unique porte de sortie (bouton "Lier un compte" + conversion invité->compte réel, doSignUp).
-//
-// À FAIRE À CETTE DATE : supprimer tout le code invité (isGuest, btnLinkAccount, la branche
-// isGuest() de doSignUp, les clés backend.auth.guest_*, ce bandeau + son HTML/CSS) puis purger les
-// comptes anonymes restants. Voir l'issue de suivi GitHub.
-const GUEST_SUNSET_DATE = '2026-08-15'; // 4 semaines de sursis à compter du 2026-07-17
-/** Affiche le bandeau de dernière chance aux comptes invités (mode invité en fin de vie) — cliquer ouvre la liaison de compte. No-op pour un compte réel. */
-function showGuestSunsetBannerIfGuest() {
-  const el = $a('guestSunsetBanner');
-  if (!el) return;
-  el.classList.toggle('hidden', !isGuest());
-  el.onclick = () => { const b = $a('btnLinkAccount'); if (b) b.click(); };
-}
-// ============ fin du bloc à supprimer ============
+// Le MODE INVITÉ a été entièrement retiré (issue #18). Plus aucune session anonyme n'était créée
+// depuis le 2026-07-10. Un test de non-régression vérifie qu'aucun symbole du mode invité ne
+// revient dans le bundle, voir testAucunResteDuModeInvite() dans tests/tests.js.
 function showOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.remove('hidden'); }
 function hideOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.add('hidden'); }
 window.addEventListener('offline', () => { isOffline = true; showOfflineBanner(); });
@@ -556,7 +533,7 @@ async function saveToCloud() {
 // ---------- classement : snapshot périodique des stats publiques dans player_stats ----------
 /** Pousse les records À VIE du joueur (silver/GS/AP/DP/zone/trésors/loyalty/compendium) dans player_stats — jamais l'état courant/instantané, pour un classement qui ne régresse jamais. silver_per_hour/best_kpm (et leurs variantes _week) ne sont PLUS envoyés : colonnes calculées et possédées par le SERVEUR depuis V454. Réservé aux comptes vérifiés. */
 async function syncPlayerStats() {
-  if (!sb || !currentUser || isGuest()) return; // classement réservé aux comptes vérifiés
+  if (!sb || !currentUser) return; // classement réservé aux comptes connectés
   // silver_per_hour / best_kpm / silver_per_hour_week / best_kpm_week : RETIRÉS du payload le
   // 2026-07-16 (V454, demande explicite : "revoir comment est calculé silver/h kpm et faire qqch
   // de mieux et juste pour tout le monde") -- ces colonnes sont désormais calculées CÔTÉ SERVEUR
