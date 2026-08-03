@@ -49,6 +49,21 @@ class KeepAliveHandler(SimpleHTTPRequestHandler):
     # erreurs (send_error), condition necessaire pour que le keep-alive soit correct.
     protocol_version = "HTTP/1.1"
 
+    # TCP_NODELAY, et ce n'est PAS un detail (mesure CI : sans lui, le job `test` passait de ~4,3
+    # a ~5,9 min, +30 %). BaseHTTPRequestHandler ecrit les en-tetes puis le corps en DEUX send()
+    # distincts. En HTTP/1.0 la fermeture de connexion poussait le tout immediatement ; en
+    # keep-alive la connexion reste ouverte, et l'algorithme de Nagle retient le 2e envoi en
+    # attendant l'ACK du 1er -- que le delayed-ACK du pair fait justement attendre. Resultat :
+    # ~40 ms perdues par reponse, x ~10 000 requetes par run. Invisible sous Windows (pile
+    # loopback differente), d'ou un gain en local et une perte en CI Linux tant que ce flag
+    # manquait.
+    disable_nagle_algorithm = True
+
+    # Une connexion keep-alive inactive garde un thread bloque en lecture. Sans borne, les
+    # threads s'accumulent sur toute la duree du run (~6 connexions par page x 82 pages).
+    # BaseHTTPRequestHandler.handle_one_request traite le socket.timeout en fermant proprement.
+    timeout = 10
+
     def log_message(self, fmt, *args):
         # Playwright pipe stdout/stderr du webServer dans la sortie des tests : une ligne par
         # requete noie le rapport (~8000 lignes par run). On ne garde que ce qui est anormal --
