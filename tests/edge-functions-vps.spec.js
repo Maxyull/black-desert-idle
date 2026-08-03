@@ -181,6 +181,47 @@ test.describe('la page /donation lit la base du VPS', () => {
   });
 });
 
+// --------------------------------------------------------- verify_jwt
+// `supabase functions deploy` applique verify_jwt = true quand rien ne le
+// déclare. Trois des quatre fonctions tournent en false, et config.toml n'en
+// disait rien : un déploiement sans `--no-verify-jwt` les aurait basculées
+// toutes ensemble, en silence. paypal-webhook aurait alors rejeté chaque don
+// en 401 (PayPal ne peut pas s'authentifier chez nous) et auth-by-identifier
+// aurait coupé la connexion de tout le monde.
+test.describe('config.toml fige le verify_jwt de chaque fonction', () => {
+  const config = lire('supabase', 'config.toml');
+  const noms = fs.readdirSync(FONCTIONS)
+    .filter((n) => fs.existsSync(path.join(FONCTIONS, n, 'index.ts')));
+
+  test('chaque fonction du dépôt a sa section', () => {
+    expect(noms.length, 'aucune fonction edge trouvée : extraction cassée').toBeGreaterThan(0);
+    for (const nom of noms) {
+      expect(
+        config,
+        `[functions.${nom}] manque dans supabase/config.toml : un deploy la basculerait ` +
+        `en verify_jwt = true sans que personne ne le voie`
+      ).toContain(`[functions.${nom}]`);
+      const section = config.slice(config.indexOf(`[functions.${nom}]`));
+      const valeur = section.slice(0, section.indexOf('\n\n') + 1 || undefined)
+        .match(/verify_jwt\s*=\s*(true|false)/);
+      expect(valeur, `[functions.${nom}] ne déclare pas verify_jwt`).not.toBeNull();
+    }
+  });
+
+  // Les trois qui DOIVENT rester ouvertes, chacune pour une raison propre.
+  // Un passage à true ici n'est pas un durcissement, c'est une panne.
+  for (const [nom, raison] of [
+    ['paypal-webhook', 'PayPal ne peut pas s\'authentifier : chaque don prendrait un 401'],
+    ['auth-by-identifier', "l'écran de connexion n'est pas authentifié par construction"],
+    ['discord-log', 'le client porte la clé publiable, qui n\'est pas un JWT'],
+  ]) {
+    test(`${nom} reste en verify_jwt = false (${raison})`, () => {
+      const section = config.slice(config.indexOf(`[functions.${nom}]`));
+      expect(section).toMatch(/^\[functions\.[^\]]+\]\s*\nverify_jwt\s*=\s*false/);
+    });
+  }
+});
+
 // ------------------------------------------------------- règle générale
 test('toute fonction edge qui parle à une base déclare VERS_VPS', () => {
   // Régression de PORTÉE, et c'est elle qui compte le plus : les deux fonctions
