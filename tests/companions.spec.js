@@ -99,8 +99,17 @@ async function signInForTest(page) {
     // rechargement pendant les tests est un fait AVÉRÉ ici -- un meta/patch-notes-version.json
     // périmé fait recharger toutes les ~30 s via checkForUpdate() (src/backend/client-health.js,
     // mesuré : 3 navigations en 75 s avec écart de version, 1 sans). Mais ce n'était PAS la
-    // cause de l'occurrence observée, où les deux versions concordaient : il reste donc une
+    // cause de l'occurrence observée, où les deux versions concordaient : il restait donc une
     // seconde cause inconnue, et c'est elle que ces champs doivent permettre de nommer.
+    //
+    // SECONDE CAUSE NOMMÉE LE 2026-08-03, et ce diagnostic est exactement ce qui l'a permise : il
+    // a renvoyé `readyState:'complete', navType:'navigate'` (donc AUCUN rechargement, la piste
+    // ci-dessus était bien morte) avec `cloudSaveInterval:'TDZ'` et un
+    // `ReferenceError: $a is not defined`. C'était la SATURATION DES PORTS ÉPHÉMÈRES : le serveur
+    // de test répondait en HTTP/1.0, une connexion TCP par requête, ~8000 par run — Chromium
+    // finissait par abandonner un `<script>` au hasard en net::ERR_NO_BUFFER_SPACE. Corrigé par
+    // scripts/test_server.py (HTTP/1.1 keep-alive), voir son en-tête et playwright.config.js.
+    // Le diagnostic reste en place : il ne coûte rien et a déjà servi deux fois.
     //
     // COMMENT L'INTERPRÉTER :
     //   readyState !== 'complete'  -> la page se rechargeait, chercher QUI l'a déclenché
@@ -199,6 +208,18 @@ async function waitCompanionsReady(frame) {
 // "déjà vu" ('1') pour n'importe quelle clé velia-idle-item-tuto-seen-* (voir itemTutoStorageKey /
 // isItemTutorialSeen, notifications-quests.js), donc maybeShowItemTutorial() n'en ouvre jamais.
 test.beforeEach(async ({ page }) => {
+  // Filet de diagnostic (2026-08-03) : un `<script>` du jeu qui n'arrive pas ne casse RIEN sur le
+  // coup — ses globales restent juste indéfinies — et ressort beaucoup plus tard, dans un test qui
+  // n'a rien à voir, en `ReferenceError: $a is not defined`. Ça a coûté deux enquêtes (2026-07-20
+  // puis 2026-08-03, voir signInForTest ci-dessus). Une ligne dans le rapport suffit désormais à
+  // reconnaître le cas au lieu de le rechercher. Log seulement, jamais d'échec ajouté : les seules
+  // requêtes qui échouent en temps normal sont les polices Google, bloquées par la CSP (attendu),
+  // et elles sont hors même-origine donc filtrées ici.
+  page.on('requestfailed', r => {
+    if (!r.url().startsWith('http://127.0.0.1')) return;
+    console.log(`[script non servi] ${r.url().split('/').pop()} -> ${r.failure() && r.failure().errorText}`
+      + ' (harnais de test, pas le jeu -- voir scripts/test_server.py)');
+  });
   await page.addInitScript(() => {
     const origGet = Storage.prototype.getItem;
     Storage.prototype.getItem = function (k) {

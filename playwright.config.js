@@ -37,7 +37,16 @@ module.exports = defineConfig({
     trace: 'retain-on-failure'
   },
   webServer: {
-    command: `python3 -m http.server ${port}`,
+    // scripts/test_server.py et pas `python3 -m http.server` (2026-08-03) : ce dernier repond en
+    // HTTP/1.0, donc ferme la connexion apres CHAQUE reponse. A ~130 scripts par test (page + iframe
+    // compagnon), un run complet ouvrait ~8000 connexions TCP en une minute et saturait la plage de
+    // ports ephemeres de Windows (16384, TIME_WAIT 2 min) : Chromium abandonnait alors une requete au
+    // hasard en net::ERR_NO_BUFFER_SPACE / net::ERR_ADDRESS_IN_USE, un <script> manquait, et ca
+    // ressortait plus tard en `ReferenceError: $a is not defined` dans un test sans rapport. C'etait
+    // la "seconde cause inconnue" cherchee depuis le 2026-07-20 (voir signInForTest dans
+    // companions.spec.js). Le remplacant parle HTTP/1.1 (keep-alive) et est threade -- tout le
+    // raisonnement et la mesure sont dans l'en-tete de scripts/test_server.py.
+    command: `python3 scripts/test_server.py ${port}`,
     url: `${baseURL}/index.dev.html`,
     // PIÈGE quand on enchaîne les suites en local (2026-07-20, après une fausse piste qui a coûté
     // du temps) : `reuseExistingServer` est vrai hors CI, donc un run peut s'attacher au serveur
@@ -49,6 +58,11 @@ module.exports = defineConfig({
     //
     // Ce n'est PAS le backlog TCP de http.server (request_queue_size = 5) : mesuré, rafales de 60
     // connexions simultanées x6, 0/360 refus à 5 comme à 128. Inutile d'aller le gonfler.
+    //
+    // À NE PAS CONFONDRE avec la saturation de ports éphémères corrigée le 2026-08-03 (voir le
+    // commentaire sur `command` ci-dessus) : symptômes proches — un <script> manquant qui ressort
+    // en ReferenceError lointain — mais causes distinctes. Ici ERR_CONNECTION_REFUSED (serveur en
+    // train de s'éteindre), là ERR_NO_BUFFER_SPACE/ERR_ADDRESS_IN_USE (plus de socket côté client).
     //
     // Pour reproduire fidèlement la CI en local : `CI=1 npx playwright test` (un serveur dédié par
     // run, jamais réutilisé). Vérifié : 3 runs enchaînés, 77/77, zéro refus -- alors que les mêmes
