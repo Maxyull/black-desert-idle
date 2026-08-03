@@ -37,7 +37,7 @@
      meta ne s'applique qu'au document qui la porte, jamais a un iframe cross-document). Teste
      avant commit : connexion Supabase, panneaux React (boss wheel/reconnect/compendium/patch
      notes), i18next, aucune violation CSP en console. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://mkwwvzbjtyawpcyrnybk.supabase.co wss://mkwwvzbjtyawpcyrnybk.supabase.co https://bdi.maxyull.fr https://black-desert-idle-discord-bot.onrender.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://stats.maxyull.fr 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://mkwwvzbjtyawpcyrnybk.supabase.co wss://mkwwvzbjtyawpcyrnybk.supabase.co https://bdi.maxyull.fr https://stats.maxyull.fr https://black-desert-idle-discord-bot.onrender.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
 <!-- favicon (2026-07-21, repo-audit-todo.md point 9) : SVG, palette officielle (CLAUDE.md §29,
      fond #0b0f1a / accent or #d4a955) -- pas de fallback PNG/ICO, pas d'outil de rasterisation
      disponible sur cette machine ; le SVG seul couvre tous les navigateurs modernes (Chrome/
@@ -113,6 +113,16 @@
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="src/styles/styles.css?v=719"><!-- refonte visuelle "Zone" (2026-07-11, port fidèle de bdi-dashboard-redesign.html fourni par     l'utilisateur, voir CLAUDE.md) : Cinzel déjà référencé dans styles.css mais jamais chargé     jusqu'ici (retombait en serif silencieusement) -- Inter/JetBrains Mono nouvellement introduits     par ce portage, mêmes polices que le mockup --><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"></head><body>
+<!-- Mesure d'audience Umami, auto-hebergee sur le VPS (stats.maxyull.fr), sans cookie ni
+     identifiant persistant, donc aucune banniere de consentement a ajouter.
+     ⚠️ data-domains limite l'envoi a blackdesertidle.maxyull.fr : sans cet attribut, chaque
+     ouverture de index.dev.html en local et chaque run Playwright compteraient comme des
+     visites, et les chiffres du jeu seraient ceux des tests.
+     ⚠️ Deux directives CSP sont necessaires, pas une : script-src pour charger le marqueur,
+     connect-src pour qu'il puisse envoyer la visite. Sans connect-src le script se charge,
+     la console reste propre, et rien n'est jamais compte. -->
+<script defer src="https://stats.maxyull.fr/script.js" data-website-id="0f12b00a-e34b-4e5e-9c90-7d0aa4be10ff" data-domains="blackdesertidle.maxyull.fr"></script>
+</head><body>
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
