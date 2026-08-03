@@ -104,11 +104,13 @@ const I18N_RESOURCES = {
       "admin.content.tutorials_no_data": "Aucun tutoriel vu pour l'instant",
       "admin.content.tutorials_tracked": "Tutoriels suivis",
       "admin.content.zone_progression_summary": "Zone la plus avancée atteinte par chaque joueur (best_zone_index, borné côté anti-triche) — pas la zone farmée maintenant. Catégories sous 4% fusionnées dans \"Autres\".",
+      "admin.dash.actions_unknown": "Impossible de savoir ce qu'il y a à traiter : données indisponibles",
       "admin.dash.ago_hours": "il y a {{n}} h",
       "admin.dash.ago_minutes": "il y a {{n}} min",
       "admin.dash.ago_seconds": "il y a {{n}} s",
       "admin.dash.all_normal": "Tout est normal",
       "admin.dash.handle": "Traiter",
+      "admin.dash.health_unreachable": "État inconnu : serveur injoignable",
       "admin.dash.kpi_active_players": "Joueurs actifs",
       "admin.dash.kpi_client_errors": "Erreurs client",
       "admin.dash.kpi_market_sales": "Ventes marché",
@@ -1305,11 +1307,13 @@ const I18N_RESOURCES = {
       "admin.content.tutorials_no_data": "No tutorials seen yet",
       "admin.content.tutorials_tracked": "Tutorials tracked",
       "admin.content.zone_progression_summary": "Furthest zone reached by each player (best_zone_index, anti-cheat bounded) — not the zone currently being farmed. Categories under 4% merged into \"Other\".",
+      "admin.dash.actions_unknown": "Cannot tell what needs handling: data unavailable",
       "admin.dash.ago_hours": "{{n}}h ago",
       "admin.dash.ago_minutes": "{{n}}min ago",
       "admin.dash.ago_seconds": "{{n}}s ago",
       "admin.dash.all_normal": "All normal",
       "admin.dash.handle": "Handle",
+      "admin.dash.health_unreachable": "Unknown state: server unreachable",
       "admin.dash.kpi_active_players": "Active players",
       "admin.dash.kpi_client_errors": "Client errors",
       "admin.dash.kpi_market_sales": "Market sales",
@@ -20434,7 +20438,16 @@ const ADM_HEALTH_TARGET = {
   db_size: ['system', 'danger'],
 };
 
-function AdmHealthBanner({ checks, checkedAt }) {
+function AdmHealthBanner({ checks, checkedAt, unreachable }) {
+  
+  if (unreachable) {
+    return admH('div', { className: 'admHealthBanner tone-warn' },
+      admH('div', { className: 'admHealthMain' },
+        admH('span', { className: 'admHealthDot' }, '🟠'),
+        admH('span', { className: 'admHealthTitle' }, i18next.t('admin:admin.dash.health_unreachable'))
+      )
+    );
+  }
   const bad = (checks || []).filter(c => c.status === 'warn' || c.status === 'down');
   const worst = (checks || []).reduce((w, c) => (ADM_STATUS_RANK[c.status] < ADM_STATUS_RANK[w] ? c.status : w), 'ok');
   const tone = worst === 'down' ? 'crit' : worst === 'warn' ? 'warn' : worst === 'unknown' ? 'muted' : 'good';
@@ -20467,9 +20480,17 @@ const ADM_KPIS = [
   { key: 'market_sales',   icon: '🏛️', dir: 'up-is-good', label: () => i18next.t('admin:admin.dash.kpi_market_sales') },
 ];
 
-function AdmKpiRow({ kpis, hours }) {
+function AdmKpiRow({ kpis, hours, unavailable }) {
   return admH('div', { className: 'admKpiRow' },
     ADM_KPIS.map(def => {
+      
+      if (unavailable) {
+        return admH('div', { key: def.key, className: 'admKpiCard' },
+          admH('div', { className: 'admKpiLbl' }, def.icon + ' ' + def.label()),
+          admH('div', { className: 'admKpiVal' }, '—'),
+          admH('div', { className: 'admKpiDelta tone-neutral' }, '—')
+        );
+      }
       const row = (kpis || {})[def.key] || { current: 0, previous: 0 };
       const d = deltaBadge(row.current, row.previous, def.dir);
       return admH('div', { key: def.key, className: 'admKpiCard' },
@@ -20482,8 +20503,10 @@ function AdmKpiRow({ kpis, hours }) {
   );
 }
 
-function AdmActionList({ actions }) {
+function AdmActionList({ actions, incomplete }) {
   if (!actions || actions.length === 0) {
+    
+    if (incomplete) return admH('div', { className: 'admActionsEmpty' }, '⚠️ ' + i18next.t('admin:admin.dash.actions_unknown'));
     return admH('div', { className: 'admActionsEmpty' }, '✅ ' + i18next.t('admin:admin.dash.nothing_todo'));
   }
   return admH('div', { className: 'admActionsList' },
@@ -20502,15 +20525,23 @@ function AdmDashboard() {
   const [state, setState] = React.useState({ loading: true, checks: [], kpis: {}, actions: [] });
   const hours = adminPeriodHours();
 
+  const safeRpc = React.useCallback((fn, args) => (
+    Promise.resolve(args === undefined ? sb.rpc(fn) : sb.rpc(fn, args))
+      .catch(e => ({ data: null, error: e || { message: 'unreachable' } }))
+  ), []);
+
   const load = React.useCallback(async () => {
-    if (!sb) return;
+    
+    if (!sb) { setState({ loading: false, checks: [], kpis: {}, actions: [], healthDown: true, kpisDown: true }); return; }
     const [health, kpi, reports, integrity] = await Promise.all([
-      sb.rpc('admin_health'),
-      sb.rpc('admin_dashboard_kpis', { p_hours: hours }),
+      safeRpc('admin_health'),
+      safeRpc('admin_dashboard_kpis', { p_hours: hours }),
       
-      Promise.resolve(sb.rpc('admin_patch_note_pending_reports')).catch(() => ({ data: [] })),
-      Promise.resolve(sb.rpc('admin_integrity_summary')).catch(() => ({ data: [] })),
+      safeRpc('admin_patch_note_pending_reports'),
+      safeRpc('admin_integrity_summary'),
     ]);
+    const healthDown = !health || !!health.error || !health.data;
+    const kpisDown = !kpi || !!kpi.error || !kpi.data;
     const kpis = {};
     (kpi.data || []).forEach(r => { kpis[r.metric] = { current: r.current_value, previous: r.previous_value }; });
     
@@ -20526,8 +20557,11 @@ function AdmDashboard() {
     (health.data || []).filter(c => c.status === 'down').forEach(c => {
       actions.push({ icon: '🔴', label: (c.label || c.key) + (c.message ? ' — ' + c.message : ''), cat: 'system', id: 'danger' });
     });
-    setState({ loading: false, checks: health.data || [], kpis, actions,
+    setState({ loading: false, checks: health.data || [], kpis, actions, healthDown, kpisDown,
+               
+               actionsIncomplete: healthDown || kpisDown || !!(reports && reports.error) || !!(integrity && integrity.error),
                checkedAt: (health.data || []).reduce((m, c) => (!m || c.checked_at > m ? c.checked_at : m), null) });
+    
   }, []);
 
   React.useEffect(() => { load(); }, [load]);
@@ -20540,11 +20574,11 @@ function AdmDashboard() {
     );
   }
   return admH('div', { className: 'admDashV2' },
-    admH(AdmHealthBanner, { checks: state.checks, checkedAt: state.checkedAt }),
+    admH(AdmHealthBanner, { checks: state.checks, checkedAt: state.checkedAt, unreachable: state.healthDown }),
     admH('div', { className: 'admDashQLabel' }, i18next.t('admin:admin.dash.q2_title', { period: adminPeriodLabel() })),
-    admH(AdmKpiRow, { kpis: state.kpis, hours }),
+    admH(AdmKpiRow, { kpis: state.kpis, hours, unavailable: state.kpisDown }),
     admH('div', { className: 'admDashQLabel' }, i18next.t('admin:admin.dash.q3_title')),
-    admH(AdmActionList, { actions: state.actions }),
+    admH(AdmActionList, { actions: state.actions, incomplete: state.actionsIncomplete }),
     admH('button', { className: 'admDashRefresh', onClick: load }, '⟳ ' + i18next.t('admin:admin.dash.refresh'))
   );
 }
