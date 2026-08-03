@@ -374,7 +374,7 @@ function wireMiniBossLobby() {
   // (renderMinibossRecruitChatLog), pas seulement au wiring initial du lobby.
   const recruitLog = $a('minibossRecruitLog');
   if (recruitLog) recruitLog.onclick = e => {
-    const btn = e.target.closest('.minibossInviteMeBtn');
+    const btn = closestFrom(e.target, '.minibossInviteMeBtn');
     if (btn) minibossInviteToChat(btn.dataset.pseudo);
   };
   const inviteAccept = $a('minibossInviteAcceptBtn'); if (inviteAccept) inviteAccept.onclick = () => minibossResolveInvite(true);
