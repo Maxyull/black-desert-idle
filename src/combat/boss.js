@@ -115,7 +115,24 @@ let liveBoss = null; // { boss, time, expires } quand un spawn global est en cou
 let liveBossFailCount = 0;
 /** Rafraîchit liveBoss depuis Supabase (RPC ensure_scheduled_boss, repli sur lecture directe de live_boss), re-render le lobby si le statut "en cours" vient de changer pendant qu'il est affiché. Trace/relance en cas d'échec des DEUX tentatives (voir liveBossFailCount) plutôt que d'avaler l'erreur silencieusement. */
 async function refreshLiveBoss() {
-  if (!sb) return;
+  // garde de SESSION (2026-08-03) : `sb` seul ne suffisait pas -- le client Supabase existe dès le
+  // chargement de la page, connecté ou non. Une page laissée ouverte SANS session appelait donc
+  // ensure_scheduled_boss toutes les 20 s (setInterval, backend/presence.js), RPC qui exige
+  // auth.uid() et répond `{"code":"P0001","message":"Non authentifié"}` en HTTP 400 -- mesuré sur le
+  // journal Caddy du VPS : 250 réponses 400 en 82 min sur ce SEUL endpoint, produites par UNE SEULE
+  // page déconnectée (82 min / 20 s ≈ 246 appels). Pas une régression de la bascule vers le VPS :
+  // vérifié, le même appel anonyme sur Supabase cloud renvoyait exactement la même erreur -- mais ça
+  // pollue désormais le journal du VPS et le tableau de bord de supervision.
+  // Aucune perte de fonctionnalité : le repli ci-dessous (lecture directe de live_boss) est lui
+  // aussi réservé aux connectés (policy `live_boss_select_all` = `auth.uid() is not null`, il
+  // renvoyait 0 ligne sans erreur), donc un joueur déconnecté ne pouvait de toute façon JAMAIS
+  // confirmer un liveBoss -- il finissait déjà sur `liveBoss = null`, exactement comme ici. Et
+  // liveBossFailCount reste intact : la lecture anonyme ne renvoyait pas d'erreur (juste 0 ligne),
+  // elle n'incrémentait donc jamais le compteur d'échecs.
+  // Le lobby reste correct à la connexion : onAuthedInner() (backend/auth.js) pose `currentUser`
+  // AVANT son appel à refreshLiveBoss(), et #nextBossMini garde son propre ticker de 1 s
+  // (setInterval(updateNextBossMini, 1000), backend/game-supabase.js) indépendant d'ici.
+  if (!sb || !currentUser) return;
   const wasLive = !!(liveBoss && liveBoss.expires > Date.now());
   let data = null;
   let hadError = false;
