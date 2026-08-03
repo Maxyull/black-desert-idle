@@ -456,7 +456,17 @@ const I18N_RESOURCES = {
       "admin.tests.tester_panel_title": "🧪 Panneau Testeur",
       "admin.tests.title": "Pour moi — test sur mon compte",
       "admin.tests.unlock_achievements_btn": "Débloquer tous les succès",
-      "admin.tests.upcoming_in_dev": "En développement — bientôt en test"
+      "admin.tests.upcoming_in_dev": "En développement — bientôt en test",
+      "admin.versions.col_players": "Joueurs",
+      "admin.versions.col_since": "Vu depuis",
+      "admin.versions.col_version": "Version",
+      "admin.versions.nobody": "Personne en ligne sur les 5 dernières minutes.",
+      "admin.versions.sub": "Version du bundle que font tourner les joueurs actuellement en ligne (fenêtre de 5 min). Une version différente de celle servie en prod signale un client qui n'a pas encore rechargé.",
+      "admin.versions.tile_behind": "Clients en retard",
+      "admin.versions.tile_expected": "Version servie",
+      "admin.versions.tile_online": "Joueurs en ligne",
+      "admin.versions.title": "Versions clientes",
+      "admin.versions.unknown": "non déclarée"
     },
     "backend": {
       "backend.account.apply_button": "Valider",
@@ -1659,7 +1669,17 @@ const I18N_RESOURCES = {
       "admin.tests.tester_panel_title": "🧪 Tester Panel",
       "admin.tests.title": "For me — test on my account",
       "admin.tests.unlock_achievements_btn": "Unlock all achievements",
-      "admin.tests.upcoming_in_dev": "In development — testable soon"
+      "admin.tests.upcoming_in_dev": "In development — testable soon",
+      "admin.versions.col_players": "Players",
+      "admin.versions.col_since": "Seen since",
+      "admin.versions.col_version": "Version",
+      "admin.versions.nobody": "Nobody online in the last 5 minutes.",
+      "admin.versions.sub": "Bundle version currently running for online players (5-min window). A version other than the one served in production means a client that has not reloaded yet.",
+      "admin.versions.tile_behind": "Clients behind",
+      "admin.versions.tile_expected": "Served version",
+      "admin.versions.tile_online": "Players online",
+      "admin.versions.title": "Client versions",
+      "admin.versions.unknown": "not reported"
     },
     "backend": {
       "backend.account.apply_button": "Apply",
@@ -15924,9 +15944,40 @@ function startAutoCloudSave() {
 setInterval(async () => { if (sb && currentUser && !document.hidden) { try { await sb.rpc('log_playtime_ping'); } catch(e) {} } }, 60000);
 
 // ==== src/backend/presence.js ====
+let heartbeatVersionSupportee = true; 
+
+function estSignatureVersionInconnue(error) {
+  if (!error) return false;
+  return error.code === 'PGRST202' || /Could not find the function/i.test(error.message || '');
+}
+
+function versionPourPresence() {
+  try {
+    return CURRENT_VERSION;
+  } catch (e) {
+    console.error('[presence] CURRENT_VERSION illisible (client-health.js charge apres presence.js, '
+      + 'voir CLAUDE.md §8) : la presence part sans version', e);
+    return null;
+  }
+}
+
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
-  try { await sb.rpc('heartbeat_presence', { p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
+  const zone = atVelia ? -1 : zoneIdx;
+  try {
+    if (heartbeatVersionSupportee) {
+      const { error } = await sb.rpc('heartbeat_presence', { p_zone_idx: zone, p_version: versionPourPresence() });
+      
+      if (estSignatureVersionInconnue(error)) {
+        heartbeatVersionSupportee = false;
+        console.error('[presence] la base ne connait pas heartbeat_presence(p_zone_idx, p_version) : '
+          + 'repli sur la signature a un parametre, la version du client ne sera plus remontee', error.message || error);
+        await sb.rpc('heartbeat_presence', { p_zone_idx: zone });
+      }
+    } else {
+      await sb.rpc('heartbeat_presence', { p_zone_idx: zone });
+    }
+  } catch(e) {}
   checkPlayerSession(); 
 }
 
@@ -20279,8 +20330,46 @@ async function refreshAdminPlayerRates() {
       </tr>`).join('')}</tbody></table>`);
 }
 
+function renderAdminClientVersions(el) {
+  el.innerHTML = admMonSkeleton('🔄 ' + i18next.t('admin:admin.versions.title'), i18next.t('admin:admin.versions.sub'), 'admVersionsBody');
+  refreshAdminClientVersions();
+}
+
+async function refreshAdminClientVersions() {
+  if (!isAdmin() || !sb) return;
+  const el = $a('admVersionsBody');
+  if (!el) return;
+  const { data, error } = await sb.rpc('admin_client_versions', { p_window_seconds: 300 });
+  if (error) { admMonFail(el, error); return; }
+  const rows = data || [];
+  if (rows.length === 0) { el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.versions.nobody')}</div>`; return; }
+  
+  const attendue = typeof CURRENT_VERSION !== 'undefined' ? CURRENT_VERSION : null;
+  const total = rows.reduce((a, r) => a + Number(r.joueurs || 0), 0);
+  const retard = rows.filter(r => r.game_version !== attendue).reduce((a, r) => a + Number(r.joueurs || 0), 0);
+  el.innerHTML = admMonTiles([
+    { lbl:'👥 ' + i18next.t('admin:admin.versions.tile_online'), val: admMonNum(total) },
+    { lbl:'✅ ' + i18next.t('admin:admin.versions.tile_expected'), val: escapeHtml(attendue || '—') },
+    { lbl:'⚠️ ' + i18next.t('admin:admin.versions.tile_behind'), val: admMonNum(retard) },
+  ]) + `<table class="admTable"><thead><tr>
+      <th>${i18next.t('admin:admin.versions.col_version')}</th>
+      <th>${i18next.t('admin:admin.versions.col_players')}</th>
+      <th>${i18next.t('admin:admin.versions.col_since')}</th>
+    </tr></thead><tbody>${rows.map(r => {
+      const aJour = r.game_version === attendue;
+      
+      const etiquette = r.game_version === '?' ? i18next.t('admin:admin.versions.unknown') : escapeHtml(r.game_version);
+      return `<tr>
+        <td style="font-family:monospace">${etiquette}${aJour ? '' : ' ⚠️'}</td>
+        <td>${admMonNum(r.joueurs)}</td>
+        <td style="font-size:10px;color:var(--ink-dim)">${admMonDate(r.plus_ancien_vu)}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
 ADMIN_SECTIONS.push({ cat:'monitoring', label:{fr:'Supervision',en:'Monitoring'}, items:[
   { id:'errors', icon:'🐞', label:{fr:'Erreurs client',en:'Client errors'}, render:renderAdminClientErrors },
+  { id:'versions', icon:'🔄', label:{fr:'Versions clientes',en:'Client versions'}, render:renderAdminClientVersions },
   { id:'ratelimit', icon:'🛡️', label:{fr:'Limitation de débit',en:'Rate limiting'}, render:renderAdminRateLimit },
   { id:'rates', icon:'📊', label:{fr:'Cadence joueurs',en:'Player rates'}, render:renderAdminPlayerRates },
 ]});

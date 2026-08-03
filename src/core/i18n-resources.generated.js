@@ -458,7 +458,17 @@ const I18N_RESOURCES = {
       "admin.tests.tester_panel_title": "🧪 Panneau Testeur",
       "admin.tests.title": "Pour moi — test sur mon compte",
       "admin.tests.unlock_achievements_btn": "Débloquer tous les succès",
-      "admin.tests.upcoming_in_dev": "En développement — bientôt en test"
+      "admin.tests.upcoming_in_dev": "En développement — bientôt en test",
+      "admin.versions.col_players": "Joueurs",
+      "admin.versions.col_since": "Vu depuis",
+      "admin.versions.col_version": "Version",
+      "admin.versions.nobody": "Personne en ligne sur les 5 dernières minutes.",
+      "admin.versions.sub": "Version du bundle que font tourner les joueurs actuellement en ligne (fenêtre de 5 min). Une version différente de celle servie en prod signale un client qui n'a pas encore rechargé.",
+      "admin.versions.tile_behind": "Clients en retard",
+      "admin.versions.tile_expected": "Version servie",
+      "admin.versions.tile_online": "Joueurs en ligne",
+      "admin.versions.title": "Versions clientes",
+      "admin.versions.unknown": "non déclarée"
     },
     "backend": {
       "backend.account.apply_button": "Valider",
@@ -1661,7 +1671,17 @@ const I18N_RESOURCES = {
       "admin.tests.tester_panel_title": "🧪 Tester Panel",
       "admin.tests.title": "For me — test on my account",
       "admin.tests.unlock_achievements_btn": "Unlock all achievements",
-      "admin.tests.upcoming_in_dev": "In development — testable soon"
+      "admin.tests.upcoming_in_dev": "In development — testable soon",
+      "admin.versions.col_players": "Players",
+      "admin.versions.col_since": "Seen since",
+      "admin.versions.col_version": "Version",
+      "admin.versions.nobody": "Nobody online in the last 5 minutes.",
+      "admin.versions.sub": "Bundle version currently running for online players (5-min window). A version other than the one served in production means a client that has not reloaded yet.",
+      "admin.versions.tile_behind": "Clients behind",
+      "admin.versions.tile_expected": "Served version",
+      "admin.versions.tile_online": "Players online",
+      "admin.versions.title": "Client versions",
+      "admin.versions.unknown": "not reported"
     },
     "backend": {
       "backend.account.apply_button": "Apply",
