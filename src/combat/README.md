@@ -18,6 +18,13 @@ comportement de l'IA.
   (`bossState.serverConfirmedDead`, mis à jour par `applyBossContributeResponse()`), jamais par la
   prédiction locale (`bossState.hp`, décrémentée sans le plafond de 5%/appel que `boss_contribute`
   applique côté SQL) — `bossShouldDeclareVictory()` centralise cette décision dans `bossLoop()`.
+  **Garde de session ajoutée le 2026-08-03** : `refreshLiveBoss()` sort désormais tôt sans session
+  (`if (!sb || !currentUser) return;`). Elle ne gardait que `sb`, qui existe dès le chargement de la
+  page — une page laissée ouverte SANS connexion appelait donc `ensure_scheduled_boss` (RPC exigeant
+  `auth.uid()`) toutes les 20 s et récoltait autant de HTTP 400 `Non authentifié` : 250 en 82 min
+  dans le journal Caddy du VPS pour UNE SEULE page. Comportement joueur inchangé (le repli lecture
+  directe de `live_boss` est lui aussi réservé aux connectés par sa policy RLS), seul le bruit dans
+  les journaux disparaît.
 - `boss-render.js` — rendu canvas de la salle de boss (piliers, créature). Charge après
   `boss.js` (`bossLoop()` l'appelle).
 - `boss-wheel-react.js` (2026-07-19, demande explicite : "je veux une roue react et que tout soit

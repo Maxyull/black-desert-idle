@@ -1722,6 +1722,71 @@
     assert('refreshLiveBoss() logue explicitement (console.warn) en cas d\'échec', /console\.warn/.test(src));
     assert('refreshLiveBoss() relance (setTimeout) après un échec plutôt que d\'attendre le prochain tick de 20s', /setTimeout\s*\(\s*refreshLiveBoss/.test(src));
   }
+  // Test unitaire (2026-08-03, bug "250 réponses HTTP 400 en 82 min dans le journal Caddy du VPS") :
+  // refreshLiveBoss() ne gardait que `sb`, jamais `currentUser`. Or le client Supabase existe dès le
+  // chargement de la page, connecté ou non -- une page laissée ouverte SANS session appelait donc
+  // ensure_scheduled_boss toutes les 20 s (setInterval, backend/presence.js), RPC qui exige
+  // auth.uid() et répond `{"code":"P0001","message":"Non authentifié"}` en 400. UNE SEULE page
+  // déconnectée suffisait à polluer le journal du VPS et le tableau de bord de supervision.
+  // Deux scénarios couverts (CLAUDE.md §11, politique en ligne + hors ligne) : déconnecté (aucun
+  // appel réseau du tout) et connecté (le RPC part normalement, le repli reste disponible).
+  function testRefreshLiveBossSkipsAllNetworkWhenLoggedOut() {
+    if (typeof refreshLiveBoss !== 'function') return;
+    const savedSb = sb, savedUser = currentUser, savedFail = liveBossFailCount;
+    let rpcCalls = 0, fromCalls = 0;
+    // Faux client Supabase : compte les appels sans jamais toucher au réseau, et renvoie des
+    // promesses qui ne se résolvent JAMAIS -- refreshLiveBoss() reste alors suspendue sur son
+    // premier `await` et ne touchera donc jamais liveBoss/#nextBossMini après la fin de ce test
+    // (aucun effet de bord différé sur les tests suivants, et le runner reste synchrone).
+    // Ce qu'on observe est justement la partie SYNCHRONE, la seule qui compte ici : la requête
+    // part-elle, oui ou non. `from()` imite la chaîne select/eq/maybeSingle du repli lecture
+    // directe de live_boss.
+    const fakeSb = {
+      rpc: () => { rpcCalls++; return new Promise(() => {}); },
+      from: () => { fromCalls++; return { select: () => ({ eq: () => ({ maybeSingle: () => new Promise(() => {}) }) }) }; },
+    };
+    try {
+      sb = fakeSb; liveBossFailCount = 0;
+      currentUser = null;
+      refreshLiveBoss(); // volontairement pas attendue : la garde sort AVANT le premier await
+      assert('Déconnecté : refreshLiveBoss() n\'appelle AUCUN RPC (plus de ensure_scheduled_boss en 400 toutes les 20s)',
+        rpcCalls === 0, `rpcCalls=${rpcCalls}`);
+      assert('Déconnecté : refreshLiveBoss() ne tente pas non plus le repli lecture directe de live_boss (policy réservée aux connectés)',
+        fromCalls === 0, `fromCalls=${fromCalls}`);
+      assert('Déconnecté : liveBossFailCount reste à 0 (une sortie anticipée n\'est PAS un échec de synchro, aucun retry en cascade)',
+        liveBossFailCount === 0, `liveBossFailCount=${liveBossFailCount}`);
+      // connecté : le comportement d'origine doit rester strictement inchangé (c'est ce chemin que
+      // prend onAuthedInner() juste après avoir posé currentUser, pour alimenter le lobby boss)
+      currentUser = { id: 'test-uid-refresh-live-boss' };
+      refreshLiveBoss();
+      assert('Connecté : refreshLiveBoss() appelle bien ensure_scheduled_boss (lobby boss toujours alimenté à la connexion)',
+        rpcCalls === 1, `rpcCalls=${rpcCalls}`);
+    } finally {
+      sb = savedSb; currentUser = savedUser; liveBossFailCount = savedFail;
+    }
+  }
+  // Garde-fou statique (même bug) : toute fonction lancée par un setInterval périodique et qui tape
+  // un RPC exigeant auth.uid() côté SQL (`raise exception 'Non authentifié'`) doit sortir tôt sans
+  // session. Les lectures de présence (get_presence_snapshot, get_registered_count...) n'exigent
+  // PAS auth.uid() et restent volontairement hors de cette liste : elles sont conçues pour marcher
+  // avant connexion. Empêche de réintroduire le spam de 400 par un autre chemin.
+  function testPeriodicAuthedRpcLoopsGuardCurrentUser() {
+    [
+      ['refreshLiveBoss', typeof refreshLiveBoss === 'function' ? refreshLiveBoss : null, 'ensure_scheduled_boss'],
+      ['heartbeatPresence', typeof heartbeatPresence === 'function' ? heartbeatPresence : null, 'heartbeat_presence'],
+    ].forEach(([name, fn, rpcName]) => {
+      if (!fn) return;
+      const src = fn.toString();
+      const guard = src.search(/!\s*currentUser/);
+      assert(`${name}() garde !currentUser (RPC ${rpcName} exige auth.uid(), sinon 400 en boucle sur une page déconnectée)`,
+        guard !== -1, `src=${src.slice(0, 200)}`);
+      // position du VRAI site d'appel (`sb.rpc(`), pas du nom du RPC : celui-ci apparaît aussi dans
+      // les commentaires explicatifs en tête de fonction, donc avant la garde.
+      const call = src.search(/sb\s*\.\s*rpc\s*\(/);
+      assert(`${name}() place cette garde AVANT son premier sb.rpc() (${rpcName})`,
+        call === -1 || guard < call, `guard=${guard} call=${call}`);
+    });
+  }
   // "borne la taille de la fiche coffre a une taille standard par rapport au autre" (2026-07-08) --
   // #veliaChestGrid doit suivre le MÊME mécanisme de synchro de hauteur que zoneList/lootTable
   // (syncFarmCardHeights, core/game-core.js), pas un max-height fixe indépendant des cartes voisines.
@@ -7857,6 +7922,8 @@
     testApplyBossContributeResponseSetsServerConfirmedDeadOnlyWhenHpReachesZero();
     testBossLoopDelegatesSharedVictoryDecisionToPureHelper();
     testRefreshLiveBossLogsAndRetriesOnFailure();
+    testRefreshLiveBossSkipsAllNetworkWhenLoggedOut();
+    testPeriodicAuthedRpcLoopsGuardCurrentUser();
     testGroupAchievementsIntoChainsGroupsByStatFnIdentity();
     testChainProgressNeverMarksIntermediateTierDoneAheadOfChain();
     testSortChainsForDisplayPushesCompletedChainsToEnd();

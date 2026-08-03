@@ -7248,7 +7248,8 @@ let liveBoss = null;
 let liveBossFailCount = 0;
 
 async function refreshLiveBoss() {
-  if (!sb) return;
+  
+  if (!sb || !currentUser) return;
   const wasLive = !!(liveBoss && liveBoss.expires > Date.now());
   let data = null;
   let hadError = false;
