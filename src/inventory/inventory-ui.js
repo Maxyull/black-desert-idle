@@ -868,7 +868,7 @@ function addPopBtnHtml(pop, html, fn) {
 }
 function hideItemPop() { $('itemPop').style.display = 'none'; document.querySelectorAll('#zoneList .zRow').forEach(r => r.classList.remove('eqFarmHalo')); }
 document.addEventListener('click', () => { hideItemPop(); const ps = $('potSelect'); if (ps) ps.classList.remove('show'); });
-document.addEventListener('contextmenu', ev => { if (!ev.target.closest('.cell')) hideItemPop(); });
+document.addEventListener('contextmenu', ev => { if (!closestFrom(ev.target, '.cell')) hideItemPop(); });
 
 // ---------- infobulle au survol (lecture seule) ----------
 /** @param {object} data - item survolé. @returns {string} HTML de l'infobulle en lecture seule (description courte selon le type). */
@@ -1708,7 +1708,9 @@ function lootAutoSellLockHtml() {
   const zoomEl = document.getElementById('lootIconZoom');
   if (!zoomEl) return;
   document.addEventListener('mouseover', e => {
-    const icon = e.target.closest('.lootIcon');
+    // closestFrom et pas e.target.closest : c'est EXACTEMENT ce couple de handlers qui a levé
+    // « t.target.closest is not a function » en prod le 2026-08-02 (voir closestFrom, game-core.js)
+    const icon = closestFrom(e.target, '.lootIcon');
     if (!icon) return;
     zoomEl.innerHTML = icon.innerHTML;
     const col = icon.style.color; if (col) zoomEl.style.color = col;
@@ -1720,7 +1722,7 @@ function lootAutoSellLockHtml() {
     zoomEl.classList.add('show');
   });
   document.addEventListener('mouseout', e => {
-    const icon = e.target.closest('.lootIcon');
+    const icon = closestFrom(e.target, '.lootIcon');
     if (!icon) return;
     if (icon.contains(e.relatedTarget)) return;
     zoomEl.classList.remove('show');

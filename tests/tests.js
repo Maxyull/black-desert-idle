@@ -7356,6 +7356,59 @@
   // collectDrop(l, byPet) ramasse par le MÊME chemin que le perso (silver/taken) et marque
   // l'affichage d'une patte 🐾 ; (3) le ramassage perso (byPet=false) n'a PAS de patte. Voir
   // src/combat/pet-looter.js et collectDrop/lootLine (src/combat/loot-rolls.js).
+  // closestFrom() (2026-08-03) : les 2 SEULES vraies erreurs joueur jamais enregistrées dans
+  // public.client_errors (2026-08-02 21:22:28, même seconde, un seul mouvement de souris) étaient
+  // « TypeError: t.target.closest is not a function », dans les deux listeners `document` de
+  // initLootIconZoom (mouseover + mouseout, inventory-ui.js). Colonnes 524638/525023 du bundle
+  // v=713 remontées jusqu'aux deux handlers. Cause : sur un listener posé sur `document`,
+  // `e.target` n'est pas garanti d'être un Element (document lui-même, nœud texte...), et
+  // `closest` vit sur Element.prototype.
+  function testClosestFromToleratesNonElementTargets() {
+    if (typeof closestFrom !== 'function') {
+      assert('closestFrom() existe globalement', false, 'helper absent de game-core.js');
+      return;
+    }
+    // Les cibles qui faisaient tomber le handler : aucune n'a Element.prototype.closest.
+    assert('closestFrom(document) renvoie null au lieu de jeter', closestFrom(document, '.lootIcon') === null);
+    assert('closestFrom(window) renvoie null au lieu de jeter', closestFrom(window, '.lootIcon') === null);
+    assert('closestFrom(null) renvoie null au lieu de jeter', closestFrom(null, '.lootIcon') === null);
+    assert('closestFrom(undefined) renvoie null au lieu de jeter', closestFrom(undefined, '.lootIcon') === null);
+    assert('closestFrom(noeud texte) renvoie null au lieu de jeter',
+      closestFrom(document.createTextNode('coucou'), '.lootIcon') === null);
+    // ...et le cas normal doit continuer de marcher, sinon le correctif casserait la délégation.
+    const hote = document.createElement('div');
+    hote.className = 'lootIcon';
+    const enfant = document.createElement('span');
+    hote.appendChild(enfant);
+    document.body.appendChild(hote);
+    try {
+      assert('closestFrom() remonte bien jusqu\'à l\'ancêtre correspondant', closestFrom(enfant, '.lootIcon') === hote);
+      assert('closestFrom() renvoie l\'élément lui-même s\'il correspond', closestFrom(hote, '.lootIcon') === hote);
+      assert('closestFrom() renvoie null si aucun ancêtre ne correspond', closestFrom(enfant, '.nexistePas') === null);
+    } finally {
+      hote.remove();
+    }
+  }
+  // Régression du vrai chemin de plantage : on rejoue un événement dont la cible est `document`
+  // sur les listeners RÉELLEMENT posés par la page (pas une copie), et la page ne doit pas lever.
+  // Sans le correctif, `document.dispatchEvent(new MouseEvent('mouseover'))` a pour cible le
+  // document et refait tomber exactement les deux handlers de initLootIconZoom.
+  function testDocumentLevelHandlersSurviveNonElementTarget() {
+    let erreur = null;
+    const onErr = e => { erreur = e.error || new Error(e.message); };
+    window.addEventListener('error', onErr);
+    try {
+      ['mouseover', 'mouseout', 'contextmenu'].forEach(type => {
+        try {
+          document.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true }));
+        } catch (e) { erreur = e; }
+      });
+    } finally {
+      window.removeEventListener('error', onErr);
+    }
+    assert('les listeners document survivent à un événement dont la cible est le document',
+      !erreur, erreur && erreur.message);
+  }
   function testPetLooterActivationAndTaggedCollect() {
     if (typeof Pet === 'undefined' || typeof collectDrop !== 'function' || typeof refreshPetLooterActivation !== 'function') {
       assert('Familier ramasseur : globals présents', false, 'Pet/collectDrop/refreshPetLooterActivation manquants');
@@ -8004,6 +8057,8 @@
     testPetLooterActivationAndTaggedCollect();
     testIsProdHostnameAcceptsOnlyProductionDomain();
     testReportClientErrorSkipsNonProdOrigin();
+    testClosestFromToleratesNonElementTargets();
+    testDocumentLevelHandlersSurviveNonElementTarget();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

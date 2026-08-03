@@ -9,6 +9,23 @@ const $ = id => document.getElementById(id);
 // tickBossPanelCountdown -> setInterval au chargement) y accedent avant que sa ligne `const $a = `
 // (dans game-supabase.js) ne soit atteinte.
 const $a = id => document.getElementById(id);
+// ---------- délégation d'événements : une cible n'est pas toujours un Element ----------
+// Bug de PRODUCTION du 2026-08-02 (les 2 seules vraies erreurs joueur de public.client_errors,
+// à la même seconde, un seul mouvement de souris) :
+//   TypeError: t.target.closest is not a function
+//   at HTMLDocument.<anonymous> (build/source.min.js?v=713:1:525023)
+// Les deux listeners `document` de initLootIconZoom (inventory-ui.js, mouseover + mouseout)
+// appelaient `e.target.closest(...)` directement. Sur un listener posé sur `document`, `e.target`
+// n'est PAS garanti d'être un Element : il peut arriver le `document` lui-même ou un nœud texte,
+// et `closest` vit sur Element.prototype — d'où le TypeError, qui casse le handler entier.
+// `core/card-layout.js` avait déjà le réflexe (`e.target.closest && e.target.closest(...)`) mais
+// répété 7 fois à la main, donc facile à oublier au 8e endroit. C'est ce qui s'est passé.
+// Passer par ce helper est désormais la seule forme autorisée : un test de régression Node
+// (tests/regression.spec.js) refuse tout `.target.closest(` écrit en direct dans src/.
+/** @param {EventTarget} target - typiquement e.target, pas forcément un Element. @param {string} selector @returns {?Element} l'ancêtre le plus proche, ou null si la cible ne sait pas répondre (document, nœud texte, window...). */
+function closestFrom(target, selector) {
+  return target && typeof target.closest === 'function' ? target.closest(selector) : null;
+}
 // le canvas a une résolution interne FIXE (1240×440, voir <canvas>) que le CSS (width:100%) réduit
 // pour tenir dans un téléphone — tout texte dessiné dessus (floatTxt : gains de loot/XP, dégâts...)
 // rétrécit donc dans les mêmes proportions et devient minuscule sur mobile (2026-07-05, demande

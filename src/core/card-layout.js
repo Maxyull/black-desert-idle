@@ -371,14 +371,14 @@ function initCardLayout() {
   });
 
   panel.addEventListener('dragstart', e => {
-    const card = e.target.closest && e.target.closest('#panel > .card');
+    const card = closestFrom(e.target, '#panel > .card');
     if (!card) return;
     cardLayoutDragSourceId = card.id;
     e.dataTransfer.effectAllowed = 'move';
     try { e.dataTransfer.setData('text/plain', card.id); } catch (err) {}
   });
   panel.addEventListener('dragover', e => {
-    const card = e.target.closest && e.target.closest('#panel > .card');
+    const card = closestFrom(e.target, '#panel > .card');
     if (!card || !cardLayoutDragSourceId || card.id === cardLayoutDragSourceId) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -387,11 +387,11 @@ function initCardLayout() {
     card.classList.add(zone === 'before' ? 'cardDropBefore' : zone === 'after' ? 'cardDropAfter' : 'cardDropTarget');
   });
   panel.addEventListener('dragleave', e => {
-    const card = e.target.closest && e.target.closest('#panel > .card');
+    const card = closestFrom(e.target, '#panel > .card');
     if (card && !card.contains(e.relatedTarget)) card.classList.remove('cardDropTarget', 'cardDropBefore', 'cardDropAfter');
   });
   panel.addEventListener('drop', e => {
-    const card = e.target.closest && e.target.closest('#panel > .card');
+    const card = closestFrom(e.target, '#panel > .card');
     if (!card || !cardLayoutDragSourceId || card.id === cardLayoutDragSourceId) { cardLayoutClearDropTargets(); cardLayoutDragSourceId = null; return; }
     e.preventDefault();
     const zone = cardLayoutDropZoneFor(card, e.clientX);
@@ -408,19 +408,19 @@ function initCardLayout() {
   panel.addEventListener('dragend', () => { cardLayoutDragSourceId = null; cardLayoutClearDropTargets(); });
 
   panel.addEventListener('click', e => {
-    const tabBtn = e.target.closest && e.target.closest('.cardTabBtn');
+    const tabBtn = closestFrom(e.target, '.cardTabBtn');
     if (tabBtn) {
       const hostId = tabBtn.dataset.cardTabHost, tabId = tabBtn.dataset.cardTabId;
       cardLayoutUpdate(st => cardLayoutSetActiveTab(st, hostId, tabId));
       return;
     }
-    const detachBtn = e.target.closest && e.target.closest('.cardDetachBtn');
+    const detachBtn = closestFrom(e.target, '.cardDetachBtn');
     if (detachBtn) {
       const hostId = detachBtn.dataset.cardDetachHost, tabId = detachBtn.dataset.cardDetachTab;
       cardLayoutUpdate(st => cardLayoutDetach(st, hostId, tabId));
       return;
     }
-    const moveBtn = e.target.closest && e.target.closest('.cardMoveBtn');
+    const moveBtn = closestFrom(e.target, '.cardMoveBtn');
     if (moveBtn && !moveBtn.disabled) {
       const id = moveBtn.dataset.cardMoveId, dir = Number(moveBtn.dataset.cardMoveDir);
       cardLayoutUpdate(st => cardLayoutReorder(st, id, dir));
