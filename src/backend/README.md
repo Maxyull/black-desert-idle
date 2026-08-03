@@ -87,6 +87,11 @@ données passent par le VPS, l'authentification et le realtime restent sur Supab
 Retour arrière = remettre `''` ici et dans `companions/viewer3d.js`, rebuild, push ; le cloud
 est conservé intact et rejouable pour ça. Voir `bdi-infra/migration/RUNBOOK.md`.
 
+⚠️ **Armée dans le bundle ne veut pas dire armée chez les joueurs.** Cette constante ne prend
+effet qu'au prochain chargement de page de chaque joueur, et un joueur qui ne recharge jamais
+continue d'écrire dans le cloud indéfiniment. Au 2026-08-03, personne n'y avait encore basculé :
+voir « Ce que le correctif de la détection de maj ne peut pas faire » plus bas.
+
 ⚠️ Les trois constantes doivent bouger **ensemble** : `DATA_API_URL`, `COMPANION_MODELS_BASE`
 et les variables `AUTH_INTERNE_*` de l'edge function. Armer le client seul enverrait les
 nouveaux profils sur le VPS pendant que la connexion par pseudo les chercherait encore dans le
@@ -224,6 +229,38 @@ sans recharger la page. Gardes : `testUpdateReloadSurvivesToastException` (dynam
 déclenchent aussi `checkForUpdate()`, donc les 5 peuvent tomber en quelques secondes si le joueur
 passe d'un onglet à l'autre. C'est voulu — plus tôt vaut mieux que plus tard, et dans le chemin
 nominal le compte à rebours de 15 s a déjà rechargé bien avant.
+
+### Ce que le correctif de la détection de maj ne peut pas faire (2026-08-03)
+
+Le correctif ci-dessus protège les clients qui chargeront le nouveau bundle. Il ne peut **rien**
+pour ceux qui sont déjà bloqués : ils font tourner l'ancien code, celui qui contient le défaut.
+C'est une propriété de tout correctif client, mais elle a ici une conséquence directe sur les
+données, et elle a été mesurée.
+
+Relevé le 2026-08-03 vers 11h : depuis la restauration du dump sur le VPS (2026-08-02 15:43),
+**le VPS n'avait reçu aucune écriture cliente** de `presence`, `player_stats` ni `game_saves`.
+Les trois joueurs actifs écrivaient tous dans le cloud, que le jeu ne lit plus. La bascule était
+donc armée dans le bundle servi, et vide chez les joueurs. Il a fallu recopier la progression
+compte par compte, à la main, comme le 2026-08-03 au matin.
+
+⚠️ **Il n'existe aucun levier serveur pour forcer un rechargement, et il ne peut pas y en avoir.**
+`checkForUpdate()` refetche `index.html` sur GitHub Pages, un hébergeur statique : ni le VPS ni le
+cloud n'ont la moindre prise dessus. Ne pas chercher de ce côté.
+
+Le seul levier serveur qui existe est le **verrou multi-session** : écrire un autre `session_id`
+dans `player_sessions` pose `sessionLocked`, ce qui coupe `advanceSim()` et `saveToCloud()` et gèle
+donc la divergence. Mais il ne recharge pas : `showSessionLockOverlay()` ne fait qu'enlever une
+classe CSS, et « Reprendre ici » rappelle `claimPlayerSession()`, qui la remet. C'est un moyen
+d'arrêter l'hémorragie, jamais de mettre à jour.
+
+⚠️ **`CURRENT_VERSION` ne permet pas de savoir si un client est armé.** `DATA_API_URL` a été
+remplie le 2026-08-02 à 18:59, et la patch note suivante n'est arrivée que le 2026-08-03 à 00:26 :
+tout bundle construit entre les deux annonce `V497` **et** route vers le VPS. Voir aussi la section
+suivante : `presence.game_version` hérite de la même limite, une version ne dit rien de la
+configuration qui l'accompagne. Le seul critère fiable est **vers quelle base le joueur écrit**,
+et `presence`/`player_stats` sont les bonnes tables pour le lire (le cron horaire
+`credit_offline_progress_hourly` écrit dans `game_saves` des deux côtés, voir `bdi-infra/CLAUDE.md`
+§ 7, et fait passer un lot serveur pour une écriture de joueur).
 
 - `game-supabase.js` — client Supabase, auth (email + Discord), chargement/sauvegarde de la
   partie, `syncPlayerStats()` (classement), présence, verrou de session, mode hors ligne.
