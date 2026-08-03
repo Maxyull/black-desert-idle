@@ -18,6 +18,35 @@ test('PROD_HOSTNAME reste synchronisé avec le fichier CNAME', () => {
   expect(match[1], `CNAME=${cname} — mettre à jour PROD_HOSTNAME, sinon reportClientError() se tait en prod`).toBe(cname);
 });
 
+// Les 2 seules vraies erreurs joueur jamais enregistrées en prod venaient d'un `e.target.closest()`
+// écrit en direct dans un listener posé sur `document` (2026-08-02, initLootIconZoom) : `e.target`
+// n'est pas toujours un Element, et le handler entier tombait. `closestFrom()` (game-core.js) est
+// désormais la seule forme autorisée. Ce test refuse toute réintroduction du motif N'IMPORTE OÙ
+// dans src/, y compris dans un fichier qui n'existe pas encore — c'est le seul angle qui tienne :
+// les listeners sont anonymes, donc inatteignables depuis les tests navigateur.
+test('aucun e.target.closest() direct dans src/ (utiliser closestFrom)', () => {
+  const root = path.join(__dirname, '..');
+  const fautifs = [];
+
+  const parcourir = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      // vendor/ = code tiers (three.js), jamais réécrit à la main ici
+      if (e.isDirectory()) { if (e.name !== 'vendor') parcourir(p); continue; }
+      if (!e.name.endsWith('.js')) continue;
+      fs.readFileSync(p, 'utf8').split('\n').forEach((ligne, i) => {
+        if (ligne.trimStart().startsWith('//')) return; // les commentaires citent le motif exprès
+        if (/\.target\s*\.closest\s*\(/.test(ligne)) {
+          fautifs.push(`${path.relative(root, p)}:${i + 1} -> ${ligne.trim()}`);
+        }
+      });
+    }
+  };
+  parcourir(path.join(root, 'src'));
+
+  expect(fautifs, `Remplacer par closestFrom(e.target, '<sel>') :\n${fautifs.join('\n')}`).toEqual([]);
+});
+
 test('runRegressionTests passes in the dev page', async ({ page }) => {
   const pageErrors = [];
 

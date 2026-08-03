@@ -2997,6 +2997,10 @@ const $ = id => document.getElementById(id);
 
 const $a = id => document.getElementById(id);
 
+function closestFrom(target, selector) {
+  return target && typeof target.closest === 'function' ? target.closest(selector) : null;
+}
+
 function uiTextScale() { return Math.min(3.2, Math.max(1, 1240 / (cv.clientWidth || 1240))); }
 
 function isMobileViewport() { return window.innerWidth <= 1024; }
@@ -9032,7 +9036,7 @@ function wireMiniBossLobby() {
   
   const recruitLog = $a('minibossRecruitLog');
   if (recruitLog) recruitLog.onclick = e => {
-    const btn = e.target.closest('.minibossInviteMeBtn');
+    const btn = closestFrom(e.target, '.minibossInviteMeBtn');
     if (btn) minibossInviteToChat(btn.dataset.pseudo);
   };
   const inviteAccept = $a('minibossInviteAcceptBtn'); if (inviteAccept) inviteAccept.onclick = () => minibossResolveInvite(true);
@@ -11235,7 +11239,7 @@ function addPopBtnHtml(pop, html, fn) {
 }
 function hideItemPop() { $('itemPop').style.display = 'none'; document.querySelectorAll('#zoneList .zRow').forEach(r => r.classList.remove('eqFarmHalo')); }
 document.addEventListener('click', () => { hideItemPop(); const ps = $('potSelect'); if (ps) ps.classList.remove('show'); });
-document.addEventListener('contextmenu', ev => { if (!ev.target.closest('.cell')) hideItemPop(); });
+document.addEventListener('contextmenu', ev => { if (!closestFrom(ev.target, '.cell')) hideItemPop(); });
 
 function itemTooltipHtml(data) {
   const desc = [];
@@ -11886,7 +11890,8 @@ function lootAutoSellLockHtml() {
   const zoomEl = document.getElementById('lootIconZoom');
   if (!zoomEl) return;
   document.addEventListener('mouseover', e => {
-    const icon = e.target.closest('.lootIcon');
+    
+    const icon = closestFrom(e.target, '.lootIcon');
     if (!icon) return;
     zoomEl.innerHTML = icon.innerHTML;
     const col = icon.style.color; if (col) zoomEl.style.color = col;
@@ -11898,7 +11903,7 @@ function lootAutoSellLockHtml() {
     zoomEl.classList.add('show');
   });
   document.addEventListener('mouseout', e => {
-    const icon = e.target.closest('.lootIcon');
+    const icon = closestFrom(e.target, '.lootIcon');
     if (!icon) return;
     if (icon.contains(e.relatedTarget)) return;
     zoomEl.classList.remove('show');
@@ -15233,14 +15238,14 @@ function initCardLayout() {
   });
 
   panel.addEventListener('dragstart', e => {
-    const card = e.target.closest && e.target.closest('#panel > .card');
+    const card = closestFrom(e.target, '#panel > .card');
     if (!card) return;
     cardLayoutDragSourceId = card.id;
     e.dataTransfer.effectAllowed = 'move';
     try { e.dataTransfer.setData('text/plain', card.id); } catch (err) {}
   });
   panel.addEventListener('dragover', e => {
-    const card = e.target.closest && e.target.closest('#panel > .card');
+    const card = closestFrom(e.target, '#panel > .card');
     if (!card || !cardLayoutDragSourceId || card.id === cardLayoutDragSourceId) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -15249,11 +15254,11 @@ function initCardLayout() {
     card.classList.add(zone === 'before' ? 'cardDropBefore' : zone === 'after' ? 'cardDropAfter' : 'cardDropTarget');
   });
   panel.addEventListener('dragleave', e => {
-    const card = e.target.closest && e.target.closest('#panel > .card');
+    const card = closestFrom(e.target, '#panel > .card');
     if (card && !card.contains(e.relatedTarget)) card.classList.remove('cardDropTarget', 'cardDropBefore', 'cardDropAfter');
   });
   panel.addEventListener('drop', e => {
-    const card = e.target.closest && e.target.closest('#panel > .card');
+    const card = closestFrom(e.target, '#panel > .card');
     if (!card || !cardLayoutDragSourceId || card.id === cardLayoutDragSourceId) { cardLayoutClearDropTargets(); cardLayoutDragSourceId = null; return; }
     e.preventDefault();
     const zone = cardLayoutDropZoneFor(card, e.clientX);
@@ -15270,19 +15275,19 @@ function initCardLayout() {
   panel.addEventListener('dragend', () => { cardLayoutDragSourceId = null; cardLayoutClearDropTargets(); });
 
   panel.addEventListener('click', e => {
-    const tabBtn = e.target.closest && e.target.closest('.cardTabBtn');
+    const tabBtn = closestFrom(e.target, '.cardTabBtn');
     if (tabBtn) {
       const hostId = tabBtn.dataset.cardTabHost, tabId = tabBtn.dataset.cardTabId;
       cardLayoutUpdate(st => cardLayoutSetActiveTab(st, hostId, tabId));
       return;
     }
-    const detachBtn = e.target.closest && e.target.closest('.cardDetachBtn');
+    const detachBtn = closestFrom(e.target, '.cardDetachBtn');
     if (detachBtn) {
       const hostId = detachBtn.dataset.cardDetachHost, tabId = detachBtn.dataset.cardDetachTab;
       cardLayoutUpdate(st => cardLayoutDetach(st, hostId, tabId));
       return;
     }
-    const moveBtn = e.target.closest && e.target.closest('.cardMoveBtn');
+    const moveBtn = closestFrom(e.target, '.cardMoveBtn');
     if (moveBtn && !moveBtn.disabled) {
       const id = moveBtn.dataset.cardMoveId, dir = Number(moveBtn.dataset.cardMoveDir);
       cardLayoutUpdate(st => cardLayoutReorder(st, id, dir));
