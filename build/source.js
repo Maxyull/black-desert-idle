@@ -16655,37 +16655,96 @@ window.addEventListener('unhandledrejection', e => {
 
 let updateToastShown = false;
 
+const UPDATE_FORCE_RELOAD_AFTER_CHECKS = 5;
+
+let updateStaleChecks = 0;
+
+const UPDATE_CHECK_FAILURES_BEFORE_REPORT = 10; 
+let updateCheckFailures = 0;
+
+function reloadForUpdate() {
+  location.reload();
+}
+
 const UPDATE_AUTO_RELOAD_SEC = 15;
 let updateCountdownTimer = null;
 
 function startUpdateCountdown() {
+  if (updateCountdownTimer) clearInterval(updateCountdownTimer); 
   let remaining = UPDATE_AUTO_RELOAD_SEC;
-  const el = $a('updCountdown');
-  const render = () => { if (el) el.innerHTML = i18next.t('backend:backend.update.auto_reload_countdown', { count: remaining }); };
+  
+  const render = () => {
+    try {
+      const el = $a('updCountdown');
+      if (el) el.innerHTML = i18next.t('backend:backend.update.auto_reload_countdown', { count: remaining });
+    } catch (e) {
+      console.error('[maj] rendu du compte a rebours impossible (le rechargement reste programme)', e);
+    }
+  };
   render();
   updateCountdownTimer = setInterval(() => {
     remaining--;
-    if (remaining <= 0) { clearInterval(updateCountdownTimer); location.reload(); return; }
+    if (remaining <= 0) { clearInterval(updateCountdownTimer); updateCountdownTimer = null; reloadForUpdate(); return; }
     render();
   }, 1000);
 }
 
+function showUpdateToast(latest) {
+  $a('updToastVer').textContent = '(' + latest + ')';
+  $a('updateToast').classList.add('show');
+  startUpdateCountdown();
+}
+
+function noteUpdateCheckFailure(reason) {
+  updateCheckFailures++;
+  console.error('[maj] controle de version en echec (' + updateCheckFailures + " d'affilee) : " + reason);
+  
+  if (updateCheckFailures === UPDATE_CHECK_FAILURES_BEFORE_REPORT) {
+    reportClientError('checkForUpdate: ' + updateCheckFailures + ' controles de version consecutifs en echec : ' + reason, null);
+  }
+}
+
+function applyUpdateCheckResult(latest) {
+  if (!latest || latest === CURRENT_VERSION) { updateStaleChecks = 0; return; }
+  
+  updateStaleChecks++;
+  if (updateStaleChecks >= UPDATE_FORCE_RELOAD_AFTER_CHECKS) {
+    
+    console.error('[maj] version ' + latest + ' en ligne depuis ' + updateStaleChecks
+      + ' controles et toujours pas rechargee (toast affiche: ' + updateToastShown + ') -> rechargement force');
+    reloadForUpdate();
+    return;
+  }
+  if (updateToastShown) return; 
+  try {
+    showUpdateToast(latest);
+    updateToastShown = true; 
+  } catch (e) {
+    
+    console.error('[maj] affichage du toast impossible (le rechargement force reste arme)', e);
+    reportClientError('checkForUpdate: affichage du toast de MAJ impossible: ' + (e && e.message ? e.message : String(e)), e && e.stack);
+  }
+}
+
 async function checkForUpdate() {
-  if (updateToastShown) return;
+  let latest = null;
   try {
     
     const res = await fetch('./meta/patch-notes-version.json?_=' + Date.now(), { cache: 'no-store' });
-    if (!res.ok) return; 
-    const latest = (await res.json()).v;
-    if (latest && latest !== CURRENT_VERSION) {
-      updateToastShown = true;
-      $a('updToastVer').textContent = '(' + latest + ')';
-      $a('updateToast').classList.add('show');
-      startUpdateCountdown();
-    }
-  } catch (e) {}
+    
+    if (!res.ok) { noteUpdateCheckFailure('HTTP ' + res.status); return; }
+    latest = (await res.json()).v;
+  } catch (e) {
+    noteUpdateCheckFailure(e && e.message ? e.message : String(e));
+    return;
+  }
+  updateCheckFailures = 0; 
+  applyUpdateCheckResult(latest);
 }
-$a('btnReloadUpdate').onclick = () => { if (updateCountdownTimer) clearInterval(updateCountdownTimer); location.reload(); };
+if ($a('btnReloadUpdate')) {
+  
+  $a('btnReloadUpdate').onclick = () => { if (updateCountdownTimer) clearInterval(updateCountdownTimer); reloadForUpdate(); };
+}
 
 async function clearGameCache() {
   try {

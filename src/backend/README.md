@@ -109,7 +109,7 @@ c'est ce qui a rendu l'opération sûre).
 
 | Fichier | Rôle |
 |---|---|
-| `client-health.js` | `CURRENT_VERSION`, détection de maj (`checkForUpdate`), erreurs JS non gérées (`reportClientError`, **prod uniquement** — voir ci-dessous), `clearGameCache()` |
+| `client-health.js` | `CURRENT_VERSION`, détection de maj (`checkForUpdate` + `applyUpdateCheckResult`/`reloadForUpdate`, **le toast ne conditionne jamais le rechargement** — voir ci-dessous), erreurs JS non gérées (`reportClientError`, **prod uniquement** — voir ci-dessous), `clearGameCache()` |
 | `wiki-codex.js` | `WIKI_SECTIONS`, Codex, Confiance & Sécurité, et `openInfo()`/`#infoOverlay` **partagé** avec Compendium/Succès/Patch notes |
 | `patch-notes-panel.js` | la **vue** des patch notes (pagination, badge non-lu, rendu). Les données sont dans `meta/patch-notes-data.js` |
 | `../core/i18n-legacy.js` | le dictionnaire `I18N` historique + `applyI18n()` (coexiste avec i18next — voir `docs/I18N_PLAN.md`) |
@@ -150,6 +150,43 @@ refusées côté serveur. ⚠️ Ça ne vaut PAS pour une session de dev manuell
 vraiment sur `127.0.0.1` : là, ces écritures partent pour de bon (silver farmé en local dans
 `silver_ledger`, présence comptée dans « joueurs en ligne »…). Aucun filtre posé sur elles — les
 couper rendrait la sauvegarde et la présence intestables en local.
+
+### Détection de maj : le toast est un confort, jamais une condition (2026-08-03)
+
+Le 2026-08-03, une joueuse est restée **11 h 30 sur le bundle V497** alors que la V498 était en
+ligne depuis 9 heures. Sa progression est partie dans la base du cloud — que le jeu ne lit plus
+depuis la bascule vers le VPS — et il a fallu recopier sa sauvegarde à la main. Le mécanisme censé
+rendre les déploiements indolores est exactement celui qui a lâché, **sans un bruit**.
+
+Son bundle contenait pourtant `checkForUpdate`, le `setInterval` de 60 s, les 4 éléments du toast
+(`#updateToast`, `#updToastVer`, `#updCountdown`, `#btnReloadUpdate`) et la clé i18n
+`backend.update.auto_reload_countdown` : le mécanisme était complet. **La cause exacte n'a pas été
+prouvée** (un fetch en échec durable ou un onglet gelé restent possibles), mais le défaut de forme,
+lui, était certain — `updateToastShown = true` était posé AVANT trois étapes faillibles (deux accès
+DOM + `i18next`), le tout sous un `catch (e) {}` muet, derrière un `if (updateToastShown) return`
+en tête de fonction. Une seule exception d'affichage condamnait définitivement la mise à jour.
+
+Le correctif ne parie sur aucun de ces diagnostics :
+
+| Garantie | Comment |
+|---|---|
+| Le drapeau ne ment plus | `updateToastShown` n'est plus un verrou d'entrée et n'est posé qu'**après** un `showUpdateToast()` réussi |
+| Le rechargement ne dépend de rien | si la version en ligne diffère sur `UPDATE_FORCE_RELOAD_AFTER_CHECKS` (5) contrôles d'affilée, `reloadForUpdate()` part **sans toucher au DOM ni à i18next** |
+| Le compte à rebours démarre toujours | le `render()` de `startUpdateCountdown()` est isolé : son échec ne peut plus empêcher l'affectation du `setInterval` qui recharge |
+| Plus rien n'est avalé | `console.error` sur les deux chemins d'échec + `reportClientError()` (une seule remontée par panne, et le poste de dev est déjà filtré, voir ci-dessus) |
+
+`applyUpdateCheckResult(latest)` est la moitié **synchrone et sans réseau** de `checkForUpdate()` :
+elle existe sous cette forme parce que le harnais de `tests/tests.js` est synchrone et ne peut pas
+`await`. `reloadForUpdate()` est une indirection du même ordre — `location.reload` n'est pas
+redéfinissable sous Chrome, une fonction globale l'est, ce qui rend le chemin de secours testable
+sans recharger la page. Gardes : `testUpdateReloadSurvivesToastException` (dynamique, le toast lève
+à chaque tentative et le rechargement part quand même), `testUpdateToastFlagIsSetOnlyAfterDisplaySucceeded`,
+`testUpdateFailuresAreNeverSwallowedSilently`, `testCountdownStartsEvenIfItsRenderThrows`.
+
+⚠️ Le seuil de 5 contrôles est un **plafond, pas un délai garanti** : `visibilitychange`/`focus`
+déclenchent aussi `checkForUpdate()`, donc les 5 peuvent tomber en quelques secondes si le joueur
+passe d'un onglet à l'autre. C'est voulu — plus tôt vaut mieux que plus tard, et dans le chemin
+nominal le compte à rebours de 15 s a déjà rechargé bien avant.
 
 - `game-supabase.js` — client Supabase, auth (email + Discord), chargement/sauvegarde de la
   partie, `syncPlayerStats()` (classement), présence, verrou de session, mode hors ligne.

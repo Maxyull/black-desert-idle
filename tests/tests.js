@@ -3592,13 +3592,142 @@
   // rechargerait réellement la page en plein milieu de la suite de tests) : le timer démarré est
   // toujours nettoyé explicitement à la fin, comme un vrai clic sur "Recharger maintenant" le ferait.
   function testUpdateCountdownStartsAt15sAndIsCleanedUp() {
-    assert('checkForUpdate() démarre bien le compte à rebours à la détection d\'une MAJ',
-      checkForUpdate.toString().includes('startUpdateCountdown()'));
+    // 2026-08-03 : l'affichage du toast a été sorti de checkForUpdate() dans showUpdateToast()
+    // (voir testUpdateReloadSurvivesToastException). La chaîne gardée ici est la MÊME qu'avant
+    // ("détecter une MAJ démarre le compte à rebours"), elle passe juste par un maillon de plus.
+    assert('checkForUpdate() délègue la décision à applyUpdateCheckResult()',
+      checkForUpdate.toString().includes('applyUpdateCheckResult('));
+    assert('applyUpdateCheckResult() affiche bien le toast à la détection d\'une MAJ',
+      applyUpdateCheckResult.toString().includes('showUpdateToast('));
+    assert('showUpdateToast() démarre bien le compte à rebours',
+      showUpdateToast.toString().includes('startUpdateCountdown()'));
     assert('UPDATE_AUTO_RELOAD_SEC vaut bien 15', UPDATE_AUTO_RELOAD_SEC === 15);
     startUpdateCountdown();
     const el = $a('updCountdown');
     if (el) assert('le rendu initial du compte à rebours affiche 15', el.textContent.includes('15'), `got=${el.textContent}`);
     clearInterval(updateCountdownTimer); // jamais laisser tourner un vrai setInterval après le test (recharge la page à 0)
+    updateCountdownTimer = null;
+  }
+  // ---------- incident du 2026-08-03 : 11 h 30 sur un bundle périmé, en silence ----------
+  // Une joueuse est restée 11 h 30 sur la V497 alors que la V498 était en ligne depuis 9 heures.
+  // Sa progression est partie dans la base du cloud (que le jeu ne lit plus depuis la bascule VPS)
+  // et il a fallu recopier sa sauvegarde à la main. Son bundle contenait pourtant checkForUpdate,
+  // le setInterval de 60 s, les 4 éléments du toast et la clé i18n : le mécanisme était COMPLET.
+  //
+  // Le défaut de forme, lui, était certain — `updateToastShown = true` était posé AVANT les trois
+  // étapes faillibles (deux accès DOM + i18next via startUpdateCountdown), le tout sous un
+  // `catch (e) {}` muet, derrière un `if (updateToastShown) return` en tête de fonction. Une seule
+  // exception d'affichage suffisait donc à condamner définitivement la mise à jour du client.
+  //
+  // Ce test reproduit exactement ça : le toast lève à CHAQUE tentative, et on vérifie que le
+  // rechargement finit quand même par partir. Il est synchrone (le harnais ne sait pas awaiter) et
+  // ne recharge jamais vraiment la page : applyUpdateCheckResult() est la moitié sans réseau de
+  // checkForUpdate(), et reloadForUpdate() est l'indirection qui existe pour être interceptée ici.
+  function testUpdateReloadSurvivesToastException() {
+    const oToast = showUpdateToast, oReload = reloadForUpdate, oShown = updateToastShown, oStale = updateStaleChecks;
+    const oErr = console.error;
+    let reloads = 0, toastAttempts = 0;
+    try {
+      console.error = () => {};                                  // le chemin testé logue à chaque tour, c'est voulu
+      showUpdateToast = () => { toastAttempts++; throw new TypeError("Cannot set properties of null (simulation : #updToastVer absent)"); };
+      reloadForUpdate = () => { reloads++; };
+      updateToastShown = false; updateStaleChecks = 0;
+
+      const fausseVersion = CURRENT_VERSION + '-plus-recente';
+      for (let i = 0; i < UPDATE_FORCE_RELOAD_AFTER_CHECKS; i++) applyUpdateCheckResult(fausseVersion);
+
+      assert('le toast a bien été retenté à chaque contrôle (aucun verrou définitif)',
+        toastAttempts === UPDATE_FORCE_RELOAD_AFTER_CHECKS - 1, `tentatives=${toastAttempts}`);
+      assert('une exception d\'affichage du toast n\'empêche PAS le rechargement (incident 2026-08-03)',
+        reloads === 1, `rechargements=${reloads} après ${UPDATE_FORCE_RELOAD_AFTER_CHECKS} contrôles`);
+      assert('updateToastShown reste false tant que l\'affichage n\'a pas réussi',
+        updateToastShown === false);
+
+      // ... et le filet ne se déclenche pas avant son seuil (sinon on rechargerait au 1er contrôle)
+      reloads = 0; updateStaleChecks = 0; updateToastShown = false;
+      for (let i = 0; i < UPDATE_FORCE_RELOAD_AFTER_CHECKS - 1; i++) applyUpdateCheckResult(fausseVersion);
+      assert('aucun rechargement forcé avant le seuil de contrôles',
+        reloads === 0, `rechargements=${reloads} en ${UPDATE_FORCE_RELOAD_AFTER_CHECKS - 1} contrôles`);
+
+      // une version en ligne redevenue identique (rollback / fetch qui rattrape) désarme le filet
+      applyUpdateCheckResult(CURRENT_VERSION);
+      assert('un contrôle qui revoit notre propre version remet le compteur à zéro', updateStaleChecks === 0);
+      applyUpdateCheckResult(fausseVersion);
+      assert('après remise à zéro, un seul contrôle périmé ne recharge pas', reloads === 0, `rechargements=${reloads}`);
+    } finally {
+      showUpdateToast = oToast; reloadForUpdate = oReload;
+      updateToastShown = oShown; updateStaleChecks = oStale;
+      console.error = oErr;
+    }
+  }
+  // Garde-fou statique, complément du test dynamique ci-dessus : celui-ci attrape la RÉÉCRITURE qui
+  // remettrait le drapeau avant l'affichage (exactement la forme d'avant l'incident), même si
+  // quelqu'un neutralisait le test dynamique en rendant showUpdateToast() infaillible.
+  function testUpdateToastFlagIsSetOnlyAfterDisplaySucceeded() {
+    const src = applyUpdateCheckResult.toString();
+    const iAffichage = src.indexOf('showUpdateToast(');
+    const iDrapeau = src.indexOf('updateToastShown = true');
+    assert('applyUpdateCheckResult() affiche le toast puis pose le drapeau', iAffichage !== -1 && iDrapeau !== -1);
+    assert('updateToastShown n\'est posé qu\'APRÈS showUpdateToast() (incident 2026-08-03)',
+      iAffichage < iDrapeau, `showUpdateToast@${iAffichage} / drapeau@${iDrapeau}`);
+    // le chemin de secours ne doit dépendre ni du DOM ni d'i18next : ni $a(...) ni i18next entre
+    // l'incrément du compteur et l'appel à reloadForUpdate()
+    // les commentaires sont retirés avant l'inspection : ils PARLENT de $a et d'i18next (c'est
+    // justement ce qu'ils promettent de ne pas utiliser), et les laisser rendait ce test
+    // faussement rouge. En dev les sources ne sont pas passées par le strip de scripts/build.py.
+    const secours = src.slice(src.indexOf('updateStaleChecks++'), src.indexOf('reloadForUpdate()'))
+      .replace(/\/\/[^\n]*/g, '');
+    assert('le rechargement forcé ne touche jamais au DOM ($a) ni à i18next',
+      !secours.includes('$a(') && !secours.includes('i18next'), `secours=${secours.slice(0, 300)}`);
+    assert('checkForUpdate() ne sort plus tôt sur updateToastShown (ancien verrou définitif)',
+      !/^\s*if \(updateToastShown\) return;/m.test(checkForUpdate.toString()));
+  }
+  // "aucune trace nulle part" : le catch muet de checkForUpdate() rendait une panne de plusieurs
+  // heures rigoureusement invisible, côté joueur comme côté dev. Les deux chemins d'échec (fetch
+  // et affichage) doivent au minimum logger, et remonter dans client_errors — reportClientError()
+  // filtre le poste de dev depuis la PR #97, ça ne pollue donc plus les métriques de prod.
+  function testUpdateFailuresAreNeverSwallowedSilently() {
+    assert('checkForUpdate() n\'avale plus les erreurs de fetch en silence',
+      !/catch \(e\) \{\}/.test(checkForUpdate.toString()) && checkForUpdate.toString().includes('noteUpdateCheckFailure('));
+    assert('un échec de fetch est loggué en console', noteUpdateCheckFailure.toString().includes('console.error'));
+    assert('une panne durable est remontée au serveur (reportClientError)',
+      noteUpdateCheckFailure.toString().includes('reportClientError('));
+    assert('un échec d\'affichage du toast est loggué ET remonté',
+      applyUpdateCheckResult.toString().includes('console.error') && applyUpdateCheckResult.toString().includes('reportClientError('));
+
+    // dynamique : le compteur d'échecs monte, et n'alerte le serveur qu'une fois par panne
+    const oErr = console.error, oReport = reportClientError, oFailures = updateCheckFailures;
+    let reports = 0;
+    try {
+      console.error = () => {};
+      reportClientError = () => { reports++; };
+      updateCheckFailures = 0;
+      for (let i = 0; i < UPDATE_CHECK_FAILURES_BEFORE_REPORT + 3; i++) noteUpdateCheckFailure('simulation');
+      assert('une panne durable de fetch alerte exactement une fois (pas une par minute)',
+        reports === 1, `remontées=${reports}`);
+    } finally {
+      console.error = oErr; reportClientError = oReport; updateCheckFailures = oFailures;
+    }
+  }
+  // Le compte à rebours EXISTE pour recharger ; son affichage n'en est que la politesse. Avant, le
+  // premier render() était synchrone et hors try : si i18next n'était pas prêt ou si #updCountdown
+  // manquait, il levait AVANT l'affectation du setInterval — plus aucun rechargement programmé.
+  function testCountdownStartsEvenIfItsRenderThrows() {
+    const oErr = console.error, oTimer = updateCountdownTimer;
+    const oI18n = window.i18next;
+    try {
+      console.error = () => {};
+      updateCountdownTimer = null;
+      window.i18next = { t: () => { throw new Error('i18next pas encore prêt (simulation)'); } };
+      startUpdateCountdown();
+      assert('le compte à rebours démarre même si son rendu lève (le rechargement reste programmé)',
+        updateCountdownTimer !== null);
+    } finally {
+      if (updateCountdownTimer) clearInterval(updateCountdownTimer); // jamais laisser un vrai timer recharger la page
+      updateCountdownTimer = oTimer;
+      window.i18next = oI18n;
+      console.error = oErr;
+    }
   }
   // issue GitHub #4 (audit de sécurité, 2026-07-14), finding L1 : les messages d'erreur Supabase
   // étaient injectés via innerHTML sans échappement (game-supabase.js:showPlayerGear,
@@ -7793,6 +7922,10 @@
     testChestZoomToggleWorks();
     testCheckForUpdateFetchesFileThatActuallyCarriesTheVersion();
     testUpdateCountdownStartsAt15sAndIsCleanedUp();
+    testUpdateReloadSurvivesToastException();
+    testUpdateToastFlagIsSetOnlyAfterDisplaySucceeded();
+    testUpdateFailuresAreNeverSwallowedSilently();
+    testCountdownStartsEvenIfItsRenderThrows();
     testErrorMessagesAreEscapedBeforeInnerHtml();
     testShowPlayerGearHasBackToLeaderboardButton();
     testSupabaseScriptIsPinnedWithIntegrity();
