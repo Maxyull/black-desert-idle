@@ -16617,7 +16617,16 @@ $a('clientVersionNum').textContent = CURRENT_VERSION;
 const CLIENT_ERROR_MAX_PER_SESSION = 5;
 let clientErrorCount = 0;
 
+const PROD_HOSTNAME = 'blackdesertidle.maxyull.fr'; 
+
+function isProdHostname(hostname) {
+  return hostname === PROD_HOSTNAME;
+}
+
+let originIsProd = isProdHostname(location.hostname);
+
 function reportClientError(message, stack) {
+  if (!originIsProd) return; 
   if (isOffline || !sb || clientErrorCount >= CLIENT_ERROR_MAX_PER_SESSION) return;
   clientErrorCount++;
   try {
