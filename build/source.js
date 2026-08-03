@@ -15789,8 +15789,10 @@ async function showPlayerInventoryWindow(userId, displayName) {
     if (apDp && apDp.hp) bits.push('+'+apDp.hp+' PV');
     if (apDp && apDp.dodge) bits.push('+'+apDp.dodge+'% Esq.');
     if (s.enhLv) bits.push(ENH_NAMES[s.enhLv]);
+    
+    const couleur = /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)$/.test(s.color || '') ? s.color : 'inherit';
     return `<div class="cell${visible?'':' catHidden'}" title="${escapeHtml(bits.join(' · '))}">` +
-      `<span style="color:${s.color}">${s.icon}</span>` +
+      `<span style="color:${couleur}">${escapeHtml(s.icon)}</span>` +
       `${s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : ''}</div>`;
   }
   let invCat = 'normal';
@@ -19110,10 +19112,11 @@ function renderAdminScreenshotHtml(save) {
   const zoneName = zone ? tr(zone.name) : i18next.t('admin:admin.reset.default_zone_name');
   const eqRows = Object.entries(eq).filter(([,v]) => v).map(([slot,it]) => {
     const lvl = it.optimizable ? (ENH_NAMES[it.enhLv||0] || '+0') : '';
-    return `<div class="row"><span>${it.icon||'▪'} ${SLOT_LABEL[slot]||slot}</span><span class="v">${escapeHtml(it.name)}${lvl?' ('+lvl+')':''}</span></div>`;
+    
+    return `<div class="row"><span>${escapeHtml(it.icon||'▪')} ${SLOT_LABEL[slot]||escapeHtml(slot)}</span><span class="v">${escapeHtml(it.name)}${lvl?' ('+lvl+')':''}</span></div>`;
   }).join('') || `<div class="admEmpty">${i18next.t('admin:admin.reset.no_gear')}</div>`;
   const invRows = inv.map(it =>
-    `<div class="row"><span>${it.icon||'▪'} ${escapeHtml(it.name)}</span><span class="v">${it.stackable ? 'x'+it.qty : (it.optimizable ? (ENH_NAMES[it.enhLv||0]||'+0') : '')}</span></div>`
+    `<div class="row"><span>${escapeHtml(it.icon||'▪')} ${escapeHtml(it.name)}</span><span class="v">${it.stackable ? 'x'+escapeHtml(String(it.qty)) : (it.optimizable ? (ENH_NAMES[it.enhLv||0]||'+0') : '')}</span></div>`
   ).join('') || `<div class="admEmpty">${i18next.t('admin:admin.reset.empty_bag')}</div>`;
   return `
     <div class="admStatTiles">

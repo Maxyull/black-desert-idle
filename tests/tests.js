@@ -3750,6 +3750,33 @@
         /escapeHtml\(error \? error\.message/.test(src), `src contient escapeHtml? ${src.includes('escapeHtml')}`);
     }
   }
+  // issue GitHub #108 (audit de sécurité, 2026-08-03) : le panneau admin rendait des champs de la
+  // sauvegarde JOUEUR (it.icon, la clé de slot, s.icon) sans escapeHtml, juste à côté de it.name qui
+  // l'était. `save_data` est écrit librement par le joueur et jamais validé côté serveur (la policy
+  // UPDATE ne vérifie que la propriété, le trigger ne borne que du numérique) : un joueur y plaçait
+  // une charge XSS qui s'exécutait dans la session ADMIN, via dangerouslySetInnerHTML pour
+  // renderAdminScreenshotHtml et via document.write pour cellHtml. Garde-fou statique : ces champs
+  // doivent passer par escapeHtml, et s.color ne doit plus atterrir brut dans un attribut style.
+  // (Test valide en dev : Terser mangle les paramètres en prod, ces .toString() tournent non minifiés.)
+  function testAdminInventoryEscapesPlayerSaveFields() {
+    if (typeof renderAdminScreenshotHtml === 'function') {
+      const src = renderAdminScreenshotHtml.toString();
+      assert('renderAdminScreenshotHtml() échappe it.icon (équipement ET inventaire)',
+        (src.match(/escapeHtml\(it\.icon/g) || []).length >= 2,
+        `occurrences escapeHtml(it.icon)=${(src.match(/escapeHtml\(it\.icon/g) || []).length}`);
+      assert('renderAdminScreenshotHtml() échappe le repli de clé de slot',
+        /escapeHtml\(slot\)/.test(src), `contient escapeHtml(slot)? ${src.includes('escapeHtml(slot)')}`);
+      assert('renderAdminScreenshotHtml() n\'interpole plus it.icon brut',
+        !/\$\{it\.icon/.test(src), 'un ${it.icon...} brut subsiste');
+    }
+    if (typeof showPlayerInventoryWindow === 'function') {
+      const src = showPlayerInventoryWindow.toString();
+      assert('cellHtml (popup inventaire admin) échappe s.icon',
+        /escapeHtml\(s\.icon\)/.test(src), `contient escapeHtml(s.icon)? ${src.includes('escapeHtml(s.icon)')}`);
+      assert('cellHtml n\'insère plus s.color brut dans un attribut style',
+        !/style="color:\$\{s\.color\}"/.test(src), 'un style="color:${s.color}" brut subsiste');
+    }
+  }
   // "ça ne revient pas au classement du tout" (2026-07-13) : showPlayerGear() n'est atteignable
   // QUE depuis le classement (wirePlayerNameLinks(), voir leaderboard-panel.js) -- avant, seul le
   // ✕ générique (ferme tout #infoOverlay) était disponible pour en sortir, perdant la
@@ -8027,6 +8054,7 @@
     testUpdateFailuresAreNeverSwallowedSilently();
     testCountdownStartsEvenIfItsRenderThrows();
     testErrorMessagesAreEscapedBeforeInnerHtml();
+    testAdminInventoryEscapesPlayerSaveFields();
     testShowPlayerGearHasBackToLeaderboardButton();
     testSupabaseScriptIsPinnedWithIntegrity();
     testNoLegacyHardcodedBorderHexOutsideAdminOrDeadCascade();
