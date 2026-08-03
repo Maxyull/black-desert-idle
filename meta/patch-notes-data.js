@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V499', d:'03/08/2026 12:00', name:{fr:'Mises à jour : le rechargement ne dépend plus de l\'affichage', en:'Updates: reloading no longer depends on the notice showing'}, fr:[
+      {t:'fix', sub:'interface', tx:"Il était possible de rester bloqué sur une ancienne version du jeu sans jamais le savoir : si la petite notification « nouvelle version disponible » n'arrivait pas à s'afficher, le jeu considérait le travail comme fait et ne réessayait plus jamais — ni notification, ni compte à rebours, ni rechargement. Désormais, dès qu'une nouvelle version est en ligne, le jeu se recharge de toute façon au bout de quelques minutes, même si la notification et son compte à rebours n'ont pas pu s'afficher."},
+      {t:'fix', sub:'interface', tx:"Rester sur une version périmée n'est pas anodin : la progression accumulée entre-temps peut partir au mauvais endroit et devoir être récupérée à la main. Le rechargement automatique passe donc avant le confort de la notification."},
+    ], en:[
+      {t:'fix', sub:'interface', tx:"You could get stuck on an old version of the game without ever knowing it: if the small \"new version available\" notice failed to show, the game considered the job done and never tried again — no notice, no countdown, no reload. Now, as soon as a new version is live, the game reloads anyway after a few minutes, even when the notice and its countdown could not be displayed."},
+      {t:'fix', sub:'interface', tx:"Staying on an outdated version is not harmless: progress made in the meantime can end up in the wrong place and have to be recovered by hand. Automatic reloading therefore takes priority over the convenience of the notice."},
+    ] },
   { v:'V498', d:'03/08/2026 00:00', name:{fr:'Retrait du mode invité', en:'Guest mode removed'}, fr:[
       {t:'change', sub:'compte', tx:"Le mode invité est définitivement retiré. Plus aucune session invité n'était créée depuis le 10/07, et le bandeau de dernière chance annonçait ce retrait depuis le 22/07. Le jeu demande désormais un compte dès l'écran d'accueil, ce qui garantit que ta progression est sauvegardée sur le serveur et te suit d'un appareil à l'autre."},
       {t:'change', sub:'interface', tx:"Le bouton « Lier un compte », le badge « Invité » et le décompte d'invités en ligne disparaissent : ils n'avaient plus d'objet."},
