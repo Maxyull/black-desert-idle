@@ -6,3 +6,47 @@
 # partir de maintenant seront poussées automatiquement au merge sur main.
 
 project_id = "mkwwvzbjtyawpcyrnybk"
+
+# ---------------------------------------------------------------------------
+# verify_jwt de chaque fonction edge (2026-08-03)
+#
+# POURQUOI CES SECTIONS EXISTENT
+# `supabase functions deploy` applique verify_jwt = true quand rien ne le
+# déclare. Trois des quatre fonctions ci-dessous tournent en `false`, et le
+# fichier ne disait rien : un déploiement sans `--no-verify-jwt` les aurait
+# donc TOUTES basculées à true d'un coup, en silence.
+#
+# Ce que ça aurait cassé, du plus grave au moins grave :
+#   * paypal-webhook  : PayPal ne peut pas s'authentifier chez nous. Chaque
+#                       don aurait pris un 401, donc AUCUN don encaissé n'aurait
+#                       été enregistré -- exactement la perte qu'on vient de
+#                       fermer en rebranchant l'écriture sur le VPS.
+#   * auth-by-identifier : l'écran de connexion n'est pas authentifié, par
+#                       construction. Plus personne ne se serait connecté.
+#   * discord-log     : appelé par le client, qui porte la clé PUBLIABLE
+#                       (`sb_publishable_...`) et non un JWT.
+#
+# Les valeurs ci-dessous décrivent l'état RÉEL du projet au 2026-08-03, relevé
+# avant de les écrire : on fige l'existant, on ne change le comportement
+# d'aucune fonction. Toute fonction ajoutée doit avoir sa section ici, et
+# tests/edge-functions-vps.spec.js échoue si elle manque.
+#
+# ⚠️ verify_jwt = false ne veut PAS dire « ouvert » : chacune de ces trois
+# fonctions porte sa propre authentification (signature PayPal vérifiée auprès
+# de PayPal, rate-limit + secret d'annonce, résolution serveur sans exposition
+# d'email). C'est documenté en tête de chaque fichier.
+# ---------------------------------------------------------------------------
+
+[functions.auth-by-identifier]
+verify_jwt = false
+
+[functions.discord-log]
+verify_jwt = false
+
+[functions.paypal-webhook]
+verify_jwt = false
+
+# La seule à exiger un JWT : elle n'est jamais appelée par un tiers non
+# authentifié, contrairement aux trois ci-dessus.
+[functions.discord-cheat-log]
+verify_jwt = true
