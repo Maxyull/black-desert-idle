@@ -2221,7 +2221,7 @@ function travelTo(i) {
 function updateVeliaPlayersTicker() {
   const t = $('lootTicker'); if (!t || !atVelia) return;
   const label = i18next.t('core:core.velia.in_town_label', { count: veliaPlayers.length });
-  const rows = veliaPlayers.map(p => `<div class="veliaPlayerRow">${p.is_guest?'🎭':'👤'} ${escapeHtml(p.pseudo)}</div>`).join('');
+  const rows = veliaPlayers.map(p => `<div class="veliaPlayerRow">👤 ${escapeHtml(p.pseudo)}</div>`).join('');
   t.innerHTML = `<div class="veliaPlayersHead">${label}</div>` +
     (rows || `<div class="admHint">${i18next.t('core:core.velia.nobody_else')}</div>`);
 }

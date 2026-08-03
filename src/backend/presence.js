@@ -18,11 +18,7 @@
 /** Signale la présence du joueur (RPC heartbeat_presence, zone -1 pour Velia) et vérifie la session en même cadence (20s). */
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
-  // p_is_guest reste dans la signature SQL de heartbeat_presence et vaut donc toujours false
-  // depuis le retrait du mode invité (issue #18). Le paramètre se retirera côté base dans une
-  // migration dédiée : le supprimer ici sans toucher à la fonction ferait échouer la résolution
-  // de surcharge par PostgREST.
-  try { await sb.rpc('heartbeat_presence', { p_is_guest: false, p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
+  try { await sb.rpc('heartbeat_presence', { p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
   checkPlayerSession(); // même cadence (20s, voir setInterval(heartbeatPresence,20000) plus bas)
 }
 // joueurs actuellement en ville (2026-07-16, demande explicite : "on peut voir la liste des
@@ -157,7 +153,7 @@ async function fetchAfkHistory() {
   if (error) throw error;
   return data || [];
 }
-/** Recharge et affiche le compteur "joueurs en ligne" (RPC get_online_counts, invités inclus). */
+/** Recharge et affiche le compteur "joueurs en ligne" (RPC get_online_counts). */
 async function refreshOnlineCounter() {
   if (!sb) return;
   try {
