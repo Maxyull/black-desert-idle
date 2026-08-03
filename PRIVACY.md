@@ -20,7 +20,9 @@
 | **Présence / activité** | En jouant | Compteur "en ligne", classements, statistiques de jeu. |
 | **Logs d'erreur** (message technique, URL, version, user-agent) | En cas de bug | Débogage. Pas d'adresse IP stockée dans ces logs applicatifs. |
 
-Nous **ne vendons pas** tes données, **ne faisons pas** de publicité, et **n'utilisons pas** de traqueurs tiers. Pas de cookie publicitaire.
+| **Mesure d'audience** (page vue, date, référent, pays, type d'appareil) | En visitant le site | Savoir combien de joueurs arrivent et d'où. Mesurée par **Umami**, un logiciel libre hébergé sur **notre propre serveur en France** : rien n'est transmis à un tiers. Sans cookie, sans identifiant persistant, et **aucune adresse IP n'est enregistrée** (elle sert le temps de la requête à calculer un identifiant de visite anonyme qui change chaque jour). |
+
+Nous **ne vendons pas** tes données, **ne faisons pas** de publicité, et **n'utilisons pas** de traqueurs tiers ni de régie publicitaire. Pas de cookie publicitaire, et aucune bannière de consentement : la mesure d'audience ci-dessus relève de l'exemption prévue par la CNIL parce qu'elle est auto-hébergée, sans cookie et sans suivi d'un site à l'autre.
 
 *(Note technique : l'hébergeur Supabase peut conserver des logs d'infrastructure — dont des IP — à des fins de sécurité/anti-abus, selon sa propre politique. Voir supabase.com/privacy.)*
 
