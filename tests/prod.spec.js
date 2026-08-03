@@ -1,4 +1,5 @@
-const { test, expect } = require('@playwright/test');
+// Isolation des backends de production : voir tests/_hors-prod.js.
+const { test, expect } = require('./_hors-prod');
 const fs = require('fs');
 const path = require('path');
 

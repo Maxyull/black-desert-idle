@@ -23,7 +23,8 @@
 //    reducedMotion })` applique bien l'émulation : comparés côte à côte dans un même test, l'un
 //    donne false et l'autre true. Les contextes explicites ci-dessous ne sont donc pas une
 //    maladresse, c'est le seul des deux chemins qui fonctionne.
-const { test, expect } = require('@playwright/test');
+// Isolation des backends de production : voir tests/_hors-prod.js.
+const { test, expect } = require('./_hors-prod');
 
 const DEV = '/index.dev.html';
 // Chromium sérialise .01ms en "1e-05s" et non "0.00001s" : on compare des DURÉES, jamais des

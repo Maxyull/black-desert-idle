@@ -9,7 +9,8 @@
 // compte ne doivent PAS se fermer avec Échap. Un « Échap ferme tout » serait une régression
 // (session évincée qui rejoue, joueur coincé devant un jeu inutilisable). Ces deux tests-là sont la
 // raison d'être du fichier.
-const { test, expect } = require('@playwright/test');
+// Isolation des backends de production : voir tests/_hors-prod.js.
+const { test, expect } = require('./_hors-prod');
 
 const DEV = '/index.dev.html';
 
