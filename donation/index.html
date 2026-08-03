@@ -556,19 +556,37 @@
      les pseudos ayant explicitement consenti : aucun montant individuel n'est exposé, la table
      donations elle-même est en deny-all RLS.
      Règle d'or : en cas de zéro don, d'erreur réseau ou de SDK indisponible, on n'affiche RIEN --
-     jamais de repli sur un chiffre inventé. -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"></script>
+     jamais de repli sur un chiffre inventé.
+
+     2026-08-03, bascule vers le VPS. Cette page interrogeait encore le projet CLOUD, alors que les
+     dons vivent sur le VPS depuis le 2026-08-02 (comme le reste des données du jeu). Elle serait
+     donc restée à zéro pendant que le panneau admin, lui, aurait bien vu les dons : le compteur
+     public d'une page qui promet "Transparence totale" aurait affiché moins que la réalité. Elle
+     lit désormais bdi.maxyull.fr, la même base que le jeu, l'admin et Grafana.
+
+     Appel en `fetch` direct, sans le SDK : sans session il n'y a rien à gérer (pas de jeton, pas
+     de rafraîchissement), et surtout supabase-js enverrait un en-tête `Authorization: Bearer
+     <clé publiable>` que le PostgREST du VPS refuserait en 401 -- il ne sait vérifier que des JWT
+     ES256, et la clé publiable n'est pas un JWT. Sans en-tête `Authorization`, PostgREST applique
+     `db-anon-role`, donc le rôle `anon`, et la fonction s'exécute normalement. C'est exactement le
+     raisonnement de fetchDonnees() dans src/backend/game-supabase.js, voir bdi-infra/migration/
+     NOTES-JWT.md. Effet de bord bienvenu : le CDN supabase-js n'est plus nécessaire ici. -->
 <script>
 (async () => {
-  // clé PUBLIABLE (anon) : déjà exposée côté client du jeu, protégée par RLS -- pas un secret.
-  const SUPABASE_URL = 'https://mkwwvzbjtyawpcyrnybk.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
+  // Base de DONNÉES du jeu (VPS). Doit rester alignée sur DATA_API_URL de
+  // src/backend/game-supabase.js : c'est là que le retour arrière se pilote.
+  const DATA_API_URL = 'https://bdi.maxyull.fr';
   const GOAL_USD = 250; // total des coûts mensuels affichés dans le tableau ci-dessus
   try {
-    if (!window.supabase) return; // CDN indisponible : on laisse les blocs masqués
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { data, error } = await sb.rpc('donation_public_summary');
-    if (error || !data) return;
+    // Aucun en-tête `Authorization` : voir le commentaire ci-dessus.
+    const reponse = await fetch(DATA_API_URL + '/rest/v1/rpc/donation_public_summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    if (!reponse.ok) return;
+    const data = await reponse.json();
+    if (!data) return;
 
     // total à vie : alimente le bloc principal « collectés depuis le lancement », masqué à zéro
     const allTime = Number(data.total_usd) || 0;

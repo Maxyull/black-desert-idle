@@ -27,10 +27,25 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 // listés (impossibles aujourd'hui) ; un client peut toujours forger d'AUTRES annonces plausibles.
 // La seule parade complète serait de détecter ces événements côté serveur et de poster depuis le
 // serveur — gros chantier, à part. Voir aussi l'audit sécurité issue #9.
+//
+// Bascule du limiteur vers le VPS (2026-08-03). `rate_limit_hit` vit sur le VPS depuis la bascule
+// du 2026-08-02, comme `auth_rate_limit`. Cette fonction comptait encore dans le cloud : le quota
+// anti-spam Discord était donc compté à un endroit et celui de la connexion à un autre, sur deux
+// tables qui portent le même nom. L'état est éphémère, donc rien à récupérer — mais il n'y avait
+// aucune raison de garder deux limiteurs, la route `/limite-debit` existant déjà pour
+// `auth-by-identifier` (bdi-infra/api/app/routes_interne.py). Aucune route nouvelle ici, juste le
+// même transport : la clé `service_role` est un JWT HS256 que le PostgREST du VPS, qui ne vérifie
+// que de l'ES256, rejetterait en 401.
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const ANNOUNCE_SECRET = Deno.env.get("ANNOUNCE_SECRET") ?? "";
 const CHEAT_WEBHOOK = Deno.env.get("DISCORD_CHEAT_WEBHOOK") ?? "";
+
+// Tant que les deux variables ne sont pas posées, on continue de compter dans le cloud exactement
+// comme avant : le code peut être déployé AVANT les secrets sans rien changer au comportement.
+const INTERNE_URL = (Deno.env.get("AUTH_INTERNE_URL") || "").replace(/\/+$/, "");
+const INTERNE_SECRET = Deno.env.get("AUTH_INTERNE_SECRET") || "";
+const VERS_VPS = Boolean(INTERNE_URL && INTERNE_SECRET);
 
 // Jalons « verrouillés » : motifs de contenu qu'un client ne peut PAS produire légitimement
 // aujourd'hui. Configurable SANS redéploiement via LOCKED_MILESTONE_PATTERNS (motifs séparés par
@@ -86,10 +101,22 @@ async function alertCheatChannel(reason: string, ip: string, title: string, desc
   } catch { /* best-effort, ne bloque jamais la réponse */ }
 }
 
-// Rate-limit best-effort via le RPC rate_limit_hit (service_role). Fail-open si indisponible.
+// Rate-limit best-effort via rate_limit_hit : sur le VPS via /interne, sinon via le RPC du cloud.
+// Fail-open dans les deux cas si la source est indisponible — ce limiteur bride le spam, il ne
+// protège rien de sensible, et un VPS injoignable ne doit pas faire taire le log anti-triche.
 async function rateOk(key: string, max: number, windowSeconds: number): Promise<boolean> {
-  if (!SERVICE_ROLE) return true;
   try {
+    if (VERS_VPS) {
+      const r = await fetch(`${INTERNE_URL}/limite-debit`, {
+        method: "POST",
+        headers: { "x-auth-interne": INTERNE_SECRET, "Content-Type": "application/json" },
+        body: JSON.stringify({ cle: key, max, fenetre_secondes: windowSeconds }),
+      });
+      if (!r.ok) return true;
+      const data = await r.json();
+      return data?.autorise !== false;
+    }
+    if (!SERVICE_ROLE) return true;
     const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rate_limit_hit`, {
       method: "POST",
       headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": "application/json" },

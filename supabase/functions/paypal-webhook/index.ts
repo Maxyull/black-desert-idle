@@ -15,13 +15,43 @@
 // réellement sur le compte, frais PayPal déduits (~3,4 % + 0,35 €). C'est ce qui finance le projet,
 // donc c'est ce qu'on affiche. À défaut, on retombe sur le montant brut.
 //
+// OÙ ATTERRIT LE DON (2026-08-03, bascule vers le VPS). Depuis le 2026-08-02 les données du jeu
+// vivent sur le VPS et le cloud ne garde que l'authentification. Cette fonction écrivait pourtant
+// encore dans le `public.donations` DU CLOUD, alors que la page /donation, le panneau admin et
+// Grafana lisent celui du VPS : un don encaissé aujourd'hui serait resté invisible partout, sans
+// la moindre erreur pour le signaler. Vérifié avant correction : la table est à 0 ligne des deux
+// côtés, donc rien n'a été perdu, c'est une correction préventive.
+//
+// On ne peut PAS écrire sur le PostgREST du VPS avec la clé `service_role` : c'est un JWT HS256,
+// or le VPS ne vérifie que de l'ES256 et répond 401 « No suitable key was found to decode the
+// JWT ». C'est l'erreur qui a cassé la connexion par pseudo en production le 2026-08-02. On passe
+// donc par la route interne de l'API des dashboards, protégée par un secret partagé et sans JWT :
+// bdi-infra/api/app/routes_interne.py, même transport que `auth-by-identifier`.
+//
 // Secrets attendus (Dashboard Supabase > Edge Functions > Secrets) :
 //   PAYPAL_CLIENT_ID, PAYPAL_SECRET, PAYPAL_WEBHOOK_ID, PAYPAL_ENV ('live' ou 'sandbox')
 //   DONATION_FX_TO_USD (optionnel : taux devise->USD si le compte n'est pas en USD, ex '1.08')
+//   AUTH_INTERNE_URL, AUTH_INTERNE_SECRET (mêmes valeurs que pour `auth-by-identifier`)
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+// Tant que les deux variables ne sont pas posées, on continue d'écrire dans le cloud exactement
+// comme avant. Volontaire, et identique à `auth-by-identifier` : le code peut être déployé AVANT
+// les secrets sans rien changer au comportement, et la bascule se fait ensuite en posant les
+// secrets, dans un geste isolé et réversible.
+const INTERNE_URL = (Deno.env.get("AUTH_INTERNE_URL") || "").replace(/\/+$/, "");
+const INTERNE_SECRET = Deno.env.get("AUTH_INTERNE_SECRET") || "";
+const VERS_VPS = Boolean(INTERNE_URL && INTERNE_SECRET);
+
+function interne(chemin: string, corps: unknown): Promise<Response> {
+  return fetch(`${INTERNE_URL}/${chemin}`, {
+    method: "POST",
+    headers: { "x-auth-interne": INTERNE_SECRET, "Content-Type": "application/json" },
+    body: JSON.stringify(corps),
+  });
+}
 const CLIENT_ID = Deno.env.get("PAYPAL_CLIENT_ID") ?? "";
 const SECRET = Deno.env.get("PAYPAL_SECRET") ?? "";
 const WEBHOOK_ID = Deno.env.get("PAYPAL_WEBHOOK_ID") ?? "";
@@ -123,6 +153,47 @@ Deno.serve(async (req: Request) => {
     received_at: res.create_time ?? ev.create_time ?? new Date().toISOString(),
   };
 
+  // ---------------------------------------------------------------- écriture
+  // Sur le VPS, là où le jeu LIT les dons. Pas de repli vers le cloud en cas d'échec, et c'est
+  // délibéré : un repli écrirait l'argent dans la base que plus personne ne lit, en répondant 200
+  // à PayPal — donc en le dissuadant de retenter. Le don serait perdu de vue en silence, ce qui
+  // est exactement le défaut qu'on corrige ici. On répond 500 : PayPal retente pendant trois
+  // jours, ce qui couvre largement une indisponibilité du VPS.
+  if (VERS_VPS) {
+    try {
+      const r = await interne("don", {
+        source: row.source,
+        external_id: row.external_id,
+        // Montants en CHAÎNES : côté API ils deviennent des Decimal exacts. Un nombre JSON
+        // passerait par un flottant binaire, où 4.62 n'est pas représentable — sur une colonne
+        // numeric(10,2) qui porte de l'argent réel, on ne laisse pas cet arrondi arriver.
+        montant_usd: String(amountUsd),
+        montant_origine: String(value),
+        devise: currency,
+        taux_usd: String(fx),
+        est_public: row.is_public,
+        libelle_donateur: row.donor_label,
+        note: row.note,
+        recu_le: row.received_at,
+      });
+      if (!r.ok) {
+        console.error("donation_interne_http", r.status, await r.text().catch(() => ""));
+        return json({ error: "insert_failed" }, 500);
+      }
+      // `enregistre: false` = l'insertion a été absorbée par `on conflict do nothing`, donc
+      // PayPal a rejoué un événement déjà enregistré. Succès fonctionnel : on répond 200 pour
+      // qu'il cesse de retenter.
+      const data = await r.json().catch(() => ({}));
+      return json({ ok: true, duplicate: data?.enregistre === false });
+    } catch (erreur) {
+      // Sans cette trace, un secret périmé ou une API arrêtée ne se manifesterait que par des
+      // dons qui n'arrivent jamais, sans le moindre indice sur la cause.
+      console.error("donation_interne_reseau", String(erreur));
+      return json({ error: "insert_failed" }, 500);
+    }
+  }
+
+  // Repli AVANT la pose des secrets : le cloud, exactement comme avant le 2026-08-03.
   const r = await fetch(`${SUPABASE_URL}/rest/v1/donations`, {
     method: "POST",
     headers: {
