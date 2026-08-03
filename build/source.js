@@ -4365,7 +4365,7 @@ function travelTo(i) {
 function updateVeliaPlayersTicker() {
   const t = $('lootTicker'); if (!t || !atVelia) return;
   const label = i18next.t('core:core.velia.in_town_label', { count: veliaPlayers.length });
-  const rows = veliaPlayers.map(p => `<div class="veliaPlayerRow">${p.is_guest?'🎭':'👤'} ${escapeHtml(p.pseudo)}</div>`).join('');
+  const rows = veliaPlayers.map(p => `<div class="veliaPlayerRow">👤 ${escapeHtml(p.pseudo)}</div>`).join('');
   t.innerHTML = `<div class="veliaPlayersHead">${label}</div>` +
     (rows || `<div class="admHint">${i18next.t('core:core.velia.nobody_else')}</div>`);
 }
@@ -15920,8 +15920,7 @@ setInterval(async () => { if (sb && currentUser && !document.hidden) { try { awa
 // ==== src/backend/presence.js ====
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
-  
-  try { await sb.rpc('heartbeat_presence', { p_is_guest: false, p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
+  try { await sb.rpc('heartbeat_presence', { p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
   checkPlayerSession(); 
 }
 
