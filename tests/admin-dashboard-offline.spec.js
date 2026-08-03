@@ -11,7 +11,8 @@
 // une fois ça corrigé, admin_health et admin_dashboard_kpis restaient sans aucune protection —
 // un simple rejet réseau suffisait à ne jamais appeler setState, donc à figer le panneau sur son
 // squelette POUR TOUJOURS, sans message et sans bouton Rafraîchir (rendu seulement après coup).
-const { test, expect } = require('@playwright/test');
+// Isolation des backends de production : voir tests/_hors-prod.js.
+const { test, expect } = require('./_hors-prod');
 
 // mocks fidèles au vrai PostgrestBuilder : un thenable, .then() seulement, jamais .catch()
 // __rpcCalls compte les appels réellement passés au mock. Sans ce compteur, un mock jamais

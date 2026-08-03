@@ -1,4 +1,5 @@
-const { test, expect } = require('@playwright/test');
+// Isolation des backends de production : voir tests/_hors-prod.js.
+const { test, expect } = require('./_hors-prod');
 
 test.use({ viewport: { width: 390, height: 844 } });
 

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const { test, expect } = require('@playwright/test');
+// Isolation des backends de production : voir tests/_hors-prod.js.
+const { test, expect } = require('./_hors-prod');
 
 // PROD_HOSTNAME (src/backend/client-health.js) décide si reportClientError() a le droit d'écrire
 // dans public.client_errors — liste blanche stricte, ajoutée le 2026-08-03 pour que le poste de dev

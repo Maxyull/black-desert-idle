@@ -1,4 +1,5 @@
-const { test, expect } = require('@playwright/test');
+// Isolation des backends de production : voir tests/_hors-prod.js.
+const { test, expect } = require('./_hors-prod');
 
 // Le canvas de jeu fait 1240px de large (#wrap) et #sideMenu (position:fixed, 210px, z-index:40)
 // se superpose au-dessus du header dès que la fenêtre est trop étroite pour laisser assez de
