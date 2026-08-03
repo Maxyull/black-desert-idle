@@ -5880,9 +5880,10 @@
   }
   function testReportClientErrorThrottlesAfterMaxPerSession() {
     if (typeof reportClientError !== 'function' || typeof CLIENT_ERROR_MAX_PER_SESSION === 'undefined') return;
-    const savedCount = clientErrorCount, savedOffline = isOffline, savedSb = sb;
+    const savedCount = clientErrorCount, savedOffline = isOffline, savedSb = sb, savedOrigin = originIsProd;
     let insertCalls = 0;
     isOffline = false;
+    originIsProd = true; // ce test tourne en dev, où le filtre d'origine sort avant le throttle
     sb = { from: () => ({ insert: () => { insertCalls++; return { then: (res) => { res && res(); return { catch: () => {} }; } }; } }) };
     try {
       clientErrorCount = CLIENT_ERROR_MAX_PER_SESSION - 1;
@@ -5891,7 +5892,60 @@
       assert('reportClientError() n\'insère plus une fois CLIENT_ERROR_MAX_PER_SESSION atteint',
         insertCalls === 1, `insertCalls=${insertCalls}`);
     } finally {
-      clientErrorCount = savedCount; isOffline = savedOffline; sb = savedSb;
+      clientErrorCount = savedCount; isOffline = savedOffline; sb = savedSb; originIsProd = savedOrigin;
+    }
+  }
+  // Filtre d'origine (2026-08-03) : reportClientError() écrivait dans public.client_errors depuis
+  // le poste de dev. Constat sur le VPS le 2026-08-02 : 10 des 12 erreurs enregistrées en 24 h
+  // venaient de http://127.0.0.1:<port>/index.dev.html (des `npx playwright test` locaux), 2
+  // seulement de vrais joueurs — d'où de fausses alertes sur le KPI « erreurs client 24h » de
+  // bdi-infra et des erreurs fantômes dans l'onglet Monitoring du panneau admin.
+  function testIsProdHostnameAcceptsOnlyProductionDomain() {
+    if (typeof isProdHostname !== 'function') return;
+    assert('isProdHostname() accepte le domaine de production', isProdHostname(PROD_HOSTNAME));
+    // Liste BLANCHE : chacun de ces hôtes est un contexte de dev réel de ce projet (serveur
+    // Playwright, `npm run serve`, test au téléphone sur le LAN, URL GitHub Pages par défaut).
+    ['127.0.0.1', 'localhost', '::1', '0.0.0.0', '192.168.1.42', 'maxyull.github.io', ''].forEach(h => {
+      assert(`isProdHostname('${h}') est faux (origine de dev)`, !isProdHostname(h));
+    });
+    // Ni sous-chaîne ni suffixe : un `includes`/`endsWith` laisserait passer ces deux-là.
+    assert('isProdHostname() ne se laisse pas avoir par un sous-domaine',
+      !isProdHostname('dev.' + PROD_HOSTNAME));
+    assert('isProdHostname() ne se laisse pas avoir par un domaine homographe',
+      !isProdHostname(PROD_HOSTNAME + '.evil.example'));
+  }
+  function testReportClientErrorSkipsNonProdOrigin() {
+    if (typeof reportClientError !== 'function') return;
+    // Garde-fou statique : le filtre doit rester AVANT l'insert, sinon la ligne part quand même.
+    const src = reportClientError.toString();
+    assert('reportClientError() teste l\'origine (originIsProd) avant tout', src.includes('originIsProd'));
+    assert('reportClientError() sort sur l\'origine AVANT d\'appeler sb.from(\'client_errors\')',
+      src.indexOf('originIsProd') < src.indexOf('client_errors'),
+      `originIsProd@${src.indexOf('originIsProd')} client_errors@${src.indexOf('client_errors')}`);
+    // Câblage réel : les tests ne tournent jamais en prod (tests/tests.js n'est pas bundlé), donc
+    // le drapeau calculé au chargement depuis location.hostname doit être faux ici. C'est ce qui
+    // prouve que le filtre est branché sur la vraie origine, et pas seulement sur le mock ci-dessous.
+    if (typeof originIsProd !== 'undefined' && !isProdHostname(location.hostname)) {
+      assert(`originIsProd est faux sur l'origine de test (${location.hostname})`, originIsProd === false);
+    }
+    // Comportement dynamique : même en ligne, avec un sb valide et le compteur à zéro, rien ne part.
+    const savedCount = clientErrorCount, savedOffline = isOffline, savedSb = sb, savedOrigin = originIsProd;
+    let insertCalls = 0;
+    isOffline = false;
+    clientErrorCount = 0;
+    sb = { from: () => ({ insert: () => { insertCalls++; return { then: (res) => { res && res(); return { catch: () => {} }; } }; } }) };
+    try {
+      originIsProd = false;
+      reportClientError('erreur depuis le poste de dev', 'stack bidon');
+      assert('reportClientError() n\'insère rien hors production', insertCalls === 0, `insertCalls=${insertCalls}`);
+      assert('reportClientError() ne consomme pas le quota de session hors production',
+        clientErrorCount === 0, `clientErrorCount=${clientErrorCount}`);
+      // ...et le comportement de prod reste STRICTEMENT inchangé (c'est la moitié qui compte).
+      originIsProd = true;
+      reportClientError('erreur d\'un vrai joueur', 'stack bidon');
+      assert('reportClientError() insère toujours normalement en production', insertCalls === 1, `insertCalls=${insertCalls}`);
+    } finally {
+      clientErrorCount = savedCount; isOffline = savedOffline; sb = savedSb; originIsProd = savedOrigin;
     }
   }
 
@@ -7881,6 +7935,8 @@
     testLb2RateCatsRankByWeekAndShowBothValues();
     testOfflineCatchupPrefersServerRatesOverLocalRecord();
     testPetLooterActivationAndTaggedCollect();
+    testIsProdHostnameAcceptsOnlyProductionDomain();
+    testReportClientErrorSkipsNonProdOrigin();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

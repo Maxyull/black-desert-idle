@@ -109,7 +109,7 @@ c'est ce qui a rendu l'opération sûre).
 
 | Fichier | Rôle |
 |---|---|
-| `client-health.js` | `CURRENT_VERSION`, détection de maj (`checkForUpdate`), erreurs JS non gérées, `clearGameCache()` |
+| `client-health.js` | `CURRENT_VERSION`, détection de maj (`checkForUpdate`), erreurs JS non gérées (`reportClientError`, **prod uniquement** — voir ci-dessous), `clearGameCache()` |
 | `wiki-codex.js` | `WIKI_SECTIONS`, Codex, Confiance & Sécurité, et `openInfo()`/`#infoOverlay` **partagé** avec Compendium/Succès/Patch notes |
 | `patch-notes-panel.js` | la **vue** des patch notes (pagination, badge non-lu, rendu). Les données sont dans `meta/patch-notes-data.js` |
 | `../core/i18n-legacy.js` | le dictionnaire `I18N` historique + `applyI18n()` (coexiste avec i18next — voir `docs/I18N_PLAN.md`) |
@@ -122,6 +122,34 @@ c'est ce qui a rendu l'opération sûre).
 > `const`/`let` de haut niveau lu au chargement explose si l'ordre bouge (CLAUDE.md §6) —
 > `client-health.js` lit `PATCH_NOTES[0].v` au chargement. Ne pas réordonner « pour ranger par
 > dossier ».
+
+### `reportClientError()` n'écrit que depuis la production (2026-08-03)
+
+`reportClientError()` (`client-health.js`) insérait dans `public.client_errors` depuis n'importe
+quelle origine, `http://127.0.0.1:<port>/index.dev.html` compris — donc depuis chaque
+`npx playwright test` local. Mesuré sur le VPS le 2026-08-02 : **10 des 12 erreurs des dernières
+24 h venaient du poste de dev**, 2 seulement de vrais joueurs. Le KPI « erreurs client 24h » du
+dashboard de supervision (bdi-infra, `/api/bdi/kpis`) alertait donc dans le vide, et l'onglet
+Monitoring du panneau admin affichait des erreurs qu'aucun joueur n'a jamais vues.
+
+Filtre : `PROD_HOSTNAME` + `isProdHostname()`, **liste blanche stricte** — seul
+`blackdesertidle.maxyull.fr` (= le fichier `CNAME`) passe. Tout le reste (127.0.0.1, localhost,
+`::1`, IP LAN pour tester au téléphone, `*.github.io`, `file://`) est du dev et sort avant l'insert,
+sans même consommer le quota `CLIENT_ERROR_MAX_PER_SESSION`. Le comportement en production est
+inchangé. Un test Node (`tests/regression.spec.js`) compare `PROD_HOSTNAME` au `CNAME` : sans lui,
+un changement de domaine éteindrait le monitoring **en silence**.
+
+**Pourquoi seulement cette fonction.** `client_errors` est la seule table qu'un client sans session
+Supabase valide peut écrire (`user_id is null or user_id = auth.uid()`, migration
+`20260722190000_harden_client_errors_insert.sql`, et le client n'envoie pas de `user_id`). Toutes
+les autres écritures (`game_saves`, `player_stats`, `farm_events`, `silver_ledger`,
+`heartbeat_presence`, `log_playtime_ping`, `record_afk_session`) exigent `user_id = auth.uid()` :
+les tests Playwright appellent `onAuthed()` avec un utilisateur fabriqué localement **sans jamais
+ouvrir de session** (`signInForTest`, `tests/companions.spec.js`), leurs écritures sont donc
+refusées côté serveur. ⚠️ Ça ne vaut PAS pour une session de dev manuelle où l'on se connecte
+vraiment sur `127.0.0.1` : là, ces écritures partent pour de bon (silver farmé en local dans
+`silver_ledger`, présence comptée dans « joueurs en ligne »…). Aucun filtre posé sur elles — les
+couper rendrait la sauvegarde et la présence intestables en local.
 
 - `game-supabase.js` — client Supabase, auth (email + Discord), chargement/sauvegarde de la
   partie, `syncPlayerStats()` (classement), présence, verrou de session, mode hors ligne.

@@ -33,8 +33,37 @@ $a('clientVersionNum').textContent = CURRENT_VERSION;
 // ============================================================
 const CLIENT_ERROR_MAX_PER_SESSION = 5;
 let clientErrorCount = 0;
-/** @param {string} message @param {?string} stack. Journalise une erreur client dans client_errors (throttlé à CLIENT_ERROR_MAX_PER_SESSION, no-op hors-ligne/sans Supabase). */
+// ---------- filtre d'origine (2026-08-03) ----------
+// reportClientError() inserait depuis N'IMPORTE QUELLE origine, y compris
+// http://127.0.0.1:<port>/index.dev.html — donc depuis chaque `npx playwright test` local. Mesuré
+// sur le VPS le 2026-08-02 : sur 12 erreurs des dernières 24 h, 10 venaient du poste de dev, 2
+// seulement de https://blackdesertidle.maxyull.fr. Conséquences : le KPI « erreurs client 24h » du
+// dashboard de supervision (bdi-infra, /api/bdi/kpis) alertait dans le vide, et l'onglet Monitoring
+// du panneau admin affichait des erreurs qu'aucun joueur n'a jamais vues.
+//
+// POURQUOI ICI ET NULLE PART AILLEURS : client_errors est la SEULE table qu'un client sans session
+// Supabase valide peut écrire (policy `user_id is null or user_id = auth.uid()`, migration
+// 20260722190000_harden_client_errors_insert.sql — le client n'envoie pas de user_id, donc un
+// invité passe). Toutes les autres écritures du jeu (game_saves, player_stats, farm_events,
+// silver_ledger, heartbeat_presence, log_playtime_ping, record_afk_session...) exigent
+// `user_id = auth.uid()`, et les tests Playwright appellent onAuthed() avec un utilisateur
+// fabriqué localement sans jamais ouvrir de session (voir signInForTest, tests/companions.spec.js) :
+// leurs écritures sont refusées côté serveur et ne polluent rien.
+//
+// Liste BLANCHE, pas liste noire : seul le domaine de prod passe. Un nouveau contexte de dev
+// (autre port, IP LAN pour tester au téléphone, *.github.io, file://, preview d'une PR) est donc
+// filtré par défaut, sans avoir à penser à l'ajouter.
+const PROD_HOSTNAME = 'blackdesertidle.maxyull.fr'; // = fichier CNAME à la racine (GitHub Pages)
+/** @param {string} hostname. true si ce nom d'hôte est celui de la production (liste blanche stricte : 127.0.0.1, localhost, ::1, IP LAN, *.github.io... sont tous du dev). */
+function isProdHostname(hostname) {
+  return hostname === PROD_HOSTNAME;
+}
+// Évalué une fois au chargement : l'origine d'une page ne change pas de sa vie. `let` et non
+// `const` pour que les tests puissent le forcer, exactement comme isOffline/sb (tests/tests.js).
+let originIsProd = isProdHostname(location.hostname);
+/** @param {string} message @param {?string} stack. Journalise une erreur client dans client_errors (prod uniquement, throttlé à CLIENT_ERROR_MAX_PER_SESSION, no-op hors-ligne/sans Supabase). */
 function reportClientError(message, stack) {
+  if (!originIsProd) return; // dev local : ne jamais polluer la table de prod, voir ci-dessus
   if (isOffline || !sb || clientErrorCount >= CLIENT_ERROR_MAX_PER_SESSION) return;
   clientErrorCount++;
   try {
