@@ -730,8 +730,14 @@ async function showPlayerInventoryWindow(userId, displayName) {
     if (apDp && apDp.hp) bits.push('+'+apDp.hp+' PV');
     if (apDp && apDp.dodge) bits.push('+'+apDp.dodge+'% Esq.');
     if (s.enhLv) bits.push(ENH_NAMES[s.enhLv]);
+    // ⚠️ SÉCURITÉ : `s.icon` et `s.color` viennent de la sauvegarde du joueur
+    // (RPC admin_get_player_inventory), rendue par document.write dans le popup
+    // admin. `s.icon` doit être échappé, et `s.color` restreint à une couleur
+    // simple : brut dans un attribut `style`, il permet un breakout d'attribut.
+    // Voir #108.
+    const couleur = /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)$/.test(s.color || '') ? s.color : 'inherit';
     return `<div class="cell${visible?'':' catHidden'}" title="${escapeHtml(bits.join(' · '))}">` +
-      `<span style="color:${s.color}">${s.icon}</span>` +
+      `<span style="color:${couleur}">${escapeHtml(s.icon)}</span>` +
       `${s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : ''}</div>`;
   }
   let invCat = 'normal';

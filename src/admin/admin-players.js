@@ -28,10 +28,15 @@ function renderAdminScreenshotHtml(save) {
   const zoneName = zone ? tr(zone.name) : i18next.t('admin:admin.reset.default_zone_name');
   const eqRows = Object.entries(eq).filter(([,v]) => v).map(([slot,it]) => {
     const lvl = it.optimizable ? (ENH_NAMES[it.enhLv||0] || '+0') : '';
-    return `<div class="row"><span>${it.icon||'▪'} ${SLOT_LABEL[slot]||slot}</span><span class="v">${escapeHtml(it.name)}${lvl?' ('+lvl+')':''}</span></div>`;
+    // ⚠️ SÉCURITÉ : `it.icon`, la clé `slot` et `it.qty` viennent de la
+    // sauvegarde du joueur (écrite librement, jamais validée côté serveur) et
+    // sont rendus dans le DOM admin via dangerouslySetInnerHTML. Sans
+    // escapeHtml, un joueur y place une charge XSS qui s'exécute dans la
+    // session admin. `it.name` était déjà échappé, pas ses voisins. Voir #108.
+    return `<div class="row"><span>${escapeHtml(it.icon||'▪')} ${SLOT_LABEL[slot]||escapeHtml(slot)}</span><span class="v">${escapeHtml(it.name)}${lvl?' ('+lvl+')':''}</span></div>`;
   }).join('') || `<div class="admEmpty">${i18next.t('admin:admin.reset.no_gear')}</div>`;
   const invRows = inv.map(it =>
-    `<div class="row"><span>${it.icon||'▪'} ${escapeHtml(it.name)}</span><span class="v">${it.stackable ? 'x'+it.qty : (it.optimizable ? (ENH_NAMES[it.enhLv||0]||'+0') : '')}</span></div>`
+    `<div class="row"><span>${escapeHtml(it.icon||'▪')} ${escapeHtml(it.name)}</span><span class="v">${it.stackable ? 'x'+escapeHtml(String(it.qty)) : (it.optimizable ? (ENH_NAMES[it.enhLv||0]||'+0') : '')}</span></div>`
   ).join('') || `<div class="admEmpty">${i18next.t('admin:admin.reset.empty_bag')}</div>`;
   return `
     <div class="admStatTiles">
