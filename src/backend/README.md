@@ -151,6 +151,43 @@ vraiment sur `127.0.0.1` : là, ces écritures partent pour de bon (silver farm�
 `silver_ledger`, présence comptée dans « joueurs en ligne »…). Aucun filtre posé sur elles — les
 couper rendrait la sauvegarde et la présence intestables en local.
 
+### La présence porte la version du client (2026-08-03)
+
+Suite directe de la section ci-dessous. Une fois le correctif de la détection de maj déployé, la
+question « la joueuse bloquée est-elle bien repassée à jour ? » s'est révélée **sans réponse
+possible** : rien n'enregistrait la version d'un client connecté. La seule colonne qui portait une
+version de bundle était `client_errors.game_version`, écrite uniquement quand un client **plante**,
+et dont le `user_id` est toujours `NULL` (le client ne l'envoie pas — c'est ce qui permet à un
+client sans session valide d'y écrire). Ni « qui », ni « quand », ni « pendant qu'il jouait ».
+
+`presence` est le bon porteur : le client y écrit déjà toutes les 20 s, la ligne est par joueur, et
+toutes les lectures existantes filtrent déjà sur `last_seen`. Migration
+`20260803120000_version_client_dans_presence.sql`.
+
+| Pièce | Où |
+|---|---|
+| Colonne `presence.game_version` | `NULL` = client trop ancien pour se déclarer — c'est en soi l'information intéressante |
+| `heartbeat_presence(p_zone_idx, p_version)` | nouvelle signature ; l'ancienne à un paramètre est **conservée** pour les onglets V499 déjà ouverts |
+| `admin_client_versions(p_window_seconds)` | lecture staff (même patron que `admin_client_errors_*`) |
+| Section admin « Versions clientes » | `admin/admin-monitoring.js`, catégorie Supervision |
+
+⚠️ **PostgREST résout une RPC par les NOMS des clés du corps JSON.** La signature à un paramètre ne
+peut donc pas disparaître tant que des clients V499 tournent, et les deux paramètres de la nouvelle
+sont volontairement **sans valeur par défaut** : sinon un appel `{p_zone_idx}` deviendrait ambigu
+entre les deux surcharges — le piège de `20260706030000` (heartbeat en échec en boucle, joueur qui
+disparaît du compteur « en ligne »).
+
+⚠️ **Ordre de déploiement** : la migration part sur le VPS **et** sur le cloud avant le client. Le
+cloud n'est pas facultatif, c'est la cible de retour arrière (`DATA_API_URL = ''`). `heartbeatPresence()`
+garde malgré tout un repli sur l'appel à un paramètre dès qu'il voit un `PGRST202`
+(`estSignatureVersionInconnue()`), et le **dit** en console : une base en retard doit dégrader la
+télémétrie, jamais la présence elle-même.
+
+⚠️ `CURRENT_VERSION` est un `const` de `client-health.js`, qui charge **après** `presence.js`.
+L'accès est purement au runtime, donc sûr — mais c'est la configuration exacte du piège TDZ de
+CLAUDE.md §8, où `typeof` ne protège pas. D'où `versionPourPresence()`, qui `try/catch` la lecture :
+si elle devenait un jour inaccessible, on perd la version, pas la présence, et jamais en silence.
+
 ### Détection de maj : le toast est un confort, jamais une condition (2026-08-03)
 
 Le 2026-08-03, une joueuse est restée **11 h 30 sur le bundle V497** alors que la V498 était en
@@ -244,7 +281,7 @@ session, offline, télémétrie — le vrai noyau Supabase) :
 
 | Fichier | Rôle | Ordre de chargement |
 |---|---|---|
-| `presence.js` | joueurs en ligne / zones / Velia / admin + télémétrie AFK | après game-supabase (refs runtime) |
+| `presence.js` | joueurs en ligne / zones / Velia / admin + télémétrie AFK + **version du client** (voir ci-dessous) | après game-supabase (refs runtime) |
 | `account-panel.js` | panneau "Mon compte" (identité, parrainage) | après game-supabase (câblé par onclick= HTML) |
 | `auth.js` | auth multi-provider + magic link + recovery **+ le point d'entrée de l'appli** | **en dernier** |
 

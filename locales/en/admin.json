@@ -452,5 +452,15 @@
   "admin.tests.tester_panel_title": "🧪 Tester Panel",
   "admin.tests.title": "For me — test on my account",
   "admin.tests.unlock_achievements_btn": "Unlock all achievements",
-  "admin.tests.upcoming_in_dev": "In development — testable soon"
+  "admin.tests.upcoming_in_dev": "In development — testable soon",
+  "admin.versions.col_players": "Players",
+  "admin.versions.col_since": "Seen since",
+  "admin.versions.col_version": "Version",
+  "admin.versions.nobody": "Nobody online in the last 5 minutes.",
+  "admin.versions.sub": "Bundle version currently running for online players (5-min window). A version other than the one served in production means a client that has not reloaded yet.",
+  "admin.versions.tile_behind": "Clients behind",
+  "admin.versions.tile_expected": "Served version",
+  "admin.versions.tile_online": "Players online",
+  "admin.versions.title": "Client versions",
+  "admin.versions.unknown": "not reported"
 }

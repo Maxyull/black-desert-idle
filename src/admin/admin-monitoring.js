@@ -357,11 +357,61 @@ async function refreshAdminPlayerRates() {
       </tr>`).join('')}</tbody></table>`);
 }
 
+// ---------- Versions clientes en ligne ----------
+// Née de l'incident du 2026-08-03 : une joueuse est restée 11 h 30 sur la V497 alors que la V498
+// était déployée depuis 9 heures, et on ne s'en est aperçu que parce qu'elle l'a signalé. Après
+// coup, impossible de vérifier qu'elle était bien repassée à jour : rien n'enregistrait la version
+// d'un client CONNECTÉ (client_errors.game_version n'existe que si le client plante, et son
+// user_id est toujours null). presence.game_version comble ça (migration 20260803120000).
+//
+// La lecture qui compte n'est pas « combien de joueurs » mais « est-ce que quelqu'un traîne sur un
+// vieux bundle » : la version majoritaire est mise en avant, et toute AUTRE version présente est
+// signalée comme retardataire, avec depuis quand on la voit.
+/** @param {HTMLElement} el. Section Versions clientes : répartition des versions parmi les joueurs actuellement en ligne. */
+function renderAdminClientVersions(el) {
+  el.innerHTML = admMonSkeleton('🔄 ' + i18next.t('admin:admin.versions.title'), i18next.t('admin:admin.versions.sub'), 'admVersionsBody');
+  refreshAdminClientVersions();
+}
+/** Charge et rend la répartition des versions clientes en ligne (admin_client_versions). */
+async function refreshAdminClientVersions() {
+  if (!isAdmin() || !sb) return;
+  const el = $a('admVersionsBody');
+  if (!el) return;
+  const { data, error } = await sb.rpc('admin_client_versions', { p_window_seconds: 300 });
+  if (error) { admMonFail(el, error); return; }
+  const rows = data || [];
+  if (rows.length === 0) { el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.versions.nobody')}</div>`; return; }
+  // La version de RÉFÉRENCE est celle que sert la prod, pas la plus répandue : juste après un
+  // déploiement la majorité est encore sur l'ancienne, et c'est précisément ce qu'on veut voir.
+  const attendue = typeof CURRENT_VERSION !== 'undefined' ? CURRENT_VERSION : null;
+  const total = rows.reduce((a, r) => a + Number(r.joueurs || 0), 0);
+  const retard = rows.filter(r => r.game_version !== attendue).reduce((a, r) => a + Number(r.joueurs || 0), 0);
+  el.innerHTML = admMonTiles([
+    { lbl:'👥 ' + i18next.t('admin:admin.versions.tile_online'), val: admMonNum(total) },
+    { lbl:'✅ ' + i18next.t('admin:admin.versions.tile_expected'), val: escapeHtml(attendue || '—') },
+    { lbl:'⚠️ ' + i18next.t('admin:admin.versions.tile_behind'), val: admMonNum(retard) },
+  ]) + `<table class="admTable"><thead><tr>
+      <th>${i18next.t('admin:admin.versions.col_version')}</th>
+      <th>${i18next.t('admin:admin.versions.col_players')}</th>
+      <th>${i18next.t('admin:admin.versions.col_since')}</th>
+    </tr></thead><tbody>${rows.map(r => {
+      const aJour = r.game_version === attendue;
+      // '?' = client trop ancien pour se declarer, donc forcement en retard : jamais un doute.
+      const etiquette = r.game_version === '?' ? i18next.t('admin:admin.versions.unknown') : escapeHtml(r.game_version);
+      return `<tr>
+        <td style="font-family:monospace">${etiquette}${aJour ? '' : ' ⚠️'}</td>
+        <td>${admMonNum(r.joueurs)}</td>
+        <td style="font-size:10px;color:var(--ink-dim)">${admMonDate(r.plus_ancien_vu)}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
 // ---------- enregistrement dans le registre du shell ----------
 // Nouvelle catégorie "Supervision" (erreurs + anti-abus) : ces deux sections ne parlent ni de
 // joueurs ni d'économie ni de contenu, elles surveillent la SANTÉ TECHNIQUE du jeu.
 ADMIN_SECTIONS.push({ cat:'monitoring', label:{fr:'Supervision',en:'Monitoring'}, items:[
   { id:'errors', icon:'🐞', label:{fr:'Erreurs client',en:'Client errors'}, render:renderAdminClientErrors },
+  { id:'versions', icon:'🔄', label:{fr:'Versions clientes',en:'Client versions'}, render:renderAdminClientVersions },
   { id:'ratelimit', icon:'🛡️', label:{fr:'Limitation de débit',en:'Rate limiting'}, render:renderAdminRateLimit },
   { id:'rates', icon:'📊', label:{fr:'Cadence joueurs',en:'Player rates'}, render:renderAdminPlayerRates },
 ]});

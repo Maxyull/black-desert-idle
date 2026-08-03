@@ -11,14 +11,72 @@
 // Les 4 seules refs externes (heartbeatPresence/refreshPresenceSnapshot depuis onAuthedInner)
 // sont au RUNTIME, verifie avant extraction.
 
-// ---------- présence : compteur "joueurs en ligne" (invités inclus) ----------
+// ---------- la présence porte la version du client (2026-08-03) ----------
+// Suite de l'incident du 2026-08-03 (11 h 30 bloquée sur la V497, voir backend/client-health.js) :
+// une fois le correctif parti, il a fallu constater qu'on ne pouvait PAS vérifier qu'un joueur
+// donné était bien repassé sur une version à jour. Rien n'enregistrait la version d'un client
+// connecté -- `client_errors.game_version` n'est écrite que quand un client PLANTE, et son
+// `user_id` est toujours null. Le heartbeat, lui, passe déjà toutes les 20 s et porte le user_id.
+//
+// Repli délibéré sur l'appel à un paramètre : si la base n'a pas encore la nouvelle signature
+// (migration 20260803120000 pas appliquée, cache de schéma PostgREST pas rechargé, retour arrière
+// vers le cloud), l'appel à 2 paramètres repond PGRST202. Sans ce repli, le joueur perdrait sa
+// PRÉSENCE -- il disparaîtrait du compteur « en ligne » et des compteurs de zone -- pour une
+// simple télémétrie. C'est exactement le mode de panne vécu en 20260706030000. La télémétrie doit
+// dégrader, jamais la fonction qui la transporte.
+let heartbeatVersionSupportee = true; // passe à false au 1er PGRST202, remis à true à chaque rechargement de page
+// ⚠️ CURRENT_VERSION est un `const` de backend/client-health.js, qui charge APRÈS ce fichier.
+// L'accès est purement au RUNTIME (heartbeatPresence n'est appelée que par onAuthed et par un
+// setInterval de 20 s), donc sûr aujourd'hui -- mais c'est très exactement la configuration du
+// piège de CLAUDE.md §8 : une fois tout concaténé dans build/source.js, un `const` déclaré plus
+// bas est en zone morte temporelle, et `typeof` ne protège PAS contre la TDZ (il lève comme un
+// accès direct). Si un jour quelqu'un appelle heartbeatPresence() au chargement, on veut perdre
+// la VERSION, pas la présence -- et surtout pas en silence.
+/**
+ * @param {?{code?:string, message?:string}} error erreur renvoyée par sb.rpc.
+ * @returns {boolean} vrai si la base ne connaît pas la signature à 2 paramètres.
+ * Pur et synchrone, pour être testable directement (le harnais de tests/tests.js ne sait pas
+ * awaiter). PGRST202 est le code PostgREST « fonction absente du cache de schéma » ; le repli sur
+ * le message couvre le cas où le code ne serait pas renseigné selon la version de PostgREST.
+ */
+function estSignatureVersionInconnue(error) {
+  if (!error) return false;
+  return error.code === 'PGRST202' || /Could not find the function/i.test(error.message || '');
+}
+/** @returns {?string} la version du bundle, ou null si elle n'est pas encore lisible (TDZ : voir ci-dessus). */
+function versionPourPresence() {
+  try {
+    return CURRENT_VERSION;
+  } catch (e) {
+    console.error('[presence] CURRENT_VERSION illisible (client-health.js charge apres presence.js, '
+      + 'voir CLAUDE.md §8) : la presence part sans version', e);
+    return null;
+  }
+}
+// ---------- présence : compteur "joueurs en ligne" ----------
 // zone_idx = -1 pour Velia (2026-07-16, demande explicite : liste des joueurs en ville) -- avant,
 // NULL (aucune zone) ; -1 sert de sentinelle dédiée pour get_velia_players() côté serveur, sans
 // jamais entrer en collision avec un vrai index de zone (toujours >= 0).
-/** Signale la présence du joueur (RPC heartbeat_presence, zone -1 pour Velia) et vérifie la session en même cadence (20s). */
+/** Signale la présence du joueur (RPC heartbeat_presence, zone -1 pour Velia) avec la version du bundle, et vérifie la session en même cadence (20s). */
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
-  try { await sb.rpc('heartbeat_presence', { p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
+  const zone = atVelia ? -1 : zoneIdx;
+  try {
+    if (heartbeatVersionSupportee) {
+      const { error } = await sb.rpc('heartbeat_presence', { p_zone_idx: zone, p_version: versionPourPresence() });
+      // La signature à 2 paramètres n'existe pas dans le cache de schéma. On bascule définitivement
+      // (pour ce chargement de page) sur l'ancienne, et on le DIT : ce serait sinon une perte de
+      // telemetrie parfaitement muette, la faute meme qui a coute 11 h 30.
+      if (estSignatureVersionInconnue(error)) {
+        heartbeatVersionSupportee = false;
+        console.error('[presence] la base ne connait pas heartbeat_presence(p_zone_idx, p_version) : '
+          + 'repli sur la signature a un parametre, la version du client ne sera plus remontee', error.message || error);
+        await sb.rpc('heartbeat_presence', { p_zone_idx: zone });
+      }
+    } else {
+      await sb.rpc('heartbeat_presence', { p_zone_idx: zone });
+    }
+  } catch(e) {}
   checkPlayerSession(); // même cadence (20s, voir setInterval(heartbeatPresence,20000) plus bas)
 }
 // joueurs actuellement en ville (2026-07-16, demande explicite : "on peut voir la liste des

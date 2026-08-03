@@ -6064,6 +6064,106 @@
   // (isOffline/!sb) même pattern que les autres fonctions réseau ci-dessus, + test dynamique du
   // throttle (jamais plus de CLIENT_ERROR_MAX_PER_SESSION tentatives réseau par session, sinon une
   // boucle d'erreur répétée spammerait la table).
+  // ---------- la présence porte la version du client (2026-08-03) ----------
+  // Après l'incident des 11 h 30 sur la V497, la question « est-elle bien repassée à jour ? » s'est
+  // révélée sans réponse possible : rien n'enregistrait la version d'un client CONNECTÉ.
+  // presence.game_version comble ça (migration 20260803120000). Ces tests protègent les deux
+  // propriétés qui comptent : la version part vraiment, et son transport ne peut jamais coûter la
+  // présence elle-même.
+  function testHeartbeatSendsClientVersion() {
+    if (typeof heartbeatPresence !== 'function') return;
+    const src = heartbeatPresence.toString();
+    assert('heartbeatPresence() envoie bien p_version', src.includes('p_version'));
+    assert('heartbeatPresence() lit la version via versionPourPresence() (garde TDZ, CLAUDE.md §8)',
+      src.includes('versionPourPresence()'), `src=${src.slice(0, 300)}`);
+    assert('versionPourPresence() renvoie la version courante du bundle',
+      versionPourPresence() === CURRENT_VERSION, `got=${versionPourPresence()} attendu=${CURRENT_VERSION}`);
+  }
+  // Le repli est la propriété critique : si la base ne connaît pas encore la signature à
+  // 2 paramètres (migration pas appliquée, cache de schéma PostgREST pas rechargé, retour arrière
+  // vers le cloud), l'appel répond PGRST202. Sans repli, le joueur disparaîtrait du compteur
+  // « en ligne » et des compteurs de zone -- une PERTE DE PRÉSENCE pour une simple télémétrie,
+  // exactement le mode de panne de la migration 20260706030000.
+  function testHeartbeatFallsBackWhenVersionSignatureUnknown() {
+    // volet pur : la détection du PGRST202, testable directement (le harnais est synchrone)
+    assert('PGRST202 est reconnu comme "signature inconnue"',
+      estSignatureVersionInconnue({ code: 'PGRST202', message: 'Could not find the function' }) === true);
+    assert('le message seul suffit si le code manque',
+      estSignatureVersionInconnue({ message: 'Could not find the function public.heartbeat_presence' }) === true);
+    assert('une absence d\'erreur n\'est jamais un repli', estSignatureVersionInconnue(null) === false);
+    assert('une erreur réseau ordinaire ne déclenche PAS le repli (sinon on perdrait la version pour rien)',
+      estSignatureVersionInconnue({ code: '503', message: 'Service Unavailable' }) === false);
+    // volet câblage : le repli rappelle bien la signature à un paramètre, et ne se tait pas
+    const src = heartbeatPresence.toString();
+    assert('heartbeatPresence() se replie via estSignatureVersionInconnue()',
+      src.includes('estSignatureVersionInconnue('));
+    assert('le repli rappelle heartbeat_presence SANS p_version (la présence, elle, doit passer)',
+      /rpc\('heartbeat_presence',\s*\{\s*p_zone_idx:\s*zone\s*\}\)/.test(src), `src=${src.slice(0, 600)}`);
+    assert('le repli est signalé en console (jamais une perte de télémétrie muette)',
+      src.includes('console.error'));
+    assert('le repli est mémorisé pour ne pas retenter à chaque battement',
+      src.includes('heartbeatVersionSupportee = false'));
+  }
+  // Volet DYNAMIQUE, en ligne : le 1er sb.rpc part de façon synchrone (l'expression est évaluée
+  // avant l'await), donc observable par le harnais. Vérifie que la charge utile porte bien la
+  // version ET la zone -- une régression qui enverrait la version mais casserait zone_idx passerait
+  // sinon inaperçue (les compteurs par zone en dépendent).
+  function testHeartbeatPayloadCarriesVersionAndZone() {
+    if (typeof heartbeatPresence !== 'function') return;
+    const oSb = sb, oUser = currentUser, oSupport = heartbeatVersionSupportee, oVelia = atVelia;
+    const appels = [];
+    try {
+      heartbeatVersionSupportee = true;
+      atVelia = true; // sentinelle -1, le cas le plus facile à casser
+      currentUser = { id: 'test-user' };
+      sb = { rpc: (nom, args) => { appels.push({ nom, args }); return Promise.resolve({ error: null }); } };
+      heartbeatPresence(); // volontairement PAS awaité : on n'observe que l'appel synchrone
+      assert('heartbeatPresence() appelle bien la RPC heartbeat_presence', appels.length === 1 && appels[0].nom === 'heartbeat_presence');
+      if (appels.length) {
+        assert('la charge utile porte la version du bundle', appels[0].args.p_version === CURRENT_VERSION, `got=${appels[0].args.p_version}`);
+        assert('la charge utile garde la sentinelle Velia (-1)', appels[0].args.p_zone_idx === -1, `got=${appels[0].args.p_zone_idx}`);
+      }
+    } finally {
+      sb = oSb; currentUser = oUser; heartbeatVersionSupportee = oSupport; atVelia = oVelia;
+    }
+  }
+  // Volet HORS LIGNE (CLAUDE.md §11, politique en ligne + hors ligne) : sans client Supabase ni
+  // session, le heartbeat ne doit RIEN tenter et surtout ne pas lever -- il tourne dans un
+  // setInterval, une exception y serait invisible et répétée toutes les 20 s.
+  function testHeartbeatDoesNothingWithoutClientOrSession() {
+    if (typeof heartbeatPresence !== 'function') return;
+    const oSb = sb, oUser = currentUser;
+    let appels = 0;
+    try {
+      sb = { rpc: () => { appels++; return Promise.resolve({ error: null }); } };
+      currentUser = null;
+      heartbeatPresence();
+      assert('sans session, heartbeatPresence() ne touche pas au réseau', appels === 0);
+      sb = null; currentUser = { id: 'test-user' };
+      heartbeatPresence();
+      assert('sans client Supabase, heartbeatPresence() ne touche pas au réseau', appels === 0);
+      assert('heartbeatPresence() garde ses deux gardes (!sb / !currentUser)',
+        /if \(!sb \|\| !currentUser\) return;/.test(heartbeatPresence.toString()));
+    } finally {
+      sb = oSb; currentUser = oUser;
+    }
+  }
+  // La colonne ne vaut que si quelqu'un la lit : la section admin "Versions clientes" est la
+  // raison d'être de tout ça (repérer un client en retard en moins d'une minute, au lieu d'un
+  // signalement à la main 11 heures plus tard).
+  function testAdminClientVersionsSectionIsWired() {
+    const groupe = ADMIN_SECTIONS.find(g => g.cat === 'monitoring');
+    assert('la catégorie Supervision existe toujours', !!groupe);
+    if (!groupe) return;
+    const item = groupe.items.find(i => i.id === 'versions');
+    assert('la section "Versions clientes" est enregistrée dans Supervision', !!item);
+    assert('elle est câblée sur une vraie fonction de rendu (pas planned:true)',
+      !!item && typeof item.render === 'function' && !item.planned);
+    const src = refreshAdminClientVersions.toString();
+    assert('elle lit la RPC admin_client_versions', src.includes('admin_client_versions'));
+    assert('elle compare à la version SERVIE (CURRENT_VERSION), pas à la version majoritaire',
+      src.includes('CURRENT_VERSION'), `src=${src.slice(0, 400)}`);
+  }
   function testReportClientErrorGuardsOfflineAndMissingClient() {
     if (typeof reportClientError !== 'function') return;
     const src = reportClientError.toString();
@@ -8052,6 +8152,11 @@
     testOfflineCacheRoundTripsPerUserAndTracksPendingSync();
     testSaveToCloudGuardsSessionLockAndOffline();
     testCheckPlayerSessionNeverLocksOnNetworkFailure();
+    testHeartbeatSendsClientVersion();
+    testHeartbeatFallsBackWhenVersionSignatureUnknown();
+    testHeartbeatPayloadCarriesVersionAndZone();
+    testHeartbeatDoesNothingWithoutClientOrSession();
+    testAdminClientVersionsSectionIsWired();
     testReportClientErrorGuardsOfflineAndMissingClient();
     testReportClientErrorThrottlesAfterMaxPerSession();
     testCheckPlayerSessionRequiresSuccessfulClaimFirst();
