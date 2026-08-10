@@ -17,7 +17,7 @@
     "worktree-setup": "node scripts/worktree-setup.js"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.0",
+    "@playwright/test": "^1.62.1",
     "csso-cli": "^4.0.2",
     "terser": "^5.49.1"
   },
