@@ -3,8 +3,14 @@
 // SUPABASE — comptes joueurs + sauvegarde cloud
 // ============================================================
 // 🔧 À REMPLIR : dans ton projet Supabase > Project Settings > API
-const SUPABASE_URL = 'https://mkwwvzbjtyawpcyrnybk.supabase.co';
+const SUPABASE_URL = 'https://bdi.maxyull.fr';
 const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
+// ⚠️ CETTE CLE NE CHANGE PAS avec la bascule vers le VPS, et ce n'est pas un
+// oubli. Un test de regression verifie qu'elle n'est PAS un JWT : supabase-js
+// l'envoie aussi en `Authorization: Bearer`, et un PostgREST en ES256 rejette
+// une cle heritee. La remplacer par le jeton `anon` du VPS a fait echouer la CI
+// le 2026-08-10. Un GoTrue auto-heberge ne valide de toute facon pas cet
+// en-tete : il n'y a pas de passerelle Kong devant lui, contrairement au cloud.
 
 // ---------- Bascule des données vers le VPS (2026-08-01, voir D:\DEV\bdi-infra) ----------
 // L'AUTHENTIFICATION reste sur Supabase cloud (153 comptes, 4 providers OAuth qu'on ne
