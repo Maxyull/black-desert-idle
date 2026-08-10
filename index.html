@@ -37,7 +37,7 @@
      meta ne s'applique qu'au document qui la porte, jamais a un iframe cross-document). Teste
      avant commit : connexion Supabase, panneaux React (boss wheel/reconnect/compendium/patch
      notes), i18next, aucune violation CSP en console. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://stats.maxyull.fr 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://mkwwvzbjtyawpcyrnybk.supabase.co wss://mkwwvzbjtyawpcyrnybk.supabase.co https://bdi.maxyull.fr https://stats.maxyull.fr https://black-desert-idle-discord-bot.onrender.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://stats.maxyull.fr 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://admin-bdi.maxyull.fr https://mkwwvzbjtyawpcyrnybk.supabase.co wss://mkwwvzbjtyawpcyrnybk.supabase.co https://bdi.maxyull.fr https://stats.maxyull.fr https://black-desert-idle-discord-bot.onrender.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
 <!-- favicon (2026-07-21, repo-audit-todo.md point 9) : SVG, palette officielle (CLAUDE.md §29,
      fond #0b0f1a / accent or #d4a955) -- pas de fallback PNG/ICO, pas d'outil de rasterisation
      disponible sur cette machine ; le SVG seul couvre tous les navigateurs modernes (Chrome/
@@ -112,7 +112,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=724">
+<link rel="stylesheet" href="build/styles.min.css?v=725">
 <!-- Mesure d'audience Umami, auto-hebergee sur le VPS (stats.maxyull.fr), sans cookie ni
      identifiant persistant, donc aucune banniere de consentement a ajouter.
      ⚠️ data-domains limite l'envoi a blackdesertidle.maxyull.fr : sans cet attribut, chaque
@@ -1022,11 +1022,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=724"></script>
+<script src="meta/patch-notes-data.js?v=725"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=724"></script>
+<script src="build/source.min.js?v=725"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
