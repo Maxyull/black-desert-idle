@@ -15318,7 +15318,7 @@ function initCardLayout() {
 initCardLayout();
 
 // ==== src/backend/game-supabase.js ====
-const SUPABASE_URL = 'https://mkwwvzbjtyawpcyrnybk.supabase.co';
+const SUPABASE_URL = 'https://bdi.maxyull.fr';
 const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
 
 const DATA_API_URL = 'https://bdi.maxyull.fr';
