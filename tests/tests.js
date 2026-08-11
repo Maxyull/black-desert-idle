@@ -8000,7 +8000,13 @@
     // Envoyer le jeton de session d'un joueur a un simple relais de journal
     // l'exposerait sans rien apporter.
     const src = String(logToDiscord);
-    assert("aucun en-tete Authorization n'est envoye", !src.includes('Authorization'), src.slice(0, 300));
+    // On cherche ce qui ENVOIE l'en-tete, pas le mot lui-meme : en dev les
+    // commentaires font partie de Function.toString(), et le commentaire qui
+    // explique pourquoi on n'envoie rien contient forcement le mot. Premiere
+    // version de ce test rouge en CI pour cette raison exacte.
+    assert("aucun en-tete Authorization n'est pose",
+      !src.includes("Authorization':") && !src.includes('Authorization":'), src.slice(0, 300));
+    assert('aucun jeton porteur envoye', !src.includes('Bearer'), src.slice(0, 300));
     assert('aucune cle anon non plus', !src.includes('SUPABASE_ANON_KEY'), src.slice(0, 300));
   }
 
