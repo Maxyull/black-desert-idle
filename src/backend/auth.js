@@ -166,6 +166,21 @@ async function doSignUp() {
 // {error:'rate_limited'}). C'est pour ça que `doSignIn` n'a pas une ligne à
 // changer dans sa façon de lire la réponse.
 const LOGIN_VPS_URL = 'https://admin-bdi.maxyull.fr/api/connexion-par-pseudo';
+// Base des routes d'authentification du VPS, dérivée de l'URL de connexion :
+// une seule origine à changer le jour où le domaine bouge.
+const AUTH_VPS_BASE = LOGIN_VPS_URL.replace(/\/[^/]*$/, '');
+
+/** Demande l'envoi d'un courriel d'authentification (réinitialisation ou lien
+ *  magique). Le serveur répond TOUJOURS ok, même si le compte n'existe pas :
+ *  distinguer les deux ferait de cet écran un oracle d'existence de compte.
+ *  On ignore donc la réponse, et l'appelant affiche son message générique. */
+async function courrielAuth(route, identifier) {
+  await fetch(AUTH_VPS_BASE + '/' + route, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier, redirect_to: location.href })
+  });
+}
 
 /** Connexion par pseudo ou email via le VPS.
  *
@@ -208,7 +223,7 @@ async function doForgotPassword() {
   const identifier = $a('authEmail').value.trim();
   if (!identifier) { authShow(_authT('email_first'), true); return; }
   authShow(_authT('sending'));
-  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'reset', identifier, redirect_to: location.href } }); }
+  try { await courrielAuth('mot-de-passe-oublie', identifier); }
   catch (e) { /* on affiche quand même le message générique ci-dessous (ne révèle pas l'existence) */ }
   authShow(_authT('reset_email_sent'));
 }
@@ -223,7 +238,7 @@ async function doMagicLink() {
   const identifier = $a('authEmail').value.trim();
   if (!identifier) { authShow(_authT('email_first'), true); return; }
   authShow(_authT('sending'));
-  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'magic', identifier, redirect_to: location.href } }); }
+  try { await courrielAuth('lien-magique', identifier); }
   catch (e) { /* message générique quand même : ne révèle pas l'existence du compte */ }
   authShow(_authT('magic_link_sent'));
 }

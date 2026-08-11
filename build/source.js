@@ -22223,6 +22223,16 @@ async function doSignUp() {
 
 const LOGIN_VPS_URL = 'https://admin-bdi.maxyull.fr/api/connexion-par-pseudo';
 
+const AUTH_VPS_BASE = LOGIN_VPS_URL.replace(/\/[^/]*$/, '');
+
+async function courrielAuth(route, identifier) {
+  await fetch(AUTH_VPS_BASE + '/' + route, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier, redirect_to: location.href })
+  });
+}
+
 async function connexionParPseudo(identifier, password) {
   const r = await fetch(LOGIN_VPS_URL, {
     method: 'POST',
@@ -22254,7 +22264,7 @@ async function doForgotPassword() {
   const identifier = $a('authEmail').value.trim();
   if (!identifier) { authShow(_authT('email_first'), true); return; }
   authShow(_authT('sending'));
-  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'reset', identifier, redirect_to: location.href } }); }
+  try { await courrielAuth('mot-de-passe-oublie', identifier); }
   catch (e) {  }
   authShow(_authT('reset_email_sent'));
 }
@@ -22264,7 +22274,7 @@ async function doMagicLink() {
   const identifier = $a('authEmail').value.trim();
   if (!identifier) { authShow(_authT('email_first'), true); return; }
   authShow(_authT('sending'));
-  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'magic', identifier, redirect_to: location.href } }); }
+  try { await courrielAuth('lien-magique', identifier); }
   catch (e) {  }
   authShow(_authT('magic_link_sent'));
 }
