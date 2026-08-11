@@ -151,14 +151,47 @@ async function doSignUp() {
   if (data.session) { onAuthed(data.session.user); }
   else authShow(_authT('account_created_confirm'));
 }
-/** Connexion par pseudo OU email + mot de passe, via l'Edge Function (email jamais exposé). */
+// --- Connexion par pseudo : portée sur le VPS le 2026-08-10 -------------------
+//
+// L'action `login` de la fonction edge `auth-by-identifier` vit désormais sur le
+// VPS, où GoTrue tourne depuis la bascule de l'authentification.
+//
+// ⚠️ `reset` et `magic` restent DÉLIBÉRÉMENT sur la fonction edge. Elles
+// envoient des courriels, et le GoTrue du VPS n'a pas encore de serveur SMTP :
+// les basculer ici ferait répondre « envoyé » sans qu'aucun mail ne parte, ce
+// qui est pire que de ne pas les basculer. À reprendre quand le SMTP existera.
+//
+// La route du VPS répond TOUJOURS 200, avec exactement les mêmes corps que la
+// fonction edge ({access_token, refresh_token} | {error:'invalid'} |
+// {error:'rate_limited'}). C'est pour ça que `doSignIn` n'a pas une ligne à
+// changer dans sa façon de lire la réponse.
+const LOGIN_VPS_URL = 'https://admin-bdi.maxyull.fr/api/connexion-par-pseudo';
+
+/** Connexion par pseudo ou email via le VPS.
+ *
+ * Rend la MÊME forme que `sb.functions.invoke` (un objet `{ data }`), pour que
+ * l'appelant reste identique. Lève sur erreur réseau ou HTTP non-2xx, ce que
+ * `doSignIn` attrape déjà — même comportement qu'avant, où un échec de la
+ * fonction edge rendait `data` nul et affichait le message générique.
+ */
+async function connexionParPseudo(identifier, password) {
+  const r = await fetch(LOGIN_VPS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier, password })
+  });
+  if (!r.ok) throw new Error('login_http_' + r.status);
+  return { data: await r.json() };
+}
+
+/** Connexion par pseudo OU email + mot de passe, via le VPS (email jamais exposé). */
 async function doSignIn() {
   if (!sb) { authShow(_authT('err_config'), true); return; }
   const identifier = $a('authEmail').value.trim(), pass = $a('authPass').value;
   if (!identifier || !pass) { authShow(_authT('err_login_fields'), true); return; }
   authShow(_authT('signing_in'));
   let res;
-  try { res = await sb.functions.invoke('auth-by-identifier', { body: { action: 'login', identifier, password: pass } }); }
+  try { res = await connexionParPseudo(identifier, pass); }
   catch (e) { authShow(_authT('err_invalid_credentials'), true); return; }
   const data = res && res.data;
   if (data && data.error === 'rate_limited') { authShow(_authT('err_rate_limited'), true); return; }

@@ -7933,8 +7933,60 @@
       !erreur, erreur && erreur.message);
   }
 
+
+  // --- Bascule de la connexion par pseudo vers le VPS (2026-08-10) ------------
+
+  function testConnexionParPseudoViseLeVps() {
+    // Unitaire : la fonction parle bien au VPS, et rend la forme que doSignIn lit.
+    assert('connexionParPseudo existe', typeof connexionParPseudo === 'function');
+    assert("l'URL de connexion vise le VPS",
+      typeof LOGIN_VPS_URL === 'string' && LOGIN_VPS_URL.startsWith('https://admin-bdi.maxyull.fr/'),
+      String(LOGIN_VPS_URL));
+    const src = String(connexionParPseudo);
+    assert('elle poste en JSON', src.includes("method: 'POST'") && src.includes('JSON.stringify'));
+    assert('elle rend un objet { data }, comme sb.functions.invoke', src.includes('return { data'));
+  }
+
+  function testLaConnexionNePassePlusParLaFonctionEdge() {
+    // Régression : le jour où quelqu'un « restaure » l'ancien appel, la
+    // connexion repartirait sur le cloud et vérifierait le mot de passe dans
+    // une base qui n'est plus celle qui fait foi.
+    const src = String(doSignIn);
+    assert("doSignIn n'appelle plus auth-by-identifier", !src.includes('auth-by-identifier'), src.slice(0, 200));
+    assert('doSignIn passe par connexionParPseudo', src.includes('connexionParPseudo'));
+  }
+
+  function testResetEtMagicRestentSurLaFonctionEdge() {
+    // Régression : les basculer sans SMTP ferait répondre « envoyé » sans
+    // qu'aucun mail ne parte. Un échec silencieux sur le seul recours d'un
+    // joueur qui a perdu son mot de passe.
+    assert("le mot de passe oublié reste sur la fonction edge",
+      String(doForgotPassword).includes('auth-by-identifier'));
+    if (typeof doMagicLink === 'function') {
+      assert('le lien magique reste sur la fonction edge',
+        String(doMagicLink).includes('auth-by-identifier'));
+    }
+  }
+
+  function testCspAutoriseLeDomaineDeConnexion() {
+    // Régression : sans cette entrée, le navigateur BLOQUE le fetch et la
+    // connexion échoue avec « identifiants invalides », un message qui
+    // n'oriente pas du tout vers la CSP.
+    if (typeof document === 'undefined') return;
+    const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    if (!meta) return;
+    const connect = ((meta.getAttribute('content') || '').split(';')
+      .find(d => d.trim().startsWith('connect-src')) || '');
+    const origine = String(LOGIN_VPS_URL).split('/').slice(0, 3).join('/');
+    assert('connect-src autorise ' + origine, connect.includes(origine), connect);
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
+    testConnexionParPseudoViseLeVps();
+    testLaConnexionNePassePlusParLaFonctionEdge();
+    testResetEtMagicRestentSurLaFonctionEdge();
+    testCspAutoriseLeDomaineDeConnexion();
     testAucunResteDuModeInvite();
     testDataApiConfigCoherente();
     testAucunJwtEnDurPourLeClientDeDonnees();

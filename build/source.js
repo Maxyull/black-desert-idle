@@ -22220,13 +22220,25 @@ async function doSignUp() {
   else authShow(_authT('account_created_confirm'));
 }
 
+const LOGIN_VPS_URL = 'https://admin-bdi.maxyull.fr/api/connexion-par-pseudo';
+
+async function connexionParPseudo(identifier, password) {
+  const r = await fetch(LOGIN_VPS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier, password })
+  });
+  if (!r.ok) throw new Error('login_http_' + r.status);
+  return { data: await r.json() };
+}
+
 async function doSignIn() {
   if (!sb) { authShow(_authT('err_config'), true); return; }
   const identifier = $a('authEmail').value.trim(), pass = $a('authPass').value;
   if (!identifier || !pass) { authShow(_authT('err_login_fields'), true); return; }
   authShow(_authT('signing_in'));
   let res;
-  try { res = await sb.functions.invoke('auth-by-identifier', { body: { action: 'login', identifier, password: pass } }); }
+  try { res = await connexionParPseudo(identifier, pass); }
   catch (e) { authShow(_authT('err_invalid_credentials'), true); return; }
   const data = res && res.data;
   if (data && data.error === 'rate_limited') { authShow(_authT('err_rate_limited'), true); return; }
