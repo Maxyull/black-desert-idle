@@ -7956,16 +7956,25 @@
     assert('doSignIn passe par connexionParPseudo', src.includes('connexionParPseudo'));
   }
 
-  function testResetEtMagicRestentSurLaFonctionEdge() {
-    // Régression : les basculer sans SMTP ferait répondre « envoyé » sans
-    // qu'aucun mail ne parte. Un échec silencieux sur le seul recours d'un
-    // joueur qui a perdu son mot de passe.
-    assert("le mot de passe oublié reste sur la fonction edge",
-      String(doForgotPassword).includes('auth-by-identifier'));
+  function testResetEtMagicSontPassesSurLeVps() {
+    // Ce test verrouillait l'INVERSE jusqu'au 2026-08-10 : reset et magic
+    // devaient rester sur la fonction edge tant que le GoTrue du VPS n'avait
+    // pas de SMTP, sinon ils auraient repondu « envoye » sans qu'aucun mail ne
+    // parte. Le SMTP est branche et prouve par un courriel reellement recu, le
+    // verrou est donc leve en connaissance de cause. C'est exactement le role
+    // qu'on attend d'un test : forcer a revenir ici plutot que de laisser
+    // basculer par megarde.
+    assert("le mot de passe oublie n'appelle plus la fonction edge",
+      !String(doForgotPassword).includes('auth-by-identifier'));
+    assert('il passe par le VPS', String(doForgotPassword).includes('courrielAuth'));
     if (typeof doMagicLink === 'function') {
-      assert('le lien magique reste sur la fonction edge',
-        String(doMagicLink).includes('auth-by-identifier'));
+      assert("le lien magique n'appelle plus la fonction edge",
+        !String(doMagicLink).includes('auth-by-identifier'));
+      assert('il passe par le VPS', String(doMagicLink).includes('courrielAuth'));
     }
+    assert('les deux routes partent de la meme origine que la connexion',
+      typeof AUTH_VPS_BASE === 'string' && LOGIN_VPS_URL.startsWith(AUTH_VPS_BASE),
+      String(AUTH_VPS_BASE));
   }
 
   function testCspAutoriseLeDomaineDeConnexion() {
@@ -8029,7 +8038,7 @@
     testCspAutoriseLeDomaineDuJournal();
     testConnexionParPseudoViseLeVps();
     testLaConnexionNePassePlusParLaFonctionEdge();
-    testResetEtMagicRestentSurLaFonctionEdge();
+    testResetEtMagicSontPassesSurLeVps();
     testCspAutoriseLeDomaineDeConnexion();
     testAucunResteDuModeInvite();
     testDataApiConfigCoherente();
