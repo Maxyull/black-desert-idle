@@ -31,7 +31,9 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-const DISCORD_LOG_URL = 'https://mkwwvzbjtyawpcyrnybk.supabase.co/functions/v1/discord-log';
+// Porté sur le VPS le 2026-08-10. Même contrat, y compris le verrou
+// x-announce-secret sur les cibles patch_fr / patch_en.
+const DISCORD_LOG_URL = 'https://admin-bdi.maxyull.fr/api/journal-discord';
 // clé publique (déjà embarquée côté client dans game-supabase.js, protégée par RLS -- pas un secret)
 const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
 const TYPE_ICONS = { new: '🆕', change: '🔧', fix: '🐛', exploit: '⚠️' };

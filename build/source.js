@@ -5306,14 +5306,15 @@ function deleteNotif(id) {
   refreshNotifPanel(); 
 }
 
+const DISCORD_LOG_URL = 'https://admin-bdi.maxyull.fr/api/journal-discord';
+
 async function logToDiscord(title, description, color) {
   if (!sb) return;
   try {
-    const { data } = await sb.auth.getSession();
-    const token = (data && data.session && data.session.access_token) || SUPABASE_ANON_KEY;
-    await fetch(SUPABASE_URL + '/functions/v1/discord-log', {
+    
+    await fetch(DISCORD_LOG_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, description, color }),
     });
   } catch (e) {}
