@@ -7981,8 +7981,46 @@
     assert('connect-src autorise ' + origine, connect.includes(origine), connect);
   }
 
+
+  // --- Bascule du journal Discord vers le VPS (2026-08-10) -------------------
+
+  function testLeJournalDiscordViseLeVps() {
+    assert('DISCORD_LOG_URL vise le VPS',
+      typeof DISCORD_LOG_URL === 'string'
+        && DISCORD_LOG_URL.startsWith('https://admin-bdi.maxyull.fr/'),
+      String(DISCORD_LOG_URL));
+    const src = String(logToDiscord);
+    assert("logToDiscord n'appelle plus la fonction edge",
+      !src.includes('/functions/v1/discord-log'), src.slice(0, 200));
+    assert('logToDiscord passe par DISCORD_LOG_URL', src.includes('DISCORD_LOG_URL'));
+  }
+
+  function testLeJournalDiscordNEnvoieAucunJeton() {
+    // Regression : la route est PUBLIQUE, sa protection est le limiteur par IP.
+    // Envoyer le jeton de session d'un joueur a un simple relais de journal
+    // l'exposerait sans rien apporter.
+    const src = String(logToDiscord);
+    assert("aucun en-tete Authorization n'est envoye", !src.includes('Authorization'), src.slice(0, 300));
+    assert('aucune cle anon non plus', !src.includes('SUPABASE_ANON_KEY'), src.slice(0, 300));
+  }
+
+  function testCspAutoriseLeDomaineDuJournal() {
+    // Meme piege que pour la connexion : sans l'entree, le navigateur bloque
+    // le fetch et le journal se tait en silence, sans erreur visible.
+    if (typeof document === 'undefined') return;
+    const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    if (!meta) return;
+    const connect = ((meta.getAttribute('content') || '').split(';')
+      .find(d => d.trim().startsWith('connect-src')) || '');
+    const origine = String(DISCORD_LOG_URL).split('/').slice(0, 3).join('/');
+    assert('connect-src autorise ' + origine, connect.includes(origine), connect);
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
+    testLeJournalDiscordViseLeVps();
+    testLeJournalDiscordNEnvoieAucunJeton();
+    testCspAutoriseLeDomaineDuJournal();
     testConnexionParPseudoViseLeVps();
     testLaConnexionNePassePlusParLaFonctionEdge();
     testResetEtMagicRestentSurLaFonctionEdge();

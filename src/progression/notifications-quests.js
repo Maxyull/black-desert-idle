@@ -85,17 +85,24 @@ function deleteNotif(id) {
   updateNotifBadge();
   refreshNotifPanel(); // no-op si le panneau n'est pas ouvert (voir garde en tête de fonction)
 }
-// relaie un événement vers le salon Discord "log général" via l'Edge Function discord-log —
-// le webhook lui-même reste côté serveur, jamais dans ce code client (voir supabase-discord-log)
+// Relaie un événement vers le salon Discord « log général ».
+//
+// Porté sur le VPS le 2026-08-10 : la fonction edge `discord-log` est remplacée
+// par /api/journal-discord, qui reproduit son contrat à l'identique (jalons
+// verrouillés, deux paliers de limitation, verrou des annonces publiques).
+// Le webhook lui-même reste côté serveur, jamais dans ce code client.
+const DISCORD_LOG_URL = 'https://admin-bdi.maxyull.fr/api/journal-discord';
 /** @param {string} title @param {string} description @param {number} color - couleur hex de l'embed Discord. Relaie fire-and-forget vers le salon "log général" via l'Edge Function discord-log, no-op si `sb` indisponible. */
 async function logToDiscord(title, description, color) {
   if (!sb) return;
   try {
-    const { data } = await sb.auth.getSession();
-    const token = (data && data.session && data.session.access_token) || SUPABASE_ANON_KEY;
-    await fetch(SUPABASE_URL + '/functions/v1/discord-log', {
+    // ⚠️ AUCUN en-tête Authorization, et c'est volontaire. La route du VPS est
+    // publique, comme l'était la fonction edge (verify_jwt=false) : sa
+    // protection est le limiteur par IP. Envoyer le jeton de session d'un
+    // joueur à un simple relais de journal l'exposerait sans rien apporter.
+    await fetch(DISCORD_LOG_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, description, color }),
     });
   } catch (e) {}
